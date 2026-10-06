@@ -1,0 +1,89 @@
+"""Content encoders behind a single interface.
+
+Every encoder exposes:
+    fit(documents)        -> fit on training documents only (leak-free); no-op for
+                             pre-trained models
+    transform(documents)  -> L2-normalised matrix (n_documents, dim)
+
+Available names: 'tfidf', 'minilm', 'bge-small', 'bge-base', 'gte-small', 'gte-base',
+'gist', 'mxbai'. Add new ones in ENCODERS.
+"""
+
+import numpy as np
+import torch
+from sklearn.decomposition import TruncatedSVD
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.preprocessing import normalize
+
+DIM_TFIDF = 128
+
+
+def device():
+    return 'cuda' if torch.cuda.is_available() else 'cpu'
+
+
+class TfidfEncoder:
+    """TF-IDF followed by a truncated SVD (classic reference)."""
+
+    name = 'tfidf'
+
+    def __init__(self, dim=DIM_TFIDF, seed=0):
+        self.vectorizer = TfidfVectorizer(min_df=5, sublinear_tf=True, lowercase=True,
+                                          strip_accents='unicode', max_features=300000)
+        self.svd = TruncatedSVD(n_components=dim, random_state=seed)
+        self.fitted = False
+
+    def fit(self, documents):
+        matrix = self.vectorizer.fit_transform(documents)
+        self.svd.fit(matrix)
+        self.fitted = True
+        return self
+
+    def transform(self, documents):
+        if not self.fitted:
+            self.fit(documents)
+        return normalize(self.svd.transform(self.vectorizer.transform(documents))).astype(np.float32)
+
+
+class SentenceEncoder:
+    """Any sentence-transformers model (BGE, GTE, MiniLM, mxbai, ...)."""
+
+    def __init__(self, model_name, name=None, batch_size=64):
+        from sentence_transformers import SentenceTransformer
+        self.model = SentenceTransformer(model_name, device=device())
+        self.name = name or model_name.split('/')[-1]
+        self.batch_size = batch_size
+
+    def fit(self, documents):
+        return self
+
+    def transform(self, documents):
+        if not documents:
+            return np.zeros((0, self.model.get_sentence_embedding_dimension()), dtype=np.float32)
+        vectors = self.model.encode(documents, batch_size=self.batch_size, show_progress_bar=False,
+                                    convert_to_numpy=True, normalize_embeddings=True)
+        return vectors.astype(np.float32)
+
+
+SENTENCE_MODELS = {
+    'minilm': 'sentence-transformers/all-MiniLM-L6-v2',
+    'bge-small': 'BAAI/bge-small-en-v1.5',
+    'bge-base': 'BAAI/bge-base-en-v1.5',
+    'bge-large': 'BAAI/bge-large-en-v1.5',
+    'gte-small': 'thenlper/gte-small',
+    'gte-base': 'thenlper/gte-base',
+    'gist': 'avsolatorio/GIST-small-Embedding-v0',
+    'mxbai': 'mixedbread-ai/mxbai-embed-large-v1',
+}
+
+
+def get_encoder(name):
+    if name == 'tfidf':
+        return TfidfEncoder()
+    if name in SENTENCE_MODELS:
+        return SentenceEncoder(SENTENCE_MODELS[name], name=name)
+    raise ValueError(f'unknown encoder: {name}')
+
+
+def available():
+    return ['tfidf'] + list(SENTENCE_MODELS)

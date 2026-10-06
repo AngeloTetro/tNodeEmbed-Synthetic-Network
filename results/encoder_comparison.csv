@@ -1,0 +1,13 @@
+encoder,content,negatives,val_auc,test1_auc,test2_auc,restriction_val,restriction_test1,restriction_test2,final_loss,seconds
+tfidf,period,random,0.9864,0.9308,0.9412,0,0,0,0.3055,75
+tfidf,period,matched,0.4894,0.5206,0.5045,0,0,0,0.6874,70
+minilm,period,random,0.9948,0.9539,0.9608,0,0,0,0.2089,137
+minilm,period,matched,0.5714,0.5214,0.5097,0,0,0,0.6850,105
+bge-small,period,random,0.9960,0.9576,0.9670,0,0,0,0.2024,208
+bge-small,period,matched,0.5406,0.5167,0.5193,0,0,0,0.6896,190
+gte-small,period,random,0.9962,0.9555,0.9630,0,0,0,0.2114,150
+gte-small,period,matched,0.5285,0.5140,0.5069,0,0,0,0.6931,112
+bge-base,period,random,0.9955,0.9601,0.9675,0,0,0,0.2057,453
+bge-base,period,matched,0.5400,0.5167,0.5345,0,0,0,0.6894,430
+gte-base,period,random,0.9961,0.9587,0.9688,0,0,0,0.2047,198
+gte-base,period,matched,0.5425,0.5234,0.5310,0,0,0,0.6933,168

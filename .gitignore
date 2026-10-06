@@ -1,0 +1,15 @@
+# ambiente e cache (grandi e rigenerabili)
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# configurazione dello strumento (non è lavoro di progetto)
+.commandcode/
+
+# dataset: input originali (1,1 GB, read-only, mai modificati) e cartelle generate
+# (ricostruibili con gli script e i seed fissi). Sono congelati nel file zip di snapshot.
+Esame Angelantonio Fedele Murolo/
+
+# archivio di snapshot, se creato dentro il progetto
+*.zip
