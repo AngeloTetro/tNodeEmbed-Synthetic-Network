@@ -1,0 +1,6 @@
+variant,partition,rule,nodes,edges,density,reciprocity,mean_out_degree,max_out_degree,seconds
+v1,generated_snapshots,threshold,10000,104672,0.001047,0.0037,10.47,183,
+v2,generated_snapshots,real_k,10000,414985,0.00415,0.0017,41.5,1008,
+v3,generated_snapshots,reciprocity,9999,138582,0.001386,0.448,13.86,5959,
+v4,generated_snapshots_growth,growth,10000,82860,0.000829,0.0002,8.29,24,
+v5,generated_snapshots_growth,growth real_k reciprocity,10000,427056,0.004271,0.4946,42.71,998,

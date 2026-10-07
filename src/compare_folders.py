@@ -12,6 +12,7 @@ Usage: uv run python src/compare_folders.py
 
 import csv
 import os
+import sys
 
 import matplotlib
 matplotlib.use('Agg')
@@ -24,7 +25,8 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BASE = os.path.join(ROOT, 'Esame Angelantonio Fedele Murolo')
 RESULTS = os.path.join(ROOT, 'results')
 FIGURES = os.path.join(RESULTS, 'figures')
-FOLDERS = ('real_snapshots', 'generated_snapshots', 'generated_snapshots_growth')
+DEFAULT_FOLDERS = ('real_snapshots', 'generated_snapshots', 'generated_snapshots_growth')
+FOLDERS = tuple(sys.argv[1:]) if len(sys.argv) > 1 else DEFAULT_FOLDERS
 
 
 def read_csv(name):
