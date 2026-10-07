@@ -6,8 +6,11 @@ Every encoder exposes:
     transform(documents)  -> L2-normalised matrix (n_documents, dim)
 
 Available names: 'tfidf', 'minilm', 'bge-small', 'bge-base', 'gte-small', 'gte-base',
-'gist', 'mxbai'. Add new ones in ENCODERS.
+'gist', 'mxbai', plus the fine-tuned encoders 'finetuned-minilm' / 'finetuned-bge-base'
+(produced by src/finetune_encoder.py). Add new ones in ENCODERS.
 """
+
+import os
 
 import numpy as np
 import torch
@@ -16,6 +19,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.preprocessing import normalize
 
 DIM_TFIDF = 128
+MODELS_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'models')
 
 
 def device():
@@ -77,13 +81,24 @@ SENTENCE_MODELS = {
 }
 
 
+FINETUNED_MODELS = {
+    'finetuned-minilm': os.path.join(MODELS_DIR, 'finetuned-minilm'),
+    'finetuned-bge-base': os.path.join(MODELS_DIR, 'finetuned-bge-base'),
+}
+
+
 def get_encoder(name):
     if name == 'tfidf':
         return TfidfEncoder()
     if name in SENTENCE_MODELS:
         return SentenceEncoder(SENTENCE_MODELS[name], name=name)
+    if name in FINETUNED_MODELS:
+        path = FINETUNED_MODELS[name]
+        if not os.path.isdir(path):
+            raise ValueError(f'{name} not found at {path}: run src/finetune_encoder.py first')
+        return SentenceEncoder(path, name=name)
     raise ValueError(f'unknown encoder: {name}')
 
 
 def available():
-    return ['tfidf'] + list(SENTENCE_MODELS)
+    return ['tfidf'] + list(SENTENCE_MODELS) + list(FINETUNED_MODELS)

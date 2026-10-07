@@ -1,0 +1,10 @@
+snapshot,nodes,new_nodes,edges,density,out_degree_mean,out_degree_median,out_degree_max,in_degree_mean,reciprocity,weak_components,largest_weak_share,strong_components,max_k_core,communities,modularity,new_edges
+snapshot_1,0,0,0,nan,nan,nan,0,nan,nan,0,nan,0,0,0,nan,0
+snapshot_2,0,0,0,nan,nan,nan,0,nan,nan,0,nan,0,0,0,nan,0
+snapshot_3,0,0,0,nan,nan,nan,0,nan,nan,0,nan,0,0,0,nan,0
+snapshot_4,0,0,0,nan,nan,nan,0,nan,nan,0,nan,0,0,0,nan,0
+snapshot_5,0,0,0,nan,nan,nan,0,nan,nan,0,nan,0,0,0,nan,0
+snapshot_6,0,0,0,nan,nan,nan,0,nan,nan,0,nan,0,0,0,nan,0
+snapshot_7,0,0,0,nan,nan,nan,0,nan,nan,0,nan,0,0,0,nan,0
+snapshot_8,0,0,0,nan,nan,nan,0,nan,nan,0,nan,0,0,0,nan,0
+snapshot_9,0,0,0,nan,nan,nan,0,nan,nan,0,nan,0,0,0,nan,0

@@ -1,0 +1,3 @@
+base,epochs,pairs,baseline_auc,best_epoch,val_proxy_auc,history
+minilm,2,8000,0.3336,2,0.3037,0.2994|0.3037
+bge-base,1,4000,0.3229,1,0.3231,0.3231

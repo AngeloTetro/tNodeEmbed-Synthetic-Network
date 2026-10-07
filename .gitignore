@@ -11,5 +11,12 @@ __pycache__/
 # (ricostruibili con gli script e i seed fissi). Sono congelati nel file zip di snapshot.
 Esame Angelantonio Fedele Murolo/
 
+# encoder fine-tuned (binari, ricostruibili con src/finetune_encoder.py)
+models/
+
+# log di lavoro degli script (ricostruibili a ogni giro)
+results/_*.txt
+results/_*.log
+
 # archivio di snapshot, se creato dentro il progetto
 *.zip

@@ -29,6 +29,31 @@ def read_csv(path):
         return list(csv.DictReader(f))
 
 
+VARIANTS = [
+    ('_rule_v1', 'v1 soglia sul punteggio'),
+    ('_rule_v2', 'v2 quota reale di archi'),
+    ('_rule_v3', 'v3 reciprocita calibrata'),
+    ('_rule_v4', 'v4 accrescimento'),
+    ('_rule_v5', 'v5 accrescimento + reciprocita'),
+    ('_v6a', 'v6a soglia sul grado finale'),
+    ('_v6b', 'v6b soglia sulla crescita'),
+    ('_v7a', 'v7a inferenza, decisione bayesiana'),
+    ('_v7b', 'v7b inferenza, tasso reale'),
+    ('_v7c', 'v7c inferenza, soglia globale'),
+    ('_v7d', 'v7d inferenza, encoder fine-tuned'),
+    ('_v7e', 'v7e inferenza, globale + fine-tuned'),
+]
+
+
+def variant_label(folder):
+    if folder == 'real_snapshots':
+        return 'REALE'
+    for suffix, label in VARIANTS:
+        if folder.endswith(suffix):
+            return label
+    return 'riferimento (solo contenuto)'
+
+
 def last_row(rows):
     return rows[-1] if rows else {}
 
@@ -54,9 +79,7 @@ def main():
         rule = rules.get(variant_of.get(folder, ''), {})
         rows.append({
             'folder': folder,
-            'kind': ('real' if folder == 'real_snapshots' else
-                     ('encoder ' + transfer.get('encoder', '?')) if transfer else
-                     ('rule ' + variant_of.get(folder, '?'))),
+            'kind': variant_label(folder),
             'real_val_auc': transfer.get('real_val_auc', ''),
             'real_test1_auc': transfer.get('real_test1_auc', ''),
             'real_test2_auc': transfer.get('real_test2_auc', ''),
@@ -80,11 +103,21 @@ def main():
     header = (f'{"folder":<44}{"nodi":>7}{"archi":>9}{"densita":>9}{"recipr":>8}'
               f'{"modul":>8}{"transit":>9}{"omofilia":>10}')
     print(header)
+
+    def fmt(row, key, width, decimals):
+        text = row.get(key)
+        if text in (None, ''):
+            return f'{"-":>{width}}'
+        return f'{float(text):>{width}.{decimals}f}'
+
     for row in rows:
+        if not row['density']:
+            print(f'{row["folder"]:<44}{"(nessun arco)":>12}')
+            continue
         print(f'{row["folder"]:<44}{row["nodes"]:>7}{row["edges"]:>9}'
-              f'{float(row["density"]):>9.5f}{float(row["reciprocity"]):>8.4f}'
-              f'{float(row["modularity"]):>8.3f}{float(row["transitivity"]):>9.3f}'
-              f'{float(row["homophily_ratio"]):>10.3f}' if row['density'] else row['folder'])
+              f'{fmt(row, "density", 9, 5)}{fmt(row, "reciprocity", 8, 4)}'
+              f'{fmt(row, "modularity", 8, 3)}{fmt(row, "transitivity", 9, 3)}'
+              f'{fmt(row, "homophily_ratio", 10, 3)}')
 
     os.makedirs(FIGURES, exist_ok=True)
     usable = [row for row in rows if row['density']]

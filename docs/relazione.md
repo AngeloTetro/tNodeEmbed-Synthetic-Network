@@ -63,7 +63,13 @@ Lettura e scrittura dei file sono centralizzate in `src/graph_io.py`, così ogni
 
 **c) I negativi della valutazione sono appaiati.** Per valutare un modello di link prediction servono anche coppie di utenti *non* collegati ("negativi"). Se si scelgono a caso, il modello può "imbrogliare" riconoscendo l'utente nuovo dalla sequenza; per evitarlo, nel confronto appaiamo ogni coppia vera con una coppia falsa che ha **lo stesso primo utente** e una destinazione con **storia di arrivo e grado simili**. Nel CSV riportiamo anche la versione con negativi casuali, per trasparenza.
 
-**d) La regola con cui nascono gli archi è dichiarata.** Il modello dà un punteggio a ogni coppia; il *numero* di archi non lo decide il modello: a ogni time step ogni utente **che scrive in quel periodo** crea `k ~ Poisson(1,2)` nuovi archi verso gli utenti **già presenti nella rete** — quelli entrati in quello snapshot o in uno precedente, perché in una rete cumulativa nessuno esce mai — scegliendo quelli con il punteggio più alto, senza contare i self-loop e gli archi già presenti. Gli archi si accumulano, come nel reale.
+**d) Come nascono gli archi: due famiglie, ed è il confronto la parte scientifica del lavoro.** Il modello dà un **punteggio** a ogni coppia di utenti; per trasformare i punteggi in una rete servono delle decisioni, e la domanda giusta è *da dove vengono*. Ne abbiamo confrontate tre famiglie:
+
+- **Famiglia "a mano" (v1–v5)**, tenuta solo come confronto: il numero di archi lo decidiamo noi (`k ~ Poisson(1,2)`, oppure la distribuzione dei gradi del reale), eventualmente con l'accrescimento e la reciprocità aggiunta a mano.
+- **Famiglia "calibrata sul reale" (v6)**: la soglia non è più una nostra scelta ma un **quantile dei punteggi del modello misurato sulle transizioni reali** — `v6a` fissa il grado uscente medio finale al valore reale (32,05), `v6b` fissa la crescita di ogni snapshot a quella reale — con i vincoli strutturali misurati sul reale (un utente può collegarsi solo a chi entra in quel momento, bersagli scelti in proporzione al grado) e la reciprocità portata al valore reale (0,42) con gli archi inversi.
+- **Famiglia "per inferenza" (v7)**, il metodo più corretto: si **fitta un modello di formazione degli archi** sulle transizioni reali — le variabili sono il punteggio di contenuto del modello tNodeEmbed, il grado dei due utenti al passo precedente, se ciascuno dei due è nuovo, e il passo temporale; l'etichetta è *"questa coppia è diventata un arco?"* — e poi si **applica** al sintetico. Qui **non c'è nessun vincolo imposto**: nessuna quota di archi decisa da noi, nessun obbligo di reciprocità, e gli archi fra utenti già presenti sono ammessi **se il modello li ritiene probabili** (nel reale sono rari, ma non impossibili: è la risposta alla domanda "due utenti già presenti possono collegarsi più avanti?" — sì, ed è il modello a deciderlo, non una regola scritta da noi).
+
+La differenza fra le ultime due è tutta lì: in v6 le statistiche del reale vengono **imposte** alla rete, in v7 vengono **imparate** e poi applicate. Teniamo entrambe come reti ufficiali del progetto, perché rispondono a due domande diverse: *cosa predice il modello* (v7) e *cosa serve per somigliare al reale* (v6).
 
 **e) Il fallback del dottorando non è servito.** Aveva proposto, se necessario, di agganciare gli utenti sintetici alla rete reale come nodi isolati. La rimozione di node2vec è bastata: non l'abbiamo implementato.
 
@@ -183,13 +189,79 @@ Per ogni transizione classifichiamo gli archi nuovi secondo i due estremi: un ut
 
 Lettura: nel **reale** i nuovi utenti **si collegano agli utenti degli snapshot precedenti** — il 92% degli archi nuovi è "nuovo &lt;-&gt; già presente" — e **non esiste nessun arco fra due utenti già presenti** (0 su 707.604); inoltre i nuovi utenti scelgono utenti **molto più connessi della media** (437 contro 64). Nella variante **arrivo progressivo** il collegamento nuovo &lt;-&gt; già presente c'è (74%), compare una quota di nuovo &lt;-&gt; nuovo (14%), ma resta un 12% di archi fra utenti già presenti (che nel reale non esiste) e **manca la preferenza per i nodi molto connessi** (il grado dell'estremo è in linea con la media). Nella variante **tutti presenti** il concetto di "nuovo" quasi non esiste — tutti hanno contenuto dal primo snapshot — quindi il **95% degli archi è fra utenti già presenti**: è la differenza strutturale principale fra le due partizioni.
 
+### 6.8 Le due famiglie ufficiali a confronto con il reale
+
+Valori dell'ultimo snapshot (`results/variant_summary.csv`):
+
+| rete | nodi | archi | densità | reciprocità | modularità | transitivity | omofilia |
+|---|---|---|---|---|---|---|---|
+| **reale** | 25.714 | 824.045 | 0,00125 | **0,418** | 0,275 | 0,034 | **2,13** |
+| v6a — calibrata sul grado (tutti) | 10.000 | 64.422 | 0,00064 | **0,420** | 0,661 | 0,000 | 0,99 |
+| v6a — calibrata sul grado (crescita) | 8.345 | 78.268 | 0,00112 | **0,420** | 0,503 | 0,006 | 1,00 |
+| v6b — calibrata sulla crescita (crescita) | 8.800 | 399.464 | 0,00516 | **0,420** | 0,364 | **0,045** | 1,00 |
+| v7b — inferenza, soglia a blocchi (tutti) | 10.000 | 61.560 | 0,00062 | 0,016 | 0,548 | 0,424 | 1,00 |
+| v7c — inferenza, soglia globale (tutti) | 10.000 | 57.558 | 0,00058 | 0,183 | 0,737 | 0,093 | 1,00 |
+| v7e — inferenza, globale + fine-tuned (tutti) | 10.000 | 57.559 | 0,00058 | **0,721** | 0,460 | 0,005 | 0,99 |
+| v7c — inferenza, soglia globale (crescita) | 9.882 | 35.918 | 0,00037 | 0,000 | 0,870 | 0,000 | 1,01 |
+| v7e — inferenza, globale + fine-tuned (crescita) | 10.000 | 35.919 | 0,00036 | 0,210 | 0,761 | 0,003 | 1,03 |
+
+Due cose da guardare con attenzione:
+
+- **La reciprocità** (nel reale 0,42): la famiglia calibrata la centra per costruzione (0,420 esatto), quella per inferenza no — va da 0,00 a 0,72 a seconda di come si decide la soglia e dell'encoder. Non è un dettaglio: la reciprocità nasce dal fatto che nel reale i due versi di un legame si creano in momenti diversi, mentre la nostra rete di 9 passi concede poco tempo perché questo accada.
+- **L'omofilia del contenuto** (nel reale **2,13**, cioè i collegati si somigliano più del doppio rispetto a due utenti a caso): **nessuna** rete generata la riproduce (tutte intorno a 1,00). È il risultato più importante del progetto: *nonostante il contenuto sia l'unica informazione usata*, le reti generate non riescono a far somigliare i collegati più di due utenti estratti a caso. La spiegazione sta nella sezione successiva.
+
+### 6.9 Il modello di formazione degli archi (v7) — cosa ha imparato
+
+Le variabili sono standardizzate, quindi i coefficienti sono confrontabili fra loro; la tabella è in `results/v7_coefficients.csv` (validation: AUC 0,988, AP 0,577).
+
+| variabile | coefficiente |
+|---|---|
+| **punteggio di contenuto** (tNodeEmbed) | **+0,18** |
+| log-grado dell'utente di partenza | +1,64 |
+| log-grado dell'utente di arrivo | +1,57 |
+| **l'utente di partenza è nuovo** | **+2,28** |
+| **l'utente di arrivo è nuovo** | **+2,08** |
+| passo temporale | +0,29 |
+
+Il modello discrimina quasi perfettamente (AUC 0,988) ma **lo fa con la struttura**: il peso dell'utente nuovo è più di dieci volte quello del contenuto, e anche il grado pesa molto di più. Tradotto: *chi entra adesso* e *quanto è connesso* spiegano quasi tutto; *cosa scrive* quasi nulla. Questo è coerente con il fatto che nella rete generata l'omofilia del contenuto resti a 1,00 e con l'AUC intorno a 0,49–0,57 quando si controlla per arrivo e grado (§6.1).
+
+Le due decisioni possibili sul modello danno esiti molto diversi:
+- **decisione bayesiana con la prevalenza vera** (un arco c'è se il modello lo ritiene più probabile del contrario): **nessun arco** in tutte le partizioni — il modello non crede mai che una coppia sintetica abbia più del 50% di probabilità di essere un arco, perché la probabilità a priori è minuscola (6,4 × 10⁻⁵ coppie collegate);
+- **soglia al tasso reale** (si tengono le coppie in testa alla graduatoria per il tasso misurato sul reale): le reti delle righe v7 della tabella precedente.
+
+### 6.10 Il fine-tuning dell'encoder (leva 1), e perché non è passato
+
+Abbiamo addestrato due encoder (MiniLM e bge-base) con una loss contrastiva sugli archi reali, negativi appaiati e negativi **temporali** (coppie che diventano archi più avanti ma non in quel passo: il tempo nel contesto), con early stopping sulla validation (`results/finetune_report.csv`). Al confronto di protocollo (`results/encoder_comparison.csv`, negativi appaiati):
+
+| encoder | validation | test1 | test2 | media val+test |
+|---|---|---|---|---|
+| MiniLM (base) | 0,571 | 0,521 | 0,510 | 0,534 |
+| **finetuned-minilm** | **0,549** | 0,509 | 0,500 | **0,519** |
+| bge-base (base) | 0,540 | 0,517 | 0,535 | 0,530 |
+| **finetuned-bge-base** | 0,529 | 0,524 | 0,518 | **0,523** |
+
+Il fine-tuning **migliora la validation** (è la finestra su cui si ferma) ma **peggiora entrambe le finestre di test**: è overfitting — la supervisione è troppo debole e l'encoder si adatta al periodo che vede. Il criterio di tenuta (media migliore del non fine-tunato) **non è soddisfatto**, quindi la pipeline resta sugli encoder pre-addestrati. Le due caselle fine-tuned di v7 servono solo a misurare l'effetto sulla rete generata.
+
+### 6.11 Il disegno 2 × 2: soglia × encoder
+
+Per separare i due effetti abbiamo generato quattro reti, incrociando la modalità di soglia (a blocchi / globale) e l'encoder (MiniLM / fine-tuned), sempre con la stessa decisione al tasso reale:
+
+| | soglia a blocchi | soglia globale |
+|---|---|---|
+| **MiniLM** | v7b: 61.560 archi, reciprocità 0,016 | v7c: 57.558 archi, reciprocità 0,183 |
+| **fine-tuned** | v7d: 61.588 archi, reciprocità 0,002 | v7e: 57.559 archi, reciprocità 0,721 |
+
+Lettura: **la soglia globale è la correzione che conta** (la reciprocità passa da 0,016 a 0,183: prima era un artefatto del calcolo a blocchi, che rompeva la simmetria fra (u,v) e (v,u)); **l'encoder fine-tuned non cambia il volume** (61.588 contro 61.560: identico) ma rende i punteggi più simmetrici, e la reciprocità sale a 0,72 — con un effetto collaterale da segnalare: compare un utente collegato a tutti gli altri (grado 9.999), cioè un hub degenerato che il reale non ha (grado massimo 1.290). Quindi nessuno dei due aggiustamenti avvicina la rete al reale nella sostanza: cambiano la simmetria, non la capacità di riprodurre la struttura.
+
 ## 7. Cosa non abbiamo fatto, e i limiti da tenere presenti
 
-1. **Il numero di archi è una nostra scelta**, non una previsione del modello (`k ~ Poisson(1,2)`): è per questo che la **reciprocità della rete generata è ~ 0,001** mentre nel reale è 0,418. Varianti della regola di conteggio non sono state ancora provate. Inoltre la regola **non riproduce la preferenza per gli hub** (nel reale gli utenti nuovi si collegano a nodi con grado medio 437 contro 64) e, nella variante "tutti presenti", ammette archi fra utenti già presenti, che nel reale non esistono (0 su 707.604).
-2. **L'inizializzazione `Q_t` del paper è usata in senso lato**: non c'è una matrice di embedding addestrabile inizializzata dalle feature; le rappresentazioni del contenuto sono direttamente l'input della LSTM. Allo stesso modo l'**allineamento di Procrustes è un pre-processing** e non compare come termine nella loss (anche l'implementazione di riferimento allena con la sola cross-entropy binaria).
-3. **Sul reale il contenuto, da solo, non separa bene i collegamenti** quando si controlla per la struttura (arrivo e grado): è il motivo per cui le AUC con negativi appaiati stanno intorno a 0,49–0,57 (0,5 = risposta casuale).
-4. **Non abbiamo usato il fallback dei nodi isolati** (non è servito) e **non abbiamo addestrato/fine-tuned un encoder** con loss contrastiva sui collegamenti reali: resta l'opzione più promettente, ora che la GPU funziona.
-5. **Dettagli tecnici**: 18 righe dei batch sintetici vengono ignorate in lettura (numero di campi diverso dall'intestazione); il confronto fra encoder copre solo la variante di contenuto "per periodo"; il progetto **non è sotto git**, quindi "nessun file originale modificato" è verificato per ispezione del codice.
+1. **Il contenuto, da solo, non riproduce i collegamenti.** È il risultato principale e va detto per primo: le reti generate hanno **omofilia del contenuto ≈ 1,00** mentre il reale è **2,13**, e nel modello di formazione degli archi (v7) il peso del punteggio di contenuto è **+0,18** contro **+2,28** dell'"utente nuovo". Con un controllo per arrivo e grado, l'AUC del contenuto sta intorno a 0,49–0,57 (0,5 = caso). Quindi la pipeline, così com'è, spiega *quando* nascono i collegamenti (chi entra, quanto è connesso) ma non *fra chi*, nella misura in cui conta il contenuto.
+2. **La famiglia per inferenza (v7) non riproduce la struttura del reale**: grado uscente medio 3,6–5,8 contro 32,0; reciprocità da 0,00 a 0,72 (non stabile) contro 0,42; e con l'encoder fine-tuned compare un hub degenerato (un utente collegato a tutti, grado 9.999 contro un massimo reale di 1.290). La famiglia calibrata (v6) centra volume e reciprocità **per costruzione**, non perché li abbia imparati: è la differenza fra *imporre* e *predire*.
+3. **Il fine-tuning dell'encoder non è passato**: migliora la validation ma peggiora entrambe le finestre di test (media 0,519 contro 0,534 per MiniLM; 0,523 contro 0,530 per bge-base). La supervisione (0,49–0,57 di AUC) è troppo debole perché l'encoder impari qualcosa che generalizzi. Il fine-tuning di bge-base ha girato con budget ridotto (4.000 coppie, 1 epoca, batch 8) perché la scheda da 6 GB andava in esaurimento di memoria con batch più grandi.
+4. **La regola a mano (v1–v5) resta come confronto, non come metodo**: il conteggio era una nostra scelta (`k ~ Poisson(1,2)` o la distribuzione dei gradi del reale), ed è la ragione per cui quelle reti avevano reciprocità ≈ 0,001.
+5. **L'inizializzazione `Q_t` del paper è usata in senso lato**: non c'è una matrice di embedding addestrabile inizializzata dalle feature; le rappresentazioni del contenuto sono direttamente l'input della LSTM. Allo stesso modo l'**allineamento di Procrustes è un pre-processing** e non compare come termine nella loss (anche l'implementazione di riferimento allena con la sola cross-entropy binaria).
+6. **Il fallback dei nodi isolati** proposto dal dottorando **non è servito** e non è stato implementato.
+7. **Dettagli tecnici**: 18 righe dei batch sintetici vengono ignorate in lettura (numero di campi diverso dall'intestazione); il confronto fra encoder copre solo la variante di contenuto "per periodo"; la partizione "tutti presenti" resta poco adatta alla famiglia v7, perché lì il concetto di "utente nuovo" quasi non esiste.
 
 ## 8. Glossario minimo
 
@@ -211,7 +283,13 @@ Lettura: nel **reale** i nuovi utenti **si collegano agli utenti degli snapshot 
 - **Modularità**: quanto la rete è divisa in gruppi coesi.
 - **Louvain**: l'algoritmo che trova quei gruppi (le "comunità").
 - **NMI**: quanto due suddivisioni in gruppi si somigliano (1 = identiche).
-- **Poisson(1,2)**: distribuzione da cui estraiamo il numero di nuovi archi per utente a ogni snapshot: in media 1,2.
+- **Modello di formazione degli archi** (v7): un modello che impara, sulle transizioni reali, con che probabilità una coppia di utenti diventa un collegamento; poi si applica al sintetico. È l'alternativa alle regole scritte a mano.
+- **Fine-tuning contrastivo** (leva 1): addestrare l'encoder perché avvicini i testi degli utenti collegati e allontani quelli non collegati.
+- **Negativi temporali**: coppie che diventano collegamenti **più avanti** ma non in questo momento; servono a insegnare all'encoder che la stessa coppia "non è ancora" collegata (il tempo nel contesto).
+- **Prevalenza (e correzione della prevalenza)**: quanto è rara una cosa. Le coppie collegate sono rarissime (6,4 × 10⁻⁵), quindi le probabilità del modello vanno riportate a quella scala prima di decidere; è il motivo per cui la decisione "bayesiana" di v7 non produce nessun arco.
+- **Soglia globale per passo**: una sola soglia per ogni istante di tempo, calcolata su tutte le coppie candidate; è la versione corretta della soglia "a blocchi" usata all'inizio, che rompeva la simmetria fra (u,v) e (v,u).
+- **Omofilia del contenuto (ratio)**: quante volte i due capi di un collegamento si somigliano di più rispetto a due utenti estratti a caso (1 = nessuna differenza). Nel reale è 2,13, nelle reti generate è ~1,00.
+- **Poisson(1,2)**: distribuzione da cui estraevamo il numero di nuovi archi per utente a ogni snapshot nella vecchia regola (v1–v5): **variante scartata**, tenuta nel confronto.
 
 ## 9. Come riprodurre tutto
 
@@ -222,19 +300,34 @@ uv run python src/tnodeembed_real.py --encoders tfidf,minilm,bge-small,gte-small
 # 2) partizione del sintetico in 9 time step (due varianti)
 uv run python src/build_synthetic_snapshots.py
 
-# 3) transfer: addestra sul reale e genera la rete sintetica
+# 3) transfer: addestra sul reale e genera la rete sintetica (riferimento, solo contenuto)
 uv run python src/transfer_to_synthetic.py generated_snapshots minilm matched
 uv run python src/transfer_to_synthetic.py generated_snapshots_growth minilm matched
 
-# 4) analisi (stessa cosa per reale_snapshots e per le due cartelle generate)
+# 4) le varianti a confronto: regole a mano (v1-v5), calibrate (v6), per inferenza (v7)
+uv run python src/apply_edge_rules.py                       # v1-v5
+uv run python src/apply_v6.py                               # v6a, v6b (soglia calibrata sul reale)
+uv run python src/generate_inference.py --encoder minilm --threshold block  --variant v7b
+uv run python src/generate_inference.py --encoder minilm --threshold global --variant v7c
+# serve prima il fine-tuning dell'encoder (passo 4b), altrimenti l'encoder non esiste
+uv run python src/finetune_encoder.py --base minilm   --pairs 8000 --batch 32 --epochs 2
+uv run python src/finetune_encoder.py --base bge-base --pairs 4000 --batch 8  --epochs 1
+uv run python src/generate_inference.py --encoder finetuned-minilm --threshold block  --variant v7d
+uv run python src/generate_inference.py --encoder finetuned-minilm --threshold global --variant v7e
+
+# 5) analisi: stessa cosa per reale_snapshots e per OGNI cartella generata (comprese le varianti)
 uv run python src/analyze_structure.py real_snapshots
 uv run python src/analyze_temporal.py  real_snapshots
 uv run python src/analyze_content.py   real_snapshots
+uv run python src/check_real_accretion.py real_snapshots
 uv run python src/analyze_profiles.py  generated_snapshots
 uv run python src/analyze_profiles.py  generated_snapshots_growth
 
-# 5) figure di confronto
+# 6) tabelle e figure di confronto fra tutte le reti (reale + varianti)
+uv run python src/variant_summary.py
 uv run python src/compare_folders.py
 ```
 
-I numeri finiscono in `results/*.csv`, le figure in `results/figures/`, le reti generate (post + `social_network.edg`) nelle cartelle `Esame Angelantonio Fedele Murolo/generated_snapshots*/`.
+I numeri finiscono in `results/*.csv` (in particolare `v7_report.csv`, `v7_coefficients.csv` per i coefficienti del modello e `variant_summary.csv` per il confronto unico), le figure in `results/figures/`, le reti generate (post + `social_network.edg`) nelle cartelle `Esame Angelantonio Fedele Murolo/generated_snapshots*/`.
+
+Nota pratica: sulla RTX 3060 da 6 GB il fine-tuning di `bge-base` va lanciato con `--batch 8` (con batch 32 va in esaurimento di memoria); MiniLM regge `--batch 32`.

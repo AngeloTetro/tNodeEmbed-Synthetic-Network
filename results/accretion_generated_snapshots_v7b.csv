@@ -1,0 +1,9 @@
+snapshot,new_edges,old_old,share_old_old,new_to_old,old_to_new,new_to_new,mean_prev_degree_of_existing_end,mean_prev_degree_all_nodes
+snapshot_2,6875,0,0.0000%,0,0,6875,0.0,4.0
+snapshot_3,6875,0,0.0000%,0,0,6875,0.0,4.6
+snapshot_4,6875,0,0.0000%,0,352,6523,8.6,5.5
+snapshot_5,6873,0,0.0000%,0,2760,4113,11.6,6.0
+snapshot_6,6874,0,0.0000%,0,5169,1705,20.3,7.1
+snapshot_7,6875,0,0.0000%,0,6567,308,29.7,8.3
+snapshot_8,6875,6875,100.0000%,0,0,0,0.0,9.6
+snapshot_9,6563,6563,100.0000%,0,0,0,0.0,11.0
