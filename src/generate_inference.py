@@ -254,13 +254,16 @@ def main():
     parser.add_argument('--encoder', default='minilm')
     parser.add_argument('--threshold', default='block', choices=['block', 'global'])
     parser.add_argument('--variant', default='v7b')
+    parser.add_argument('--pooling', default='concat', choices=('concat', 'mean_of_posts'))
     args = parser.parse_args()
     open(LOG, 'w').close()
     rng = np.random.default_rng(SEED)
-    log(f'encoder {args.encoder} | threshold mode {args.threshold} | variant {args.variant}')
+    log(f'encoder {args.encoder} | threshold mode {args.threshold} | variant {args.variant} '
+        f'| pooling {args.pooling}')
     log('training the tNodeEmbed model on the real dataset')
     encoder, users, index, edge_sets, matrices, masks = real_representations(args.encoder,
-                                                                            'period')
+                                                                            'period',
+                                                                            args.pooling)
     aligned = procrustes_chain(matrices, masks)
     build = prepare_pairs(edge_sets, users, index, matrices, masks, 'matched')
     model = train_model(aligned, build, index, matrices[0].shape[1])
@@ -325,7 +328,8 @@ def main():
     rows = []
     for partition in ('generated_snapshots', 'generated_snapshots_growth'):
         (synthetic_users, _, synthetic_matrices, synthetic_masks,
-         synthetic_present, _) = synthetic_representations(encoder, os.path.join(BASE, partition))
+         synthetic_present, _) = synthetic_representations(encoder, os.path.join(BASE, partition),
+                                                           args.pooling)
         synthetic_embeddings = node_embeddings(model, synthetic_matrices)
         for variant, mode in ((args.variant, 'rate'),):
             folder = os.path.join(BASE, f'{partition}_{variant}')

@@ -98,18 +98,33 @@ def procrustes_chain(matrices, masks):
 
 
 class TNodeEmbed(nn.Module):
-    def __init__(self, dim, hidden=HIDDEN):
+    """LSTM over the sequence of node representations plus the link-prediction head.
+
+    features='frozen'   : the content vectors are the input and never change (our earlier setup);
+    features='trainable': a small shared projection (dim -> projected) is trained together with
+                          the LSTM and the head, i.e. the node features are learned as in the
+                          paper's Q_t, only constrained to one shared map instead of one row per
+                          user and snapshot (that version does not fit in 6 GB of VRAM).
+    """
+
+    def __init__(self, dim, hidden=HIDDEN, features='frozen', projected=256):
         super().__init__()
-        self.lstm = nn.LSTM(dim, hidden, batch_first=True)
+        width = min(dim, projected) if features == 'trainable' else dim
+        self.projection = (nn.Sequential(nn.Linear(dim, width), nn.ReLU(), nn.Linear(width, width))
+                           if features == 'trainable' else None)
+        self.lstm = nn.LSTM(width, hidden, batch_first=True)
         self.head = nn.Sequential(nn.Linear(3 * hidden, hidden), nn.ReLU(), nn.Linear(hidden, 1))
 
     def forward(self, left, right):
+        if self.projection is not None:
+            left = self.projection(left)
+            right = self.projection(right)
         h_left = self.lstm(left)[0][:, -1]
         h_right = self.lstm(right)[0][:, -1]
         return self.head(torch.cat([h_left, h_right, h_left * h_right], dim=1)).squeeze(1)
 
 
-def run(encoder_name, content, negatives_mode, verbose=True):
+def run(encoder_name, content, negatives_mode, pooling='concat', features='frozen', verbose=True):
     snapshots = sorted(os.listdir(os.path.join(BASE, 'real_snapshots')))
     edge_sets = [load_edges(os.path.join(BASE, 'real_snapshots', s, 'social_network.edg'))
                  for s in snapshots]
@@ -121,24 +136,36 @@ def run(encoder_name, content, negatives_mode, verbose=True):
     index = {u: i for i, u in enumerate(users)}
     n_users = len(users)
 
+    from content_encoders import encode_grouped
     encoder = get_encoder(encoder_name)
     # the encoder is fitted on the training content only, then applied to every snapshot
-    fit_docs = [' '.join(docs_per_snapshot[t].get(u, [])) for t in TRAIN_STEPS for u in users]
+    if pooling == 'mean_of_posts':
+        fit_docs = [text for t in TRAIN_STEPS for u in users
+                    for text in docs_per_snapshot[t].get(u, [])]
+    else:
+        fit_docs = [' '.join(docs_per_snapshot[t].get(u, [])) for t in TRAIN_STEPS for u in users]
     encoder.fit([d for d in fit_docs if d])
 
     matrices, masks = [], []
     for t in range(N_SNAPSHOTS):
-        documents = [' '.join(docs_per_snapshot[t].get(u, [])) for u in users]
-        present = np.array([bool(d) for d in documents])
-        vectors = np.zeros((n_users, 1), dtype=np.float32)
-        if present.any():
-            encoded = encoder.transform([d for d in documents if d])
-            vectors = np.zeros((n_users, encoded.shape[1]), dtype=np.float32)
-            vectors[present] = encoded
+        if pooling == 'mean_of_posts':
+            groups = [docs_per_snapshot[t].get(u, []) for u in users]
+            present = np.array([bool(group) for group in groups])
+            vectors = (encode_grouped(encoder, groups) if present.any()
+                       else np.zeros((n_users, 1), dtype=np.float32))
+        else:
+            documents = [' '.join(docs_per_snapshot[t].get(u, [])) for u in users]
+            present = np.array([bool(d) for d in documents])
+            vectors = np.zeros((n_users, 1), dtype=np.float32)
+            if present.any():
+                encoded = encoder.transform([d for d in documents if d])
+                vectors = np.zeros((n_users, encoded.shape[1]), dtype=np.float32)
+                vectors[present] = encoded
         matrices.append(vectors)
         masks.append(present)
     if verbose:
-        print(f'[{encoder_name}/{content}] users {n_users} | dim {matrices[0].shape[1]} '
+        print(f'[{encoder_name}/{content}/{pooling}/{features}] users {n_users} '
+              f'| dim {matrices[0].shape[1]} '
               f'| users with content per snapshot {[int(m.sum()) for m in masks]}')
 
     aligned = procrustes_chain(matrices, masks)
@@ -203,7 +230,8 @@ def run(encoder_name, content, negatives_mode, verbose=True):
         for start in range(0, len(pairs), BATCH):
             train_batches.append((step, pairs[start:start + BATCH], labels[start:start + BATCH]))
 
-    model = TNodeEmbed(matrices[0].shape[1]).to('cuda' if torch.cuda.is_available() else 'cpu')
+    model = TNodeEmbed(matrices[0].shape[1], features=features).to(
+        'cuda' if torch.cuda.is_available() else 'cpu')
     device = next(model.parameters()).device
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
     loss_fn = nn.BCEWithLogitsLoss()
@@ -253,6 +281,8 @@ def main():
     parser.add_argument('--encoders', default='tfidf,minilm')
     parser.add_argument('--content', default='period', choices=('period', 'cumulative'))
     parser.add_argument('--negatives', default='random,matched')
+    parser.add_argument('--pooling', default='concat', choices=('concat', 'mean_of_posts'))
+    parser.add_argument('--features', default='frozen', choices=('frozen', 'trainable'))
     args = parser.parse_args()
 
     os.makedirs(RESULTS, exist_ok=True)
@@ -268,8 +298,12 @@ def main():
             for negatives_mode in args.negatives.split(','):
                 started = time.time()
                 metrics, restrictions, final_loss = run(encoder_name.strip(), args.content,
-                                                        negatives_mode.strip())
-                row = [encoder_name.strip(), args.content, negatives_mode.strip(),
+                                                        negatives_mode.strip(), args.pooling,
+                                                        args.features)
+                label = encoder_name.strip()
+                if args.pooling != 'concat' or args.features != 'frozen':
+                    label = f'{label}|{args.pooling}|{args.features}'
+                row = [label, args.content, negatives_mode.strip(),
                        f'{metrics[VAL_STEP]:.4f}', f'{metrics[TEST_STEPS[0]]:.4f}',
                        f'{metrics[TEST_STEPS[1]]:.4f}',
                        restrictions[VAL_STEP], restrictions[TEST_STEPS[0]], restrictions[TEST_STEPS[1]],

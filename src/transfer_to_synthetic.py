@@ -27,7 +27,7 @@ import numpy as np
 import torch
 from sklearn.metrics import roc_auc_score
 
-from content_encoders import get_encoder
+from content_encoders import encode_grouped, get_encoder
 from tnodeembed_real import (BASE, TEST_STEPS, TRAIN_STEPS, VAL_STEP, TNodeEmbed, load_docs,
                              load_edges, norm, procrustes_chain)
 
@@ -53,7 +53,7 @@ def words(text):
     return WORDS.findall(text.lower())
 
 
-def real_representations(encoder_name, content):
+def real_representations(encoder_name, content, pooling='concat'):
     snapshots = sorted(os.listdir(os.path.join(BASE, 'real_snapshots')))
     edge_sets = [load_edges(os.path.join(BASE, 'real_snapshots', s, 'social_network.edg'))
                  for s in snapshots]
@@ -62,18 +62,26 @@ def real_representations(encoder_name, content):
     users = sorted({u for d in docs for u in d})
     index = {u: i for i, u in enumerate(users)}
     encoder = get_encoder(encoder_name)
-    encoder.fit([text for t in TRAIN_STEPS for text in
-                 (' '.join(docs[t].get(u, [])) for u in users) if text])
+    if pooling == 'mean_of_posts':
+        encoder.fit([text for t in TRAIN_STEPS for u in users
+                     for text in docs[t].get(u, []) if text])
+    else:
+        encoder.fit([text for t in TRAIN_STEPS for text in
+                     (' '.join(docs[t].get(u, [])) for u in users) if text])
     matrices, masks = [], []
     for t in range(N_SNAPSHOTS):
-        documents = [' '.join(docs[t].get(u, [])) for u in users]
-        present = np.array([bool(d) for d in documents])
-        if present.any():
-            encoded = encoder.transform([d for d in documents if d])
+        if pooling == 'mean_of_posts':
+            groups = [docs[t].get(u, []) for u in users]
+            present = np.array([bool(group) for group in groups])
+            matrix = (encode_grouped(encoder, groups) if present.any()
+                      else np.zeros((len(users), 1), dtype=np.float32))
         else:
-            encoded = np.zeros((0, 1), dtype=np.float32)
-        matrix = np.zeros((len(users), encoded.shape[1]), dtype=np.float32)
-        matrix[present] = encoded
+            documents = [' '.join(docs[t].get(u, [])) for u in users]
+            present = np.array([bool(d) for d in documents])
+            encoded = (encoder.transform([d for d in documents if d]) if present.any()
+                       else np.zeros((0, 1), dtype=np.float32))
+            matrix = np.zeros((len(users), encoded.shape[1]), dtype=np.float32)
+            matrix[present] = encoded
         matrices.append(matrix)
         masks.append(present)
     return encoder, users, index, edge_sets, matrices, masks
@@ -177,7 +185,7 @@ def real_metrics(model, aligned, build, index):
     return metrics
 
 
-def synthetic_representations(encoder, folder):
+def synthetic_representations(encoder, folder, pooling='concat'):
     snapshots = [os.path.join(folder, f'snapshot_{t}') for t in range(1, N_SNAPSHOTS + 1)]
     docs = [load_docs(os.path.join(s, 'posts_current_snapshot.tsv')) for s in snapshots]
     cumulative = [load_docs(os.path.join(s, 'posts_incremental.tsv')) for s in snapshots]
@@ -185,12 +193,18 @@ def synthetic_representations(encoder, folder):
     index = {u: i for i, u in enumerate(users)}
     matrices, masks, present_masks = [], [], []
     for t in range(N_SNAPSHOTS):
-        documents = [' '.join(docs[t].get(u, [])) for u in users]
-        present = np.array([bool(d) for d in documents])
-        encoded = encoder.transform([d for d in documents if d]) if present.any() else \
-            np.zeros((0, 1), dtype=np.float32)
-        matrix = np.zeros((len(users), encoded.shape[1]), dtype=np.float32)
-        matrix[present] = encoded
+        if pooling == 'mean_of_posts':
+            groups = [docs[t].get(u, []) for u in users]
+            present = np.array([bool(group) for group in groups])
+            matrix = (encode_grouped(encoder, groups) if present.any()
+                      else np.zeros((len(users), 1), dtype=np.float32))
+        else:
+            documents = [' '.join(docs[t].get(u, [])) for u in users]
+            present = np.array([bool(d) for d in documents])
+            encoded = encoder.transform([d for d in documents if d]) if present.any() else \
+                np.zeros((0, 1), dtype=np.float32)
+            matrix = np.zeros((len(users), encoded.shape[1]), dtype=np.float32)
+            matrix[present] = encoded
         matrices.append(matrix)
         masks.append(present)                                   # writes in this time step
         present_masks.append(np.array([bool(cumulative[t].get(u, [])) for u in users]))  # born <= t
@@ -281,11 +295,14 @@ def main():
     folder_name = sys.argv[1] if len(sys.argv) > 1 else 'generated_snapshots'
     encoder_name = sys.argv[2] if len(sys.argv) > 2 else 'tfidf'
     negatives_mode = sys.argv[3] if len(sys.argv) > 3 else 'random'
+    pooling = sys.argv[4] if len(sys.argv) > 4 else 'concat'
     folder = os.path.join(BASE, folder_name)
     started = time.time()
 
-    print(f'[{folder_name}] encoder {encoder_name} | negatives {negatives_mode}')
-    encoder, users, index, edge_sets, matrices, masks = real_representations(encoder_name, 'period')
+    print(f'[{folder_name}] encoder {encoder_name} | negatives {negatives_mode} '
+          f'| pooling {pooling}')
+    encoder, users, index, edge_sets, matrices, masks = real_representations(encoder_name, 'period',
+                                                                            pooling)
     aligned = procrustes_chain(matrices, masks)
     build = prepare_pairs(edge_sets, users, index, matrices, masks, negatives_mode)
     model = train_model(aligned, build, index, matrices[0].shape[1])
@@ -294,7 +311,7 @@ def main():
           f'{metrics[TEST_STEPS[0]]:.4f} / {metrics[TEST_STEPS[1]]:.4f}')
 
     synthetic_users, synthetic_index, synthetic_matrices, synthetic_masks, synthetic_present, \
-        synthetic_docs = synthetic_representations(encoder, folder)
+        synthetic_docs = synthetic_representations(encoder, folder, pooling)
     embeddings = node_embeddings(model, synthetic_matrices)
     np.savez_compressed(os.path.join(folder, 'tnodeembed_embeddings.npz'),
                         users=np.array(synthetic_users),

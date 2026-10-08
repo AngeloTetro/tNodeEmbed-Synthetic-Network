@@ -253,15 +253,44 @@ Per separare i due effetti abbiamo generato quattro reti, incrociando la modalit
 
 Lettura: **la soglia globale è la correzione che conta** (la reciprocità passa da 0,016 a 0,183: prima era un artefatto del calcolo a blocchi, che rompeva la simmetria fra (u,v) e (v,u)); **l'encoder fine-tuned non cambia il volume** (61.588 contro 61.560: identico) ma rende i punteggi più simmetrici, e la reciprocità sale a 0,72 — con un effetto collaterale da segnalare: compare un utente collegato a tutti gli altri (grado 9.999), cioè un hub degenerato che il reale non ha (grado massimo 1.290). Quindi nessuno dei due aggiustamenti avvicina la rete al reale nella sostanza: cambiano la simmetria, non la capacità di riprodurre la struttura.
 
+### 6.12 La rappresentazione del contenuto: due ipotesi provate
+
+Il dottorando ha suggerito che il problema fosse l'encoder (node2vec) e che, avendo noi le feature dei nodi, bastasse toglierlo — cosa che avevamo già fatto. Restava però un punto del paper che avevamo semplificato: nel paper le feature dei nodi (`Q_t`) sono **addestrabili**, mentre noi le tenevamo **congelate**. Abbiamo provato entrambe le direzioni.
+
+**a) Le feature addestrabili non aiutano** (media val+test, negativi appaiati):
+
+| MiniLM | validation | test1 | test2 | media |
+|---|---|---|---|---|
+| congelate (com'erano) | 0,571 | 0,521 | 0,510 | 0,534 |
+| **addestrabili** | 0,533 | 0,527 | 0,476 | **0,512** |
+
+Peggiora: aggiungere capacità addestrabile sui contenuti porta all'overfitting, come era successo col fine-tuning dell'encoder. (La versione completa del paper — una riga per utente e per snapshot — richiede più memoria di quella disponibile sulla scheda e non è stata provata; ha però più capacità, quindi il rischio sarebbe maggiore.)
+
+**b) La codifica "per post" invece migliora.** Era un difetto vero della nostra rappresentazione: prima univamo i post di un utente in una sola stringa, che l'encoder tagliava al suo limite di token (per gli utenti molto attivi sopravviveva il 28% del testo). Ora ogni post viene codificato da solo e i vettori di un utente vengono mediati:
+
+| encoder | concatenato | **per post** |
+|---|---|---|
+| MiniLM | 0,534 | **0,549** |
+| bge-base | 0,530 | **0,540** |
+| tf-idf | 0,505 | **0,524** |
+
+Tre encoder su tre migliorano, e nel transfer la media passa da 0,541 a 0,552. È un miglioramento pulito: non c'è addestramento in più, quindi nessun rischio di overfitting.
+
+**c) Ma la rete generata non cambia.** È il test che conta: se il contenuto iniziasse a contare, l'**omofilia** della rete dovrebbe salire. Non sale: **1,004** con la rappresentazione nuova (0,996 con la vecchia; nel reale **2,13**). E il coefficiente del contenuto nel modello di formazione degli archi resta **≈ +0,20** contro **+2,28** di "l'utente è nuovo" (il valore oscilla fra 0,18 e 0,26 da un addestramento all'altro: è una stima, non una cifra esatta).
+
+**Conclusione.** La rappresentazione andava migliorata, e l'abbiamo fatto; ma non era quello il collo di bottiglia. Il contenuto, da solo, non basta a spiegare chi si collega a chi, perché la rete reale è governata da un meccanismo — chi entra, quando entra, quanto è connesso — che un modello che guarda solo il testo **non può vedere**. Per andare oltre servirebbe un modello generativo che impari *anche* la struttura, non solo il contenuto.
+
 ## 7. Cosa non abbiamo fatto, e i limiti da tenere presenti
 
-1. **Il contenuto, da solo, non riproduce i collegamenti.** È il risultato principale e va detto per primo: le reti generate hanno **omofilia del contenuto ≈ 1,00** mentre il reale è **2,13**, e nel modello di formazione degli archi (v7) il peso del punteggio di contenuto è **+0,18** contro **+2,28** dell'"utente nuovo". Con un controllo per arrivo e grado, l'AUC del contenuto sta intorno a 0,49–0,57 (0,5 = caso). Quindi la pipeline, così com'è, spiega *quando* nascono i collegamenti (chi entra, quanto è connesso) ma non *fra chi*, nella misura in cui conta il contenuto.
+1. **Il contenuto, da solo, non riproduce i collegamenti.** È il risultato principale e va detto per primo: le reti generate hanno **omofilia del contenuto ≈ 1,00** mentre il reale è **2,13**, e nel modello di formazione degli archi (v7) il peso del punteggio di contenuto è **≈ +0,20** contro **+2,28** dell'"utente nuovo". Con un controllo per arrivo e grado, l'AUC del contenuto sta intorno a 0,49–0,57 (0,5 = caso). Quindi la pipeline, così com'è, spiega *quando* nascono i collegamenti (chi entra, quanto è connesso) ma non *fra chi*, nella misura in cui conta il contenuto.
 2. **La famiglia per inferenza (v7) non riproduce la struttura del reale**: grado uscente medio 3,6–5,8 contro 32,0; reciprocità da 0,00 a 0,72 (non stabile) contro 0,42; e con l'encoder fine-tuned compare un hub degenerato (un utente collegato a tutti, grado 9.999 contro un massimo reale di 1.290). La famiglia calibrata (v6) centra volume e reciprocità **per costruzione**, non perché li abbia imparati: è la differenza fra *imporre* e *predire*.
 3. **Il fine-tuning dell'encoder non è passato**: migliora la validation ma peggiora entrambe le finestre di test (media 0,519 contro 0,534 per MiniLM; 0,523 contro 0,530 per bge-base). La supervisione (0,49–0,57 di AUC) è troppo debole perché l'encoder impari qualcosa che generalizzi. Il fine-tuning di bge-base ha girato con budget ridotto (4.000 coppie, 1 epoca, batch 8) perché la scheda da 6 GB andava in esaurimento di memoria con batch più grandi.
 4. **La regola a mano (v1–v5) resta come confronto, non come metodo**: il conteggio era una nostra scelta (`k ~ Poisson(1,2)` o la distribuzione dei gradi del reale), ed è la ragione per cui quelle reti avevano reciprocità ≈ 0,001.
-5. **L'inizializzazione `Q_t` del paper è usata in senso lato**: non c'è una matrice di embedding addestrabile inizializzata dalle feature; le rappresentazioni del contenuto sono direttamente l'input della LSTM. Allo stesso modo l'**allineamento di Procrustes è un pre-processing** e non compare come termine nella loss (anche l'implementazione di riferimento allena con la sola cross-entropy binaria).
+5. **L'inizializzazione `Q_t` del paper è usata in senso lato**: non c'è la matrice di embedding addestrabile (una riga per utente e snapshot) inizializzata dalle feature: le rappresentazioni del contenuto sono direttamente l'input della LSTM, e la versione addestrabile che entra nella scheda (una proiezione condivisa, §6.12) è stata provata e non ha aiutato. Allo stesso modo l'**allineamento di Procrustes è un pre-processing** e non compare come termine nella loss (anche l'implementazione di riferimento allena con la sola cross-entropy binaria).
 6. **Il fallback dei nodi isolati** proposto dal dottorando **non è servito** e non è stato implementato.
-7. **Dettagli tecnici**: 18 righe dei batch sintetici vengono ignorate in lettura (numero di campi diverso dall'intestazione); il confronto fra encoder copre solo la variante di contenuto "per periodo"; la partizione "tutti presenti" resta poco adatta alla famiglia v7, perché lì il concetto di "utente nuovo" quasi non esiste.
+7. **Dettagli tecnici**: 18 righe dei batch sintetici vengono ignorate in lettura (numero di campi diverso dall'intestazione); il confronto fra encoder copre solo la variante di contenuto "per periodo"; la partizione "tutti presenti" resta poco adatta alla famiglia v7, perché lì il concetto di "utente nuovo" quasi non esiste; i coefficienti del modello di formazione degli archi oscillano un po' fra un addestramento e l'altro (il contenuto fra +0,18 e +0,26), quindi vanno letti come stime.
+
+**Cosa servirebbe per andare oltre**: un modello generativo che impari **anche la struttura** — grado, arrivo, reciprocità, chiusura triadica — insieme al contenuto. Tutte le misure di questo progetto puntano lì: il contenuto da solo non basta, e il modello attuale non può vedere la struttura, perché guarda soltanto il testo. Questa è la direzione, non un rimprovero alla pipeline: era il punto di partenza del dottorando (togliere node2vec e usare le feature), ed è stato fatto.
 
 ## 8. Glossario minimo
 

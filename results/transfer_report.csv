@@ -7,3 +7,4 @@ generated_snapshots_tfidf,tfidf,matched,0.5077,0.5215,0.5033,10000,107511,0.0010
 generated_snapshots_growth_gte-base,gte-base,matched,0.5486,0.5269,0.5369,10000,83017,0.00083,0.001,340958,49262,27317,0.555,437
 generated_snapshots_growth_bge-base,bge-base,matched,0.5595,0.5328,0.5525,10000,83017,0.00083,0.001,340958,49262,27317,0.555,929
 generated_snapshots_growth_tfidf,tfidf,matched,0.4842,0.5154,0.5031,10000,83017,0.00083,0.002,340958,49262,27317,0.555,248
+generated_snapshots_pooled,minilm,matched,0.5774,0.5423,0.5369,10000,107511,0.00108,0.001,340958,49262,27317,0.555,512

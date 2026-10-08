@@ -87,6 +87,26 @@ FINETUNED_MODELS = {
 }
 
 
+def encode_grouped(encoder, groups):
+    """One vector per group of texts: every text is encoded on its own, then averaged.
+
+    Empty groups become zero vectors. This is the alternative to concatenating a user's posts
+    into one long string, which the encoder then truncates at its token limit.
+    """
+    flat = [text for group in groups for text in group]
+    if not flat:
+        return np.zeros((len(groups), 1), dtype=np.float32)
+    encoded = encoder.transform(flat)
+    pooled = np.zeros((len(groups), encoded.shape[1]), dtype=np.float32)
+    position = 0
+    for index, group in enumerate(groups):
+        if group:
+            pooled[index] = encoded[position:position + len(group)].mean(axis=0)
+            position += len(group)
+    norms = np.linalg.norm(pooled, axis=1, keepdims=True)
+    return pooled / np.maximum(norms, 1e-8)
+
+
 def get_encoder(name):
     if name == 'tfidf':
         return TfidfEncoder()
