@@ -19,6 +19,7 @@ Four networks are produced: {all, growth} x {v6a, v6b}. Report: results/v6_repor
 Usage: uv run python src/apply_v6.py
 """
 
+import argparse
 import csv
 import os
 
@@ -179,6 +180,10 @@ def bisect_quantile(model, embeddings, users, masks, present_masks, partition, t
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--partitions', default='generated_snapshots_v2,generated_snapshots_growth_v2',
+                        help='comma separated list of partition folders')
+    args = parser.parse_args()
     os.makedirs(RESULTS, exist_ok=True)
     print('training the model on the real dataset (same seeds as the transfer)', flush=True)
     encoder, users, index, edge_sets, real_matrices, real_masks = real_representations(
@@ -206,7 +211,8 @@ def main():
           f'real nodes {real_nodes}', flush=True)
 
     rows = []
-    for partition in ('generated_snapshots', 'generated_snapshots_growth'):
+    partition_names = [name.strip() for name in args.partitions.split(',')]
+    for partition in partition_names:
         (synthetic_users, _, synthetic_matrices, synthetic_masks,
          synthetic_present, _) = synthetic_representations(encoder, os.path.join(BASE, partition))
         embeddings = node_embeddings(model, synthetic_matrices)

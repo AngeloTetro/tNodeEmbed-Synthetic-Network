@@ -1,0 +1,14 @@
+feature,coefficient
+content_score,0.000000
+target_degree_pct,2.901725
+source_degree_pct,3.033288
+new_source,3.270512
+new_target,2.731863
+reverse_edge,-0.250789
+common_neighbours,-6.127925
+source_active,0.067676
+target_active,0.153782
+recency_target,0.306615
+step,0.176185
+intercept,-6.161526
+prior_shift,-5.727246

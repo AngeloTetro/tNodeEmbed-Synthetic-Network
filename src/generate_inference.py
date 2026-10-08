@@ -255,6 +255,8 @@ def main():
     parser.add_argument('--threshold', default='block', choices=['block', 'global'])
     parser.add_argument('--variant', default='v7b')
     parser.add_argument('--pooling', default='concat', choices=('concat', 'mean_of_posts'))
+    parser.add_argument('--partitions', default='generated_snapshots_v2,generated_snapshots_growth_v2',
+                        help='comma separated list of partition folders')
     args = parser.parse_args()
     open(LOG, 'w').close()
     rng = np.random.default_rng(SEED)
@@ -326,7 +328,8 @@ def main():
         f.write(f'prior_shift,{prior_shift:.6f}\n')
 
     rows = []
-    for partition in ('generated_snapshots', 'generated_snapshots_growth'):
+    partition_names = [name.strip() for name in args.partitions.split(',')]
+    for partition in partition_names:
         (synthetic_users, _, synthetic_matrices, synthetic_masks,
          synthetic_present, _) = synthetic_representations(encoder, os.path.join(BASE, partition),
                                                            args.pooling)
