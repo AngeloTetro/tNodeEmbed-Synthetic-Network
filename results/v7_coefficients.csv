@@ -1,9 +1,9 @@
 feature,coefficient
-content_score,0.264139
-log_degree_left,1.673681
-log_degree_right,1.483563
-new_left,2.311934
-new_right,1.960980
-step,0.311303
-intercept,-4.555669
+content_score,0.184474
+log_degree_left,1.634298
+log_degree_right,1.545761
+new_left,2.273986
+new_right,2.067962
+step,0.291470
+intercept,-4.543403
 prior_shift,-7.350635

@@ -11,3 +11,5 @@ v7e,generated_snapshots,rate,"real rate 6.42e-05 per candidate pair, threshold g
 v7e,generated_snapshots_growth,rate,"real rate 6.42e-05 per candidate pair, threshold global",0.9881,0.5768,10000,35919,0.000359,0.21,3.59,7917
 v7f,generated_snapshots,rate,"real rate 6.42e-05 per candidate pair, threshold global",0.9879,0.5726,8834,57558,0.000738,0.0,6.52,549
 v7f,generated_snapshots_growth,rate,"real rate 6.42e-05 per candidate pair, threshold global",0.9879,0.5726,8700,35917,0.000475,0.0,4.13,282
+v7c,generated_snapshots_v2,rate,"real rate 6.42e-05 per candidate pair, threshold global",0.9884,0.5901,5180,17883,0.000667,0.0,3.45,408
+v7c,generated_snapshots_growth_v2,rate,"real rate 6.42e-05 per candidate pair, threshold global",0.9884,0.5901,3619,14578,0.001113,0.0,4.03,398
