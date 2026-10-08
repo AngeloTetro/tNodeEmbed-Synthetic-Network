@@ -63,13 +63,14 @@ Lettura e scrittura dei file sono centralizzate in `src/graph_io.py`, così ogni
 
 **c) I negativi della valutazione sono appaiati.** Per valutare un modello di link prediction servono anche coppie di utenti *non* collegati ("negativi"). Se si scelgono a caso, il modello può "imbrogliare" riconoscendo l'utente nuovo dalla sequenza; per evitarlo, nel confronto appaiamo ogni coppia vera con una coppia falsa che ha **lo stesso primo utente** e una destinazione con **storia di arrivo e grado simili**. Nel CSV riportiamo anche la versione con negativi casuali, per trasparenza.
 
-**d) Come nascono gli archi: due famiglie, ed è il confronto la parte scientifica del lavoro.** Il modello dà un **punteggio** a ogni coppia di utenti; per trasformare i punteggi in una rete servono delle decisioni, e la domanda giusta è *da dove vengono*. Ne abbiamo confrontate tre famiglie:
+**d) Come nascono gli archi: le famiglie a confronto, ed è il confronto la parte scientifica del lavoro.** Il modello dà un **punteggio** a ogni coppia di utenti; per trasformare i punteggi in una rete servono delle decisioni, e la domanda giusta è *da dove vengono*. Ne abbiamo confrontate **quattro**:
 
 - **Famiglia "a mano" (v1–v5)**, tenuta solo come confronto: il numero di archi lo decidiamo noi (`k ~ Poisson(1,2)`, oppure la distribuzione dei gradi del reale), eventualmente con l'accrescimento e la reciprocità aggiunta a mano.
 - **Famiglia "calibrata sul reale" (v6)**: la soglia non è più una nostra scelta ma un **quantile dei punteggi del modello misurato sulle transizioni reali** — `v6a` fissa il grado uscente medio finale al valore reale (32,05), `v6b` fissa la crescita di ogni snapshot a quella reale — con i vincoli strutturali misurati sul reale (un utente può collegarsi solo a chi entra in quel momento, bersagli scelti in proporzione al grado) e la reciprocità portata al valore reale (0,42) con gli archi inversi.
-- **Famiglia "per inferenza" (v7)**, il metodo più corretto: si **fitta un modello di formazione degli archi** sulle transizioni reali — le variabili sono il punteggio di contenuto del modello tNodeEmbed, il grado dei due utenti al passo precedente, se ciascuno dei due è nuovo, e il passo temporale; l'etichetta è *"questa coppia è diventata un arco?"* — e poi si **applica** al sintetico. Qui **non c'è nessun vincolo imposto**: nessuna quota di archi decisa da noi, nessun obbligo di reciprocità, e gli archi fra utenti già presenti sono ammessi **se il modello li ritiene probabili** (nel reale sono rari, ma non impossibili: è la risposta alla domanda "due utenti già presenti possono collegarsi più avanti?" — sì, ed è il modello a deciderlo, non una regola scritta da noi).
+- **Famiglia "per inferenza con soglia" (v7)**: si **fitta un modello di formazione degli archi** sulle transizioni reali — le variabili sono il punteggio di contenuto del modello tNodeEmbed, il grado dei due utenti al passo precedente, se ciascuno dei due è nuovo, e il passo temporale; l'etichetta è *"questa coppia è diventata un arco?"* — e poi si **applica** al sintetico tenendo le coppie in testa alla graduatoria fino al tasso reale. Qui **non c'è nessun vincolo imposto**: nessuna quota decisa da noi, nessun obbligo di reciprocità, e gli archi fra utenti già presenti sono ammessi **se il modello li ritiene probabili** (nel reale sono rari, ma non impossibili: è la risposta alla domanda "due utenti già presenti possono collegarsi più avanti?" — sì, ed è il modello a deciderlo).
+- **Famiglia "per inferenza con campionamento" (V8), la rete ufficiale del progetto**: stesso principio di v7, ma con **tutte** le variabili strutturali (grado relativo, "è nuovo", arco inverso, vicini in comune, attività nel periodo, recenza), con **nessuna soglia** — ogni coppia candidata diventa un arco con la **sua** probabilità — e con **retroazione**: lo stato della rete si ricalcola a ogni passo su ciò che è stato appena generato. Volume, gradi e hub **emergono** dal modello. Il dettaglio e gli esiti sono in **§6.13**.
 
-La differenza fra le ultime due è tutta lì: in v6 le statistiche del reale vengono **imposte** alla rete, in v7 vengono **imparate** e poi applicate. Teniamo entrambe come reti ufficiali del progetto, perché rispondono a due domande diverse: *cosa predice il modello* (v7) e *cosa serve per somigliare al reale* (v6).
+Il confine è tutto qui: in v6 le statistiche del reale vengono **imposte** alla rete, in v7 vengono lette con una soglia, in **v8 vengono imparate e poi campionate**. La rete **ufficiale** del progetto è **V8**; v6 e v7 restano nella tabella come confronto — servono a mostrare la differenza fra *copiare*, *soglia* e *generare*.
 
 **e) Il fallback del dottorando non è servito.** Aveva proposto, se necessario, di agganciare gli utenti sintetici alla rete reale come nodi isolati. La rimozione di node2vec è bastata: non l'abbiamo implementato.
 
@@ -91,6 +92,8 @@ AUC su validation / test1 / test2 (`results/encoder_comparison.csv`):
 In tutte le righe il numero di archi che soddisfano la **restrizione del protocollo originale** ("il test contiene solo utenti già visti") è **0**: è la conferma che il problema denunciato esiste e che il protocollo è stato adattato.
 
 ### 6.2 Il transfer e la rete generata
+
+**Nota sulle partizioni**: le tabelle da qui a §6.7 si riferiscono alla **prima** partizione del sintetico (attività uniforme), che resta come riferimento storico. I numeri della **partizione definitiva** (attività presa dal reale) e della **rete ufficiale V8** sono in **§6.13**.
 
 Modello addestrato sul reale (MiniLM, negativi appaiati) e applicato al sintetico (`results/transfer_report.csv`):
 
@@ -189,7 +192,7 @@ Per ogni transizione classifichiamo gli archi nuovi secondo i due estremi: un ut
 
 Lettura: nel **reale** i nuovi utenti **si collegano agli utenti degli snapshot precedenti** — il 92% degli archi nuovi è "nuovo &lt;-&gt; già presente" — e **non esiste nessun arco fra due utenti già presenti** (0 su 707.604); inoltre i nuovi utenti scelgono utenti **molto più connessi della media** (437 contro 64). Nella variante **arrivo progressivo** il collegamento nuovo &lt;-&gt; già presente c'è (74%), compare una quota di nuovo &lt;-&gt; nuovo (14%), ma resta un 12% di archi fra utenti già presenti (che nel reale non esiste) e **manca la preferenza per i nodi molto connessi** (il grado dell'estremo è in linea con la media). Nella variante **tutti presenti** il concetto di "nuovo" quasi non esiste — tutti hanno contenuto dal primo snapshot — quindi il **95% degli archi è fra utenti già presenti**: è la differenza strutturale principale fra le due partizioni.
 
-### 6.8 Le due famiglie ufficiali a confronto con il reale
+### 6.8 Le famiglie a confronto con il reale (la rete ufficiale è V8, §6.13)
 
 Valori dell'ultimo snapshot (`results/variant_summary.csv`):
 
