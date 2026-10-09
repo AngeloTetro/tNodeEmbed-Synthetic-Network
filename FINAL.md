@@ -13,7 +13,7 @@
 5. Il suo **punteggio di coppia** diventa **una variabile** di un **modello di formazione degli archi fittato sul reale**, che include lo **stato della rete** (grado relativo, arrivo, reciprocità, vicini in comune, recenza).
 6. La rete sintetica si genera **passo per passo con retroazione**: probabilità calcolate sullo stato corrente, archi **campionati**, stato aggiornato, si ripete. Volume, distribuzione dei gradi e hub **emergono** dal modello: nessuna statistica del reale viene imposta.
 7. Si valuta il **grafo** (non solo l'AUC) contro il reale e contro le varianti storiche, e si **quantifica il contributo del contenuto** con un'ablazione (modello con e senza punteggio di contenuto).
-8. Tutto è misurato, riproducibile con seed fissi, e documentato in `docs/pipeline.md` (tecnico) e `docs/relazione.md` + `relazione.pdf` (divulgativo, in italiano).
+8. Tutto è misurato, riproducibile con seed fissi, e documentato in `docs/pipeline.md` (tecnico) e `docs/relazione.md` + `docs/relazione.pdf` (divulgativo, in italiano).
 
 ---
 
