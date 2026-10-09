@@ -25,7 +25,7 @@
 
 - Si addestra sul reale, si fa inferenza sul sintetico; solo collegamenti **sintetico ↔ sintetico** (nessun aggancio al reale; il "fallback" dei nodi isolati non serve).
 - **Niente node2vec**: le feature iniziali dei nodi sono i **vettori del contenuto** (il paper lo permette, §3.1).
-- Il **contenuto è l'unica feature comune** ai due dataset (il reale non ha attributi oltre ai post; il sintetico sì, ma non sono condivisibili). Il dataset reale **non viene mai modificato**.
+- **L'unica colonna comune** ai due dataset (oltre a `id` e `account_id`) è il `content` dei post: il reale ha solo campi **del post** (lingua, conteggi di reazioni/risposte, timestamp), il sintetico ha **attributi dell'utente** (genere, religione, orientamento politico, età, professione…) più il testo. Poiché il modello si addestra sul reale e si applica al sintetico, come feature può entrare solo ciò che esiste da entrambe le parti: il contenuto. Gli attributi del sintetico servono solo in **valutazione**. Il dataset reale **non viene mai modificato**.
 - L'**arco** è un'interazione fra due utenti (leggibile come follow, senza semantica specifica da preservare).
 - Il sintetico, che non ha tempo, viene **ripartito in 9 time step** in due varianti.
 

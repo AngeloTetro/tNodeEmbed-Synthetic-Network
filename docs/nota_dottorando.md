@@ -7,7 +7,7 @@
 - **Si addestra sul dataset reale e si fa inferenza sul sintetico**; i collegamenti generati sono **sintetico ↔ sintetico** (nessun aggancio al reale).
 - **node2vec è stato rimosso** da tutta la pipeline: le rappresentazioni iniziali dei nodi sono i **vettori del contenuto** dei post (il paper lo consente, §3.1). Il problema dei nodi mai visti è risolto: la **restrizione del protocollo originale produce 0 archi** proprio perché nel reale ogni arco nuovo coinvolge un entrante — è il sintomo che lei aveva indicato, ed è la ragione per cui la valutazione usa l'intera transizione.
 - **Un passaggio = uno snapshot = un time step**: 9 nel reale (dati), 9 nel sintetico (ripartito da noi).
-- Il **contenuto è l'unica feature comune**; il reale non viene mai modificato; gli attributi del sintetico non sono usati come feature (non esistono nel reale).
+- L'**unica colonna comune** ai due dataset (oltre a `id` e `account_id`) è il `content` dei post: il reale ha solo campi **del post** (lingua, conteggi di reazioni/risposte, timestamp) e nessun attributo di profilo; il sintetico ha **attributi dell'utente** (genere, religione, orientamento politico, età, professione…) più il testo. Poiché il modello si addestra sul reale e si applica al sintetico, come feature può entrare solo ciò che esiste da entrambe le parti: il contenuto. Gli attributi del sintetico servono **solo per la valutazione**, mai come ingresso. Il dataset reale non viene mai modificato.
 
 ## 2. Cosa abbiamo costruito
 

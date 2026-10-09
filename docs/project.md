@@ -7,7 +7,7 @@ Il progetto di esame studia **una rete sociale che evolve nel tempo**. Ci sono d
 - **reale**: 25.714 utenti, 173.475 post, **824.045 collegamenti** (diretti) su **9 snapshot** (2022 → luglio 2025), con lo split dichiarato 6 training / 1 validation / 2 test;
 - **sintetico**: 10.000 utenti con 100.456 post e attributi di profilo, **senza collegamenti e senza tempo**, in 4 batch.
 
-L'unica informazione **comune** ai due dataset è il **contenuto dei post**. Gli archi sono **interazioni fra due utenti** (leggibili come un follow, senza significato specifico da preservare). Il dataset reale **non va mai modificato**.
+L'unica informazione **comune** ai due dataset è il **contenuto dei post**: il reale ha solo campi del post (lingua, conteggi di reazioni/risposte, timestamp) e nessun profilo utente, il sintetico ha **attributi dell'utente** (genere, religione, orientamento politico, età, professione…) ma l'unica cosa che esiste da entrambe le parti è il testo — e quindi l'unica feature utilizzabile, visto che il modello si addestra sul reale e si applica al sintetico. Gli archi sono **interazioni fra due utenti** (leggibili come un follow, senza significato specifico da preservare). Il dataset reale **non va mai modificato**.
 
 ## Cosa dobbiamo fare
 
