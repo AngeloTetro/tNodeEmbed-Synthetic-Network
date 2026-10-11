@@ -1,0 +1,16 @@
+variant,partition,content,operating_point,val_auc,events,edges_per_event,reverse_share,nodes,edges,density,reciprocity,mean_out_degree,max_out_degree
+v9_real,generated_snapshots_v2,real,"arrival events, sampled jointly",0.9174,10000,98.526,0.2861,10000,985258,0.009854,0.6431,98.53,722
+v9_real,generated_snapshots_v2,real,"arrival events, sampled jointly",0.9173,10000,59.619,0.3951,10000,596189,0.005962,0.412,59.62,623
+v9_real,generated_snapshots_v2,real,"arrival events, sampled jointly",0.918,8120,26.881,0.4014,9955,218277,0.002203,0.3439,21.93,269
+v9_real,generated_snapshots_v2,real,"arrival events, sampled jointly",0.9174,1368,56.989,0.4068,9180,77961,0.000925,0.3362,8.49,125
+v9_real,generated_snapshots_v2,real,"arrival events, sampled jointly",0.9176,6889,5.265,0.4177,9163,36273,0.000432,0.2825,3.96,26
+v9_real,generated_snapshots_v2,real,"arrival events, sampled jointly",0.9181,8107,9.249,0.4084,9818,74985,0.000778,0.2954,7.64,37
+v9_real,generated_snapshots_v2,real,"arrival events, sampled jointly",0.9174,8108,9.215,0.405,9838,74712,0.000772,0.2918,7.59,34
+v9_permuted,generated_snapshots_v2,permuted,"arrival events, sampled jointly",0.9176,8135,9.199,0.4057,9869,74830,0.000768,0.2904,7.58,34
+v9_off,generated_snapshots_v2,off,"arrival events, sampled jointly",0.9175,8081,9.213,0.406,9841,74453,0.000769,0.2925,7.57,35
+v9_real,generated_snapshots_v2,real,"arrival events, sampled jointly",0.9178,9999,80.095,0.3953,10000,800871,0.00801,0.4494,80.09,789
+v9_permuted,generated_snapshots_v2,permuted,"arrival events, sampled jointly",0.9178,10000,78.65,0.3946,10000,786500,0.007866,0.4436,78.65,754
+v9_off,generated_snapshots_v2,off,"arrival events, sampled jointly",0.9174,10000,76.51,0.3966,10000,765101,0.007652,0.4451,76.51,766
+v9_real,generated_snapshots_v2,real,"arrival events, sampled jointly",0.9179,8238,33.349,0.4021,9964,274725,0.002767,0.3609,27.57,285
+v9_permuted,generated_snapshots_v2,permuted,"arrival events, sampled jointly",0.9173,8156,33.604,0.4049,9978,274071,0.002753,0.3627,27.47,263
+v9_off,generated_snapshots_v2,off,"arrival events, sampled jointly",0.9175,8240,34.741,0.404,9981,286268,0.002874,0.3652,28.68,277

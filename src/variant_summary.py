@@ -46,6 +46,9 @@ VARIANTS = [
     ('_v8_real', 'v8 controllo A (testo autentico)'),
     ('_v8_permuted', 'v8 controllo B (testo permutato)'),
     ('_v8_off', 'v8 controllo C (senza testo)'),
+    ('_v9_real', 'v9 evento di arrivo (testo autentico)'),
+    ('_v9_permuted', 'v9 evento di arrivo (testo permutato)'),
+    ('_v9_off', 'v9 evento di arrivo (senza testo)'),
     ('_v8', 'v8 modello struttura (campionamento)'),
 ]
 

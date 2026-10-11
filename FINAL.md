@@ -330,6 +330,20 @@ Queste strade sono **documentate e non vengono riaperte** in questo progetto: no
 | B — testo permutato fra utenti | 123.310 | 0,001233 | 0,0030 | 111 | 0,158 | 0,00248 | 1,0000 |
 | C — senza testo | 124.154 | 0,001242 | 0,0029 | 98 | 0,158 | 0,00259 | 0,9995 |
 
+**V9 — il meccanismo di arrivo** (`src/generate_arrival.py`): l'unità non è la coppia ma l'**evento di arrivo**, cioè un utente che entra nella rete in quella transizione. Misurato sul reale: ogni evento porta in media **29–83 archi** secondo la transizione (mediana 6–32), con massimo **1.421** — lo stesso ordine del grado massimo reale, quindi l'hub nasce da un *singolo* arrivo e non da molte decisioni indipendenti; il **63%** degli archi dell'evento è uscente e il **40%** circa delle coppie è ricambiato dentro lo stesso evento. V9 stima queste tre cose sul reale e genera arrivo per arrivo: k archi per evento, bersagli scelti con un modello (grado +0,83, "la controparte è nuova" +1,40, co-occorrenza +0,06, contenuto +0,04), coppie ricambiate pescate fra gli uscenti già scelti, e k riscalato linearmente sulla popolazione (`--exponent`, default 1: senza riscalatura il grado medio uscirebbe 80 contro 32).
+
+| rete | archi | densità | grado medio | grado max | reciprocità | modularità | transitività | clustering | omofilia |
+|---|---|---|---|---|---|---|---|---|---|
+| **reale** | 824.045 | 0,001246 | **32,05** | **1.290** | **0,418** | **0,275** | **0,034** | **0,080** | **2,13** |
+| **V9, testo autentico** | 274.725 | 0,002767 | **27,57** | **285** | **0,361** | 0,854 | 0,107 | 0,141 | 1,0005 |
+| V9, testo permutato | 274.071 | 0,002753 | 27,47 | 263 | 0,363 | 0,855 | 0,114 | 0,141 | 1,0001 |
+| V9, senza testo | 286.268 | 0,002874 | 28,68 | 277 | 0,365 | 0,855 | 0,115 | 0,148 | 1,0001 |
+| V8 (coppie indipendenti) | 129.321 | 0,001293 | 12,93 | 102 | 0,003 | 0,152 | 0,003 | 0,005 | 1,0003 |
+
+- **Cosa V9 risolve**: la **reciprocità** (0,361 contro 0,003 di V8; era il coefficiente dell'arco inverso di segno sbagliato), la **scala dei gradi** (grado medio 27,6 contro 12,9, con il reale a 32,05) e la **coda** (grado massimo 285 contro 102, con il reale a 1.290).
+- **Cosa V9 sbaglia ora**: la **coesione**. Modularità **0,854** contro 0,275 e transitività **0,107** contro 0,034: gli arrivi si concentrano sugli stessi hub e formano gruppi troppo separati. È l'errore di segno opposto a V8 (che stava 12 volte *sotto* sulla transitività) ed è il prossimo bersaglio: la dipendenza fra i bersagli dello stesso evento e la scelta fra le comunità.
+- **Il controllo A/B/C su V9**: testo autentico, permutato e assente danno reti **indistinguibili** anche in questo meccanismo (archi 274.725 / 274.071 / 286.268; reciprocità 0,361 / 0,363 / 0,365; transitività 0,107 / 0,114 / 0,115; omofilia 1,0005 / 1,0001 / 1,0001) e, per la terza volta, l'ordine non è monotono (`off` esce il più grande): la conclusione del §6 vale su **entrambi** i meccanismi, quello per coppie e quello per eventi.
+
 - **Raggiunto**: la densità coincide con quella reale (0,00129 contro 0,00125) e il grado medio è a 2–2,5× dal reale, **senza imporre statistiche** (v7 si fermava a 0,0004 e 3,6–5,8). Il piano è stato eseguito come scritto: candidati decisi dalla misura sul reale, attività dal reale, campionamento, retroazione, ablazione.
 - **Non raggiunto, dichiarato**: coda dei gradi (102–128 contro 1.290), reciprocità (0,004 contro 0,418), transitivity (0,003 contro 0,034).
 - **Il contenuto non porta il legame (esperimento controllato, non più solo ablazione)**: nelle tre modalità A/B/C le proprietà relazionali sono **indistinguibili** (reciprocità 0,0029 / 0,0030 / 0,0029; transitività 0,00269 / 0,00248 / 0,00259; grado massimo 100 / 111 / 98; modularità 0,154 / 0,158 / 0,158) e il volume varia di pochi punti percentuali **senza ordine** (`permuted` sta più vicino a `off` che a `real`), entro la rumorosità fra addestramenti (~0,4%). L'ablazione per AUC (0,9818 → 0,9816) va letta come strumento **saturo**: la prova è il confronto fra reti.
