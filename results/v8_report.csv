@@ -6,3 +6,4 @@ v8_nocontent,generated_snapshots_growth_v2,off,"sampling, corrected prior",0.981
 v8_real,generated_snapshots_v2,real,"sampling, corrected prior",0.9818,0.7935,0.9865,10000,128859,0.001289,0.0029,12.89,100
 v8_permuted,generated_snapshots_v2,permuted,"sampling, corrected prior",0.9819,0.7951,0.9865,10000,123310,0.001233,0.003,12.33,111
 v8_off,generated_snapshots_v2,off,"sampling, corrected prior",0.9815,0.7896,0.9864,10000,124154,0.001242,0.0029,12.42,98
+v8_real,generated_snapshots_v2,real,"sampling, corrected prior",0.9818,0.7939,0.9867,10000,127629,0.001276,0.0036,12.76,103

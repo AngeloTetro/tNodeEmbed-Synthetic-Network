@@ -18,3 +18,4 @@ v9_real,generated_snapshots_v2,real,"arrival events, sampled jointly",0.9182,818
 v9_real,generated_snapshots_v2,real,"arrival events, sampled jointly",0.9179,8157,34.21,0.4077,9881,279050,0.002858,0.3034,28.24,324
 v9_permuted,generated_snapshots_v2,permuted,"arrival events, sampled jointly",0.9177,8198,34.321,0.4093,9882,281364,0.002882,0.3034,28.47,321
 v9_off,generated_snapshots_v2,off,"arrival events, sampled jointly",0.9177,8183,33.715,0.4069,9864,275893,0.002836,0.3014,27.97,317
+v9_real,generated_snapshots_v2,real,"arrival events, sampled jointly",0.9184,8225,34.767,0.4064,9898,285958,0.002919,0.3,28.89,324

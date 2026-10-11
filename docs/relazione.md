@@ -174,7 +174,7 @@ Sul sintetico gli attributi del profilo sono etichette "vere", quindi possiamo c
 | political_leaning (growth) | **0,827** | 0,828 | 0,683 | 0,694 |
 | profession (growth) | **0,867** | 0,871 | 0,654 | 0,654 |
 
-Il contenuto "grezzo" classifica meglio degli embedding temporali passati per la LSTM, e aggiungere la rete non cambia quasi nulla.
+Il contenuto "grezzo" classifica meglio degli embedding temporali passati per la LSTM, e aggiungere la rete non cambia quasi nulla. Anche sulle reti generate (V8 e V9) il risultato è lo stesso: 0,827 / 0,867 / 0,690 con il solo contenuto, praticamente identici aggiungendo la rete. **È l'immagine speculare di quello che succede per i collegamenti**: *chi è* un utente sta nel testo, *con chi si collega* sta nella struttura. E c'è una conferma in più: gli **embedding temporali** predicono gli attributi molto peggio del testo (0,61 contro 0,83 sullo schieramento, **0,55 contro 0,87** sulla professione), ed è coerente — sono addestrati a prevedere i collegamenti, e i collegamenti non dipendono dagli attributi, quindi la LSTM conserva ciò che serve ai legami e perde il profilo.
 
 ![Classificazione dei profili](results/figures/compare_profiles.png)
 
@@ -362,6 +362,8 @@ V9 avvicina tutto: la reciprocità passa da 0,003 a **0,303** (il reale è 0,418
 **Cosa resta.** Gli scarti residui sono piccoli e **tutti nella stessa direzione**: V9 è un po' più "piatta" del reale (0,25–0,9× su modularità, grado massimo e quota di archi fra co-arrivati). Il filo comune è la **preferenza per i nodi più connessi, che resta sottostimata** (il grado dell'estremo già presente è 165 contro 437), e viene dal trasferire le variabili di grado da una rete di 25.714 utenti a una di 10.000: è la difficoltà di trasferimento che avevamo messo in conto fin dall'inizio.
 
 **Il contenuto, per la quarta volta.** Con lo stesso modello e lo stesso scenario, testo autentico, testo permutato fra utenti e nessun testo danno reti indistinguibili (reciprocità 0,3034 / 0,3034 / 0,3014; transitività 0,0203 / 0,0206 / 0,0207). La risposta alla domanda del progetto è la stessa in entrambi i meccanismi: **il contenuto non decide chi si collega a chi**.
+
+*Nota sulle cifre*: ripetendo la stessa generazione con lo stesso seed il volume si sposta di circa il 2% (279.050 contro 285.958 archi) perché i lotti di addestramento sono campionati; reciprocità, gradi massimi e coesione restano invariati. Le cifre vanno lette con questa tolleranza, la lettura no.
 
 ## 7. Cosa non abbiamo fatto, e i limiti da tenere presenti
 

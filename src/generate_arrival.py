@@ -455,6 +455,11 @@ def run():
         log('  content permuted: same profiles, different owner, one permutation for all the steps')
     synthetic_embeddings = node_embeddings(model, synthetic_matrices)
     folder = os.path.join(BASE, f'{args.partition}_{args.variant}')
+    os.makedirs(folder, exist_ok=True)
+    np.savez_compressed(os.path.join(folder, 'tnodeembed_embeddings.npz'),
+                        users=np.array(synthetic_users),
+                        **{f'step_{t + 1}': synthetic_embeddings[t].cpu().numpy()
+                           for t in range(N_SNAPSHOTS)})
     log(f'generating on {args.partition} -> {os.path.basename(folder)} (arrival events)')
     events, edges, reversed_edges = generate(
         model, synthetic_embeddings, synthetic_users, synthetic_masks, synthetic_present, scaler,

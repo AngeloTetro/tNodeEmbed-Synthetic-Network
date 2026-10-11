@@ -138,9 +138,10 @@ Le due partizioni restano — `generated_snapshots` (tutti presenti) e `generate
 | v1–v5 | regole a conteggio deciso a mano (`k ~ Poisson(1,2)`, quota reale, accrescimento, reciprocità aggiunta) | documentano il percorso e mostrano cosa succede senza modello |
 | v6a/v6b | soglia calibrata sul reale (grado finale / crescita per snapshot), reciprocità forzata a 0,42 | "cosa serve per **somigliare** al reale": impone le statistiche |
 | v7a–v7f | modello di formazione degli archi con soglia (blocchi/globale, encoder base/fine-tuned) | "cosa **predice** il modello" in forma minima: è il predecessore di V8 |
-| **v8** | modello di formazione degli archi con campionamento e retroazione | **il metodo definitivo: la rete ufficiale del progetto** |
+| **v8** | modello di formazione degli archi con campionamento e retroazione | **il metodo del piano: la rete ufficiale** |
+| **v9** | evento di arrivo: quanti archi porta ogni utente nuovo, dove vanno, quanto è ricambiato | **il risultato più avanzato**: supera V8 su reciprocità (0,303 contro 0,003), scala dei gradi (28,2 contro 12,9) e coda (324 contro 102), con triangoli e clustering nell'ordine giusto (§10) |
 
-La rete **ufficiale** è V8; v6 e v7 restano nella tabella di confronto — servono a mostrare la differenza fra **imparare** il meccanismo (v8) e **imporre** le statistiche del reale (v6) o applicare un modello di solo contenuto con una soglia (v7).
+La rete **ufficiale del piano** è V8; **V9** (§10) è la variante più avanzata e la supera su tutte le proprietà relazionali. v6 e v7 restano nella tabella di confronto — servono a mostrare la differenza fra **imparare** il meccanismo (v8, v9), **imporre** le statistiche del reale (v6) o applicare un modello di solo contenuto con una soglia (v7).
 
 ### 3.5 Strato 5 — Analisi e valutazione
 
@@ -209,11 +210,19 @@ uv run python src/apply_edge_rules.py                          # v1-v5
 uv run python src/apply_v6.py                                  # v6a, v6b
 uv run python src/generate_inference.py --encoder minilm --threshold global --variant v7c --pooling mean_of_posts
 
-# 6) ANALISI SU OGNI RETE (reale compreso): struttura, evoluzione, contenuto, accrescimento
+# 5b) V9, IL MECCANISMO DI ARRIVO (la variante più avanzata)
+uv run python src/generate_arrival.py --partition generated_snapshots_v2 --content real     --variant v9_real
+uv run python src/generate_arrival.py --partition generated_snapshots_v2 --content permuted --variant v9_permuted
+uv run python src/generate_arrival.py --partition generated_snapshots_v2 --content off      --variant v9_off
+#    entrambi i generatori (V8 e V9) scrivono anche tnodeembed_embeddings.npz nella cartella
+#    generata, così le analisi dei profili hanno le righe con gli embedding tNodeEmbed
+
+# 6) ANALISI SU OGNI RETE (reale compreso): struttura, evoluzione, contenuto, accrescimento, profili
 uv run python src/analyze_structure.py <cartella>
 uv run python src/analyze_temporal.py  <cartella>
 uv run python src/analyze_content.py   <cartella>
 uv run python src/check_real_accretion.py <cartella>
+uv run python src/analyze_profiles.py <cartella>       # solo sulle cartelle generate (le label sono lì)
 
 # 7) TABELLE E FIGURE
 uv run python src/variant_summary.py
@@ -232,6 +241,8 @@ uv run python src/compare_folders.py
 | misura | valore | fonte |
 |---|---|---|
 | encoder migliore, negativi appaiati | MiniLM 0,534 → **0,549** con per-post | `encoder_comparison.csv` |
+| **profili dell'utente dal testo** (label solo sintetiche, split 80/20) | schieramento **0,827**, professione **0,867**, età **0,690** di AUC — e **aggiungere la rete non cambia nulla** | `profiles_*.csv` |
+| **evento di arrivo nel reale** | 29–83 archi per evento (mediana 6–32), massimo **1.421**, 63% uscenti, ~40% coppie ricambiate | `_v9_run.txt` |
 | negativi **casuali** (non è la colonna di scelta) | ~0,99 val / 0,96–0,97 test | `encoder_comparison.csv` |
 | fine-tuning dell'encoder | **peggiora** i test (0,519 vs 0,534) | `finetune_report.csv` |
 | feature dei nodi addestrabili | **peggiora** (0,512 vs 0,534) | `encoder_comparison.csv` |
@@ -301,10 +312,12 @@ Queste strade sono **documentate e non vengono riaperte** in questo progetto: no
 | artefatto | dove |
 |---|---|
 | reti generate (V8, due partizioni; più le varianti) | `Esame Angelantonio Fedele Murolo/generated_snapshots*_v8/` |
+| **rete V9** (il meccanismo di arrivo, tre modalità di contenuto) | `Esame Angelantonio Fedele Murolo/generated_snapshots_v2_v9_*/` |
 | **V8 di controllo sulla vecchia partizione** (misura l'effetto del cambio di scenario) | `<partizione storica>_v8/` |
-| modelli, report, coefficienti | `models/`, `results/v8_report.csv`, `results/v8_coefficients.csv` |
+| modelli, report, coefficienti | `models/`, `results/v8_report.csv`, `results/v8_coefficients.csv`, `results/v9_report.csv`, `results/v9_coefficients.csv` |
+| **embedding tNodeEmbed del sintetico** (per le analisi dei profili) | `<cartella generata>/tnodeembed_embeddings.npz`, scritto da **entrambi** i generatori |
 | tabelle e figure di confronto | `results/variant_summary.csv`, `results/figures/` |
-| analisi complete su reale e su ogni rete | `results/structure_*.csv`, `temporal_*.csv`, `content_*.csv`, `accretion_*.csv` |
+| analisi complete su reale e su ogni rete | `results/structure_*.csv`, `temporal_*.csv`, `content_*.csv`, `content_attributes_*.csv`, `accretion_*.csv`, `profiles_*.csv` |
 | documentazione tecnica | `docs/pipeline.md`, `docs/project.md`, `FINAL.md` |
 | relazione divulgativa per me | `docs/relazione.md` + `docs/relazione.pdf` |
 | **nota tecnica breve per il dottorando** | `docs/nota_dottorando.md` (2–3 pagine, in italiano: cosa è stato fatto, i numeri, i risultati negativi dichiarati) |
@@ -344,6 +357,7 @@ Queste strade sono **documentate e non vengono riaperte** in questo progetto: no
 - **Cosa V9 risolve**: la **reciprocità** (0,303 contro 0,003 di V8; era il coefficiente dell'arco inverso di segno sbagliato), la **scala dei gradi** (grado medio 28,2 contro 12,9, con il reale a 32,05), la **coda** (grado massimo 324 contro 102) e — dopo la correzione — anche la **coesione**, che prima sbagliava nel verso opposto: transitività 0,0203 contro 0,107 di prima (reale 0,034), clustering 0,042 contro 0,141 (reale 0,080), diametro 6 come il reale.
 - **Cosa resta sotto**: dopo la correzione gli errori sono tutti **dello stesso segno e contenuti** (0,25–0,9× del reale): modularità 0,106 contro 0,275, grado massimo 324 contro 1.290, new→new 17% contro 8,1%. Il filo comune è la **preferenza per l'hub**, che sottostima — il grado dell'estremo già presente è 165 contro 437 del reale, 0,38× — e viene dal trasferire i percentili di grado da 25.714 utenti reali a 10.000 sintetici: è il Rischio 1 del §7.
 - **Una leva scartata**: rifare il fit con 100 negativi per positivo invece di 10 non cambia la coesione e costa cinque volte tanto → configurazione riportata a 10.
+- **Variabilità fra run, dichiarata**: le cifre qui sopra sono del run di riferimento. Ripetendo la stessa generazione con lo stesso seed il volume si sposta di circa il **2%** (285.958 archi e grado medio 28,9 in una ripetizione, contro 279.050 e 28,2) e reciprocità e gradi massimi restano invariati, perché i lotti di addestramento di tNodeEmbed sono campionati: le cifre vanno lette con questa tolleranza, la lettura no.
 - **Il controllo A/B/C su V9**: testo autentico, permutato e assente danno reti **indistinguibili** anche in questo meccanismo (archi 279.050 / 281.364 / 275.893; reciprocità 0,3034 / 0,3034 / 0,3014; transitività 0,0203 / 0,0206 / 0,0207; modularità 0,106 / 0,104 / 0,103; omofilia 1,0003 / 1,0003 / 1,0033) e, per la quarta volta, l'ordine non è monotono: la conclusione del §6 vale su **entrambi** i meccanismi, quello per coppie e quello per eventi.
 
 - **Raggiunto**: la densità coincide con quella reale (0,00129 contro 0,00125) e il grado medio è a 2–2,5× dal reale, **senza imporre statistiche** (v7 si fermava a 0,0004 e 3,6–5,8). Il piano è stato eseguito come scritto: candidati decisi dalla misura sul reale, attività dal reale, campionamento, retroazione, ablazione.
