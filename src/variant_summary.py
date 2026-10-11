@@ -43,6 +43,9 @@ VARIANTS = [
     ('_v7d', 'v7d inferenza, encoder fine-tuned'),
     ('_v7e', 'v7e inferenza, globale + fine-tuned'),
     ('_v8_nocontent', 'v8 ablazione (senza contenuto)'),
+    ('_v8_real', 'v8 controllo A (testo autentico)'),
+    ('_v8_permuted', 'v8 controllo B (testo permutato)'),
+    ('_v8_off', 'v8 controllo C (senza testo)'),
     ('_v8', 'v8 modello struttura (campionamento)'),
 ]
 

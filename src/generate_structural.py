@@ -25,10 +25,20 @@ volume, degree distribution and hubs emerge instead of being imposed.
 Global quantities are computed once per time step (the common-neighbour product is a sparse
 matrix product); only the per-pair evaluation is done in row blocks.
 
+Content modes (`--content`); only the synthetic side is affected, the model is always fitted on the
+real content:
+    real      the authentic user profiles;
+    permuted  the same profiles reassigned to other users (one permutation for all the steps, same
+              statistics, same supervision): the control that tells whether the text carries the
+              link at all;
+    off       the content channel zeroed (the ablation).
+
 Usage:
-    uv run python src/generate_structural.py --partition generated_snapshots_v2
-    uv run python src/generate_structural.py --partition generated_snapshots_v2 --no-content
-Output: <partition>_v8/, results/v8_report.csv, results/v8_coefficients.csv, results/_v8_run.txt
+    uv run python src/generate_structural.py --partition generated_snapshots_v2 --content real
+    uv run python src/generate_structural.py --partition generated_snapshots_v2 --content permuted
+    uv run python src/generate_structural.py --partition generated_snapshots_v2 --content off
+Output: <partition>_<variant>/, results/v8_report.csv, results/v8_coefficients.csv,
+        results/_v8_run.txt
 """
 
 import argparse
@@ -300,16 +310,16 @@ def main():
     parser.add_argument('--partition', default='generated_snapshots_v2')
     parser.add_argument('--pooling', default='mean_of_posts')
     parser.add_argument('--variant', default='v8')
-    parser.add_argument('--no-content', action='store_true')
+    parser.add_argument('--content', choices=('real', 'permuted', 'off'), default='real')
     parser.add_argument('--max-pos', type=int, default=MAX_POS)
     parser.add_argument('--steps', type=int, default=N_SNAPSHOTS)
     args = parser.parse_args()
-    with_content = not args.no_content
+    with_content = args.content != 'off'
     open(LOG, 'w').close()
     rng = np.random.default_rng(SEED)
 
     log(f'partition {args.partition} | pooling {args.pooling} | variant {args.variant} '
-        f'| content {"on" if with_content else "off"}')
+        f'| content {args.content}')
     log('training the tNodeEmbed model on the real dataset')
     encoder, users, index, edge_sets, masks, model, embeddings = load_real()
     n = len(users)
@@ -367,6 +377,10 @@ def main():
 
     synthetic_users, _, synthetic_matrices, synthetic_masks, synthetic_present, _ = \
         synthetic_representations(encoder, os.path.join(BASE, args.partition), args.pooling)
+    if args.content == 'permuted':
+        order = rng.permutation(len(synthetic_users))
+        synthetic_matrices = [matrix[order] for matrix in synthetic_matrices]
+        log('  content permuted: same profiles, different owner, one permutation for all the steps')
     synthetic_embeddings = node_embeddings(model, synthetic_matrices)
     folder = os.path.join(BASE, f'{args.partition}_{args.variant}')
     log(f'generating on {args.partition} -> {os.path.basename(folder)} (sampling, with feedback)')
@@ -375,7 +389,7 @@ def main():
              steps=args.steps)
 
     row = {'variant': args.variant, 'partition': args.partition,
-           'content': 'on' if with_content else 'off',
+           'content': args.content,
            'operating_point': 'sampling, corrected prior', 'val_auc': round(auc, 4),
            'val_ap': round(average_precision, 4), 'val_auc_gbm': round(auc_boosted, 4)}
     row.update(metrics_from_folder(folder))

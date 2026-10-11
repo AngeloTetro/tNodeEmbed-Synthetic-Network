@@ -3,3 +3,6 @@ v8,generated_snapshots_v2,on,"sampling, corrected prior",0.9818,0.7939,0.9867,10
 v8,generated_snapshots_growth_v2,on,"sampling, corrected prior",0.9818,0.7938,0.9866,10000,159804,0.001598,0.0043,15.98,125
 v8,generated_snapshots_growth,on,"sampling, corrected prior",0.9819,0.7946,0.9865,10000,168015,0.00168,0.004,16.8,128
 v8_nocontent,generated_snapshots_growth_v2,off,"sampling, corrected prior",0.9816,0.7914,0.9864,10000,153100,0.001531,0.0041,15.31,126
+v8_real,generated_snapshots_v2,real,"sampling, corrected prior",0.9818,0.7935,0.9865,10000,128859,0.001289,0.0029,12.89,100
+v8_permuted,generated_snapshots_v2,permuted,"sampling, corrected prior",0.9819,0.7951,0.9865,10000,123310,0.001233,0.003,12.33,111
+v8_off,generated_snapshots_v2,off,"sampling, corrected prior",0.9815,0.7896,0.9864,10000,124154,0.001242,0.0029,12.42,98

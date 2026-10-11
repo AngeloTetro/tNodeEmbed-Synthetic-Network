@@ -25,7 +25,15 @@
 | **V8, tutti presenti** | 129.321 | **0,00129** | 12,9 | 102 | 0,003 | 0,152 | 0,003 | 1,00 |
 | **V8, arrivo progressivo** | 159.804 | 0,00160 | 16,0 | 125 | 0,004 | 0,140 | 0,004 | 1,00 |
 | V8 controllo (vecchio scenario) | 168.015 | 0,00168 | 16,8 | 128 | 0,004 | 0,131 | 0,003 | 1,00 |
-| V8, ablazione **senza contenuto** | 153.100 | 0,00153 | 15,3 | 126 | 0,004 | 0,142 | 0,004 | 1,00 |
+| V8, ablazione **senza contenuto** (`growth_v2`) | 153.100 | 0,00153 | 15,3 | 126 | 0,004 | 0,142 | 0,004 | 1,00 |
+
+**Controllo del contenuto A/B/C** (stesso modello fittato sul reale e stesso scenario, partizione `generated_snapshots_v2`; l'unica differenza è il canale testuale sul lato sintetico):
+
+| modalità | archi | densità | reciprocità | grado max | modularità | transitivity | omofilia |
+|---|---|---|---|---|---|---|---|
+| A — testo autentico | 128.859 | 0,001289 | 0,0029 | 100 | 0,154 | 0,00269 | 1,0017 |
+| B — testo permutato fra utenti | 123.310 | 0,001233 | 0,0030 | 111 | 0,158 | 0,00248 | 1,0000 |
+| C — senza testo | 124.154 | 0,001242 | 0,0029 | 98 | 0,158 | 0,00259 | 0,9995 |
 
 - **La densità coincide con quella reale** (0,00129 contro 0,00125) e il grado medio è a 2–2,5 volte dal reale: con la versione precedente, basata su una soglia, si arrivava a 3,6–5,8 di grado medio e a una densità 3-4 volte più bassa. **Nessuno di questi valori è imposto**: emergono dal campionamento.
 - **V6 (calibrata)** centra volume e reciprocità **per costruzione** (0,420 esatta): è utile come confronto, ma è la differenza fra *imporre* e *imparare*.
@@ -33,11 +41,12 @@
 
 ## 4. Risultati negativi, dichiarati
 
-1. **Il contenuto non aggiunge capacità né cambia la rete.** Nell'ablazione (stesso modello, punteggio di contenuto azzerato): AUC di validation **0,9818 → 0,9816**, rete **+4%** in volume, **omofilia identica** (1,003). Coerente con: i pesi fittati (contenuto **+0,11** contro **+3,3** dell'utente nuovo), l'AUC con **negativi appaiati** (0,49–0,57, cioè ~caso), l'omofilia delle reti generate **1,00 contro 2,13** del reale, e il fatto che il testo **predice bene gli attributi** del sintetico (schieramento politico AUC 0,83–0,87) — ma quella non è l'informazione che spiega i collegamenti.
+1. **Il contenuto non porta il legame.** Col controllo **A/B/C** (testo autentico / **testo permutato fra utenti** / senza testo, stesso modello e stesso scenario) le tre reti sono **indistinguibili** nelle proprietà relazionali: reciprocità 0,0029 / 0,0030 / 0,0029, transitivity 0,0025 / 0,0025 / 0,0026, grado massimo 100 / 111 / 98, modularità 0,154 / 0,158 / 0,158; il volume varia di pochi punti percentuali **senza ordine** (`permuted` sta più vicino a `off` che a `real`). L'omofilia resta a 1,0017 / 1,0000 / 0,9995 (il reale è 2,13). Coerente con: i pesi fittati (contenuto **+0,11–0,14** contro **+3,3** dell'utente nuovo), l'AUC con **negativi appaiati** sul reale (0,49–0,57, cioè ~caso), e il fatto che il testo **predice bene gli attributi** del sintetico (schieramento politico AUC 0,83–0,87) — ma quella non è l'informazione che spiega i collegamenti. **Nota di metodo**: valutare una rete generata non si fa con un AUC (nel sintetico non ci sono archi veri) ma confrontando distribuzioni e statistiche di rete; l'ablazione per AUC (**0,9818 → 0,9816**) è **satura** e da sola non proverebbe nulla.
 2. **V8 non riproduce tre proprietà**: coda dei gradi (max 102–128 contro 1.290), **reciprocità** (0,004 contro 0,418) e **transitivity** (0,003 contro 0,034). Nel modello fittato il coefficiente dell'arco inverso è lievemente negativo e quello dei **vicini in comune è −4,4**: la ragione è che i negativi sono coppie estratte a caso e gli archi veri coinvolgono spesso entranti, che non hanno vicini in comune. È una proprietà della competizione scelta e spiega la transitivity bassa.
 3. **Il fine-tuning dell'encoder non passa**: migliora la validation ma peggiora **entrambe** le finestre di test (0,519 contro 0,534 MiniLM; 0,523 contro 0,530 bge-base). La supervisione è troppo debole.
 4. **Le feature dei nodi addestrabili** (una proiezione inizializzata dal contenuto e addestrata con la loss del compito) **peggiorano**: 0,512 contro 0,534. La `Q_t` completa del paper (una riga per utente e snapshot, ~70M parametri) non entra nei 6 GB della scheda disponibile: non l'abbiamo provata.
+5. **L'omofilia del 2,13 è in gran parte struttura, non scelta.** Contro coppie a caso è **2,133**; contro non-archi appaiati per grado (classi larghe) **1,511**; per grado esatto ±10% **1,290**; per grado+volume di testo 1,367; per volume di testo 1,554. Gli estremi degli archi hanno grado medio **403,6** contro **61,7** e **1.297 caratteri** cumulativi contro una mediana di **323**; la somiglianza interna per decile di grado sale da 0,079 a 0,291. Resta un **residuo lessicale piccolo** (AUC ≈ 0,58) che vive nei profili **TF-IDF+SVD cumulativi**, non nel canale del generatore (**MiniLM per post**, dove il segnale è nullo): il 2,13 e l'1,00 del modello non misurano la stessa cosa. Script: `src/analyze_homophily.py` → `results/homophily_control.csv`.
 
 ## 5. In una riga
 
-La pipeline riproduce **la struttura di base** (densità e gradi) **imparando** il meccanismo dal reale e senza imporre statistiche; **non** riproduce le proprietà che dipendono dalle relazioni (reciprocità, triangoli, hub) né quelle che dipendono dal testo (omofilia), e la ragione è misurata: il meccanismo che i dati rivelano è "chi entra e quanto è connesso", mentre il contenuto — così rappresentato — non aggiunge capacità di previsione.
+La pipeline riproduce **la struttura di base** (densità e gradi) **imparando** il meccanismo dal reale e senza imporre statistiche; **non** riproduce le proprietà che dipendono dalle relazioni (reciprocità, triangoli, hub), e la ragione è misurata: il meccanismo che i dati rivelano è "chi entra e quanto è connesso". Sul contenuto il progetto ha ora due risultati controllati: il canale testuale **non sposta la rete** (A/B/C indistinguibili) e l'omofilia **2,13** del reale è **in gran parte posizione nella rete**, non scelta di somiglianza.

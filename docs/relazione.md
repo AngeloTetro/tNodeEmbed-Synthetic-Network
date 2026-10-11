@@ -156,6 +156,8 @@ Misuriamo quanto il contenuto di due utenti collegati è più simile di quello d
 
 Nel **reale** i collegati si somigliano sempre di più col tempo (fino a 2,13 volte le coppie casuali). Nella **rete generata** questo effetto non c'è: 1,0 significa che i collegamenti non sono più "simili nel contenuto" di quanto lo sarebbero due utenti estratti a caso.
 
+**Ma il 2,13 va letto con attenzione.** Confrontandolo con *non* collegati che hanno la **stessa posizione nella rete**, scende molto (i dettagli al **§6.14**): una parte importante di quel "i collegati si somigliano" è che nel reale vengono collegati gli utenti **più connessi e più attivi**, e i profili di chi scrive molto si somigliano fra loro anche senza alcuna scelta di somiglianza.
+
 ![Omofilia del contenuto: reale contro reti generate](results/figures/compare_homophily.png)
 
 Lo stesso vale per gli attributi del profilo sintetico (lift = quante volte più spesso dell'atteso un arco collega due utenti con lo stesso valore). Valori dell'ultimo snapshot per la variante "tutti presenti" / "arrivo progressivo": schieramento politico 1,17 / 1,00, professione 0,98 / 0,87, interessi 0,61 / 1,05 — quindi **nessun attributo viene riprodotto** dalla rete generata in modo apprezzabile (un lift di 1 significa "come il caso").
@@ -211,7 +213,7 @@ Valori dell'ultimo snapshot (`results/variant_summary.csv`):
 Due cose da guardare con attenzione:
 
 - **La reciprocità** (nel reale 0,42): la famiglia calibrata la centra per costruzione (0,420 esatto), quella per inferenza no — va da 0,00 a 0,72 a seconda di come si decide la soglia e dell'encoder. Non è un dettaglio: la reciprocità nasce dal fatto che nel reale i due versi di un legame si creano in momenti diversi, mentre la nostra rete di 9 passi concede poco tempo perché questo accada.
-- **L'omofilia del contenuto** (nel reale **2,13**, cioè i collegati si somigliano più del doppio rispetto a due utenti a caso): **nessuna** rete generata la riproduce (tutte intorno a 1,00). È il risultato più importante del progetto: *nonostante il contenuto sia l'unica informazione usata*, le reti generate non riescono a far somigliare i collegati più di due utenti estratti a caso. La spiegazione sta nella sezione successiva.
+- **L'omofilia del contenuto** (nel reale **2,13**, cioè i collegati si somigliano più del doppio rispetto a due utenti a caso): **nessuna** rete generata la riproduce (tutte intorno a 1,00). È il risultato più importante del progetto: *nonostante il contenuto sia l'unica informazione usata*, le reti generate non riescono a far somigliare i collegati più di due utenti estratti a caso. Le spiegazioni stanno nelle sezioni successive: il modello impara la struttura e non il testo (§6.9), e **il 2,13 stesso è in gran parte struttura** (§6.14).
 
 ### 6.9 Il modello di formazione degli archi (v7) — cosa ha imparato
 
@@ -229,7 +231,7 @@ Le variabili sono standardizzate, quindi i coefficienti sono confrontabili fra l
 Il modello discrimina quasi perfettamente (AUC 0,988) ma **lo fa con la struttura**: il peso dell'utente nuovo è più di dieci volte quello del contenuto, e anche il grado pesa molto di più. Tradotto: *chi entra adesso* e *quanto è connesso* spiegano quasi tutto; *cosa scrive* quasi nulla. Questo è coerente con il fatto che nella rete generata l'omofilia del contenuto resti a 1,00 e con l'AUC intorno a 0,49–0,57 quando si controlla per arrivo e grado (§6.1).
 
 Le due decisioni possibili sul modello danno esiti molto diversi:
-- **decisione bayesiana con la prevalenza vera** (un arco c'è se il modello lo ritiene più probabile del contrario): **nessun arco** in tutte le partizioni — il modello non crede mai che una coppia sintetica abbia più del 50% di probabilità di essere un arco, perché la probabilità a priori è minuscola (6,4 × 10⁻⁵ coppie collegate);
+- **decisione bayesiana con la prevalenza vera** (un arco c'è se il modello lo ritiene più probabile del contrario): **nessun arco** in tutte le partizioni — il modello non crede mai che una coppia sintetica abbia più del 50% di probabilità di essere un arco, perché la probabilità a priori è minuscola (6,4 coppie collegate su 100.000);
 - **soglia al tasso reale** (si tengono le coppie in testa alla graduatoria per il tasso misurato sul reale): le reti delle righe v7 della tabella precedente.
 
 ### 6.10 Il fine-tuning dell'encoder (leva 1), e perché non è passato
@@ -279,7 +281,7 @@ Peggiora: aggiungere capacità addestrabile sui contenuti porta all'overfitting,
 
 Tre encoder su tre migliorano, e nel transfer la media passa da 0,541 a 0,552. È un miglioramento pulito: non c'è addestramento in più, quindi nessun rischio di overfitting.
 
-**c) Ma la rete generata non cambia.** È il test che conta: se il contenuto iniziasse a contare, l'**omofilia** della rete dovrebbe salire. Non sale: **1,004** con la rappresentazione nuova (0,996 con la vecchia; nel reale **2,13**). E il coefficiente del contenuto nel modello di formazione degli archi resta **≈ +0,20** contro **+2,28** di "l'utente è nuovo" (il valore oscilla fra 0,18 e 0,26 da un addestramento all'altro: è una stima, non una cifra esatta).
+**c) Ma la rete generata non cambia.** È il test che conta: se il contenuto iniziasse a contare, l'**omofilia** della rete dovrebbe salire. Non sale: **1,004** con la rappresentazione nuova (0,996 con la vecchia; nel reale **2,13**). E il coefficiente del contenuto nel modello di formazione degli archi resta **~+0,20** contro **+2,28** di "l'utente è nuovo" (il valore oscilla fra 0,18 e 0,26 da un addestramento all'altro: è una stima, non una cifra esatta).
 
 **Conclusione.** La rappresentazione andava migliorata, e l'abbiamo fatto; ma non era quello il collo di bottiglia. Il contenuto, da solo, non basta a spiegare chi si collega a chi, perché la rete reale è governata da un meccanismo — chi entra, quando entra, quanto è connesso — che un modello che guarda solo il testo **non può vedere**. Per andare oltre servirebbe un modello generativo che impari *anche* la struttura, non solo il contenuto.
 
@@ -295,27 +297,59 @@ Le variabili sono: il punteggio di contenuto di tNodeEmbed, il **grado relativo*
 | V8, tutti presenti | 129.321 | **0,00129** | 12,9 | 102 | 0,003 | 0,152 | 0,003 | 1,00 |
 | V8, arrivo progressivo | 159.804 | 0,00160 | 16,0 | 125 | 0,004 | 0,140 | 0,004 | 1,00 |
 | V8, vecchio scenario (controllo) | 168.015 | 0,00168 | 16,8 | 128 | 0,004 | 0,131 | 0,003 | 1,00 |
-| V8, **senza contenuto** | 153.100 | 0,00153 | 15,3 | 126 | 0,004 | 0,142 | 0,004 | 1,00 |
+| V8, **senza contenuto** (`growth_v2`) | 153.100 | 0,00153 | 15,3 | 126 | 0,004 | 0,142 | 0,004 | 1,00 |
 
 **Cosa ha funzionato.** La **densità** della prima rete è **0,00129 contro 0,00125** del reale: praticamente identica. E il grado medio (12,9–16,8) si è avvicinato molto: la versione precedente, che usava una soglia, si fermava a 3,6–5,8 e a una densità 3-4 volte più bassa. Nessuno di questi valori è stato imposto: sono **emersi** dal campionamento delle probabilità fittate sul reale.
 
-**Cosa resta fuori.** Tre cose, e vanno dette: la **coda dei gradi** (il grado massimo è 102–128 contro 1.290: mancano gli hub estremi), la **reciprocità** (0,004 contro 0,418: il modello non riproduce il fatto che i legami vengono ricambiati) e la **transitivity** (0,003 contro 0,034). A queste si aggiunge l'**omofilia del contenuto**: 1,00 contro 2,13.
+**Cosa resta fuori.** Tre cose, e vanno dette: la **coda dei gradi** (il grado massimo è 102–128 contro 1.290: mancano gli hub estremi), la **reciprocità** (0,004 contro 0,418: il modello non riproduce il fatto che i legami vengono ricambiati) e la **transitivity** (0,003 contro 0,034). L'**omofilia del contenuto** resta a 1,00 contro il 2,13 del reale, ma il 2,13 è in gran parte struttura: la questione è trattata per intero in **§6.14**.
 
-**Il contenuto, misurato per ablazione.** Togliendo dal modello il punteggio di contenuto — tutto il resto identico — l'AUC di validation passa da **0,9818 a 0,9816** e la rete cambia del **4%** in volume, con **omofilia identica**. È la risposta definitiva alla domanda che ci siamo portati dietro: *il testo, così rappresentato, non aggiunge capacità di previsione e non cambia la rete.* Non è un'opinione, è un esperimento.
+**Il contenuto, misurato con un controllo (A/B/C).** Togliere il punteggio di contenuto non basterebbe a dimostrare che il testo non conta: si potrebbe obiettare che "senza" sia un caso troppo diverso. Abbiamo quindi aggiunto il controllo più duro: **gli stessi profili di testo, riassegnati ad altri utenti** (stesse statistiche, stesso addestramento: il modello vede testo autentico, solo attribuito alla persona sbagliata). Le tre reti — **A** testo autentico, **B** testo permutato, **C** senza testo — escono **indistinguibili** nelle proprietà che definiscono una rete sociale:
+
+| modalità | archi | densità | reciprocità | grado massimo | modularità | transitivity | omofilia |
+|---|---|---|---|---|---|---|---|
+| A — testo autentico | 128.859 | 0,001289 | 0,0029 | 100 | 0,154 | 0,00269 | 1,0017 |
+| B — testo permutato fra utenti | 123.310 | 0,001233 | 0,0030 | 111 | 0,158 | 0,00248 | 1,0000 |
+| C — senza testo | 124.154 | 0,001242 | 0,0029 | 98 | 0,158 | 0,00259 | 0,9995 |
+
+Il volume varia di pochi punti percentuali e **senza ordine** (la rete col testo permutato sta più vicino a quella senza testo che a quella col testo autentico): siamo ai margini della variabilità fra un addestramento e l'altro (~0,4%). Reciprocità, transitività, coda dei gradi e modularità sono le stesse in tutti e tre i casi. L'unico effetto del testo che si vede è minimo: l'omofilia passa dallo 0,9995 senza testo all'1,0017 col testo autentico — circa **l'1%** del divario che nel reale è 2,13.
+
+**Una nota di metodo, perché conta.** L'ablazione per AUC (**0,9818 → 0,9816**) da sola non prova niente: quella misura è **saturo**, cioè così alta che qualunque cambiamento le sembra piccolo. E soprattutto una **rete generata non si giudica con un AUC**: nel sintetico non ci sono collegamenti "veri" da indovinare. Si giudica confrontando **le proprietà della rete** con quelle del reale — che è quello che fa la tabella qui sopra. L'AUC resta uno strumento corretto solo **sul reale**, dove le etichette esistono: per il *fit* del modello e per il diagnostico sul contenuto (§6.14).
 
 **Una cosa che avevo previsto male, e la dico.** Pensavo che cambiare lo scenario del sintetico (da attività uniforme ad attività "a raffica", presa dal reale) avrebbe reso la variabile "ha scritto in questo periodo" importante e avrebbe fatto crescere la rete "a ondate". Il confronto diretto dice che l'effetto sul **volume** è del ~5% e che **nessuna metrica strutturale cambia**. Lo scenario conta meno di quanto pensassi: lo documento come esito, non come conferma.
 
-**Il coefficiente dei vicini in comune è negativo (−4,4), e non è un errore.** Le coppie di controllo sono estratte a caso, e gli archi veri coinvolgono spesso utenti appena entrati — che per definizione non hanno vicini in comune. Il modello impara quindi che, *contro una coppia a caso*, i triangoli non aiutano: è una proprietà della competizione che abbiamo scelto, e spiega la transitivity bassa della rete generata.
+**Il coefficiente dei vicini in comune è negativo (−4,4; −5,8 nell'ultimo addestramento), e non è un errore.** Le coppie di controllo sono estratte a caso, e gli archi veri coinvolgono spesso utenti appena entrati — che per definizione non hanno vicini in comune. Il modello impara quindi che, *contro una coppia a caso*, i triangoli non aiutano: è una proprietà della competizione che abbiamo scelto, e spiega la transitivity bassa della rete generata.
 
-**In una frase.** V8 è la rete più vicina al reale che il progetto abbia prodotto sulla struttura di base (densità e gradi), è **imparata** e non imposta, e il suo limite è chiaro: il meccanismo che ha imparato è "chi entra e quanto è connesso", non "chi si somiglia" — e per questo le due proprietà che dipendono dalle relazioni (reciprocità e triangoli) e quella che dipende dal testo (omofilia) restano lontane.
+**In una frase.** V8 è la rete più vicina al reale che il progetto abbia prodotto sulla struttura di base (densità e gradi), è **imparata** e non imposta, e il suo limite è chiaro: il meccanismo che ha imparato è "chi entra e quanto è connesso", non "chi si somiglia" — e per questo le due proprietà che dipendono dalle relazioni (reciprocità e triangoli) restano lontane, mentre sul testo il progetto ha due risultati controllati: il contenuto non sposta la rete (§6.13) e il 2,13 del reale è in gran parte struttura (§6.14).
+
+### 6.14 Il 2,13 scomposto: quanto è scelta e quanto è posizione nella rete
+
+Il numero che per tutto il progetto è sembrato "il fallimento del contenuto" è l'omofilia del reale: **2,13**, cioè i collegati si somigliano più del doppio di due utenti estratti a caso. Prima di attribuirlo al contenuto, ci siamo chiesti *con chi* lo stessimo confrontando. La misura standard confronta ogni collegamento con due utenti **a caso**; ma gli estremi dei collegamenti non sono utenti qualsiasi:
+
+- hanno grado medio **403,6** contro **61,7** dell'utente tipico;
+- hanno **1.297 caratteri** di testo cumulativo contro una mediana di **323**;
+- e la somiglianza fra due profili lessicali **cresce con il grado**: dentro il decile più basso è 0,079, dentro il più alto 0,291.
+
+In altre parole: nel reale vengono collegati gli utenti **più connessi e più attivi**, e i profili di chi scrive molto si somigliano fra loro anche senza alcuna scelta di somiglianza. Se il confronto si fa con **non collegati della stessa posizione**, il 2,13 cambia volto (`src/analyze_homophily.py`, `results/homophily_control.csv`):
+
+| contro… | rapporto |
+|---|---|
+| due utenti **a caso** (la misura standard) | **2,133** |
+| due **non collegati** con lo stesso grado (classi larghe) | **1,511** |
+| due non collegati con lo stesso grado **entro ±10%** | **1,290** |
+| due non collegati con grado **e volume di testo** simili | **1,367** |
+| due non collegati con lo stesso **volume di testo** | **1,554** |
+
+Più della metà del divario se ne va appena si confrontano utenti comparabili: quel 2,13 è **in gran parte posizione nella rete**, non scelta di somiglianza. Resta un **residuo piccolo** (rapporto 1,29, AUC ~0,58): una lieve tendenza dei collegati a somigliarsi *anche* a parità di posizione. Attenzione a come si legge: quel residuo vive nei **profili lessicali** (TF-IDF+SVD sui testi cumulativi), che sono un modo di misurare il contenuto **diverso** da quello che il generatore usa (MiniLM, ogni post per conto suo, dove il segnale è nullo). Il 2,13 del reale e l'1,00 delle reti generate **non misurano la stessa cosa**, e questo spiega perché sembravano in contraddizione. I controlli più stretti sono poi instabili passo per passo (in un caso il gruppo di confronto risulta *più* simile dei collegamenti veri, 0,42 contro 0,31), quindi 1,29 va preso come **limite inferiore**.
+
+**In una riga**: il contenuto non porta il legame (controllo A/B/C, §6.13), e il numero che sembrava dire il contrario era per metà struttura.
 
 ## 7. Cosa non abbiamo fatto, e i limiti da tenere presenti
 
 0. **V8 (il metodo definitivo) non riproduce tre proprietà del reale**: la coda dei gradi (massimo 102–128 contro 1.290), la **reciprocità** (0,004 contro 0,418) e la **transitivity** (0,003 contro 0,034). Le prime due dipendono da meccanismi relazionali che il modello, così com'è costruito, non cattura; la terza anche dal fatto che i negativi sono coppie a caso (che rende negativo il coefficiente dei vicini in comune).
-1. **Il contenuto, da solo, non riproduce i collegamenti.** È il risultato principale e va detto per primo: le reti generate hanno **omofilia del contenuto ≈ 1,00** mentre il reale è **2,13**, e nel modello di formazione degli archi il peso del punteggio di contenuto è **≈ +0,11** contro **+3,3** dell'"utente nuovo" (e l'ablazione di V8 lo conferma: 0,9818 → 0,9816 di AUC). Con un controllo per arrivo e grado, l'AUC del contenuto sta intorno a 0,49–0,57 (0,5 = caso). Quindi la pipeline spiega *quando* nascono i collegamenti (chi entra, quanto è connesso) ma non *fra chi*, nella misura in cui conta il contenuto.
+1. **Il contenuto, da solo, non riproduce i collegamenti.** È il risultato principale e va detto per primo: col controllo **A/B/C** (§6.13) la rete non cambia quando il testo passa dal suo proprietario a un altro utente, e nel modello di formazione degli archi il peso del punteggio di contenuto è **~+0,11–0,14** contro **+3,3** dell'"utente nuovo". Con un controllo per arrivo e grado, l'AUC del contenuto sta intorno a 0,49–0,57 (0,5 = caso). Quindi la pipeline spiega *quando* nascono i collegamenti (chi entra, quanto è connesso) ma non *fra chi*, nella misura in cui conta il contenuto. Il numero che sembrava contraddire questa conclusione — l'omofilia **2,13** del reale — è **in gran parte struttura** (§6.14).
 2. **La famiglia per inferenza (v7) non riproduce la struttura del reale**: grado uscente medio 3,6–5,8 contro 32,0; reciprocità da 0,00 a 0,72 (non stabile) contro 0,42; e con l'encoder fine-tuned compare un hub degenerato (un utente collegato a tutti, grado 9.999 contro un massimo reale di 1.290). La famiglia calibrata (v6) centra volume e reciprocità **per costruzione**, non perché li abbia imparati: è la differenza fra *imporre* e *predire*.
 3. **Il fine-tuning dell'encoder non è passato**: migliora la validation ma peggiora entrambe le finestre di test (media 0,519 contro 0,534 per MiniLM; 0,523 contro 0,530 per bge-base). La supervisione (0,49–0,57 di AUC) è troppo debole perché l'encoder impari qualcosa che generalizzi. Il fine-tuning di bge-base ha girato con budget ridotto (4.000 coppie, 1 epoca, batch 8) perché la scheda da 6 GB andava in esaurimento di memoria con batch più grandi.
-4. **La regola a mano (v1–v5) resta come confronto, non come metodo**: il conteggio era una nostra scelta (`k ~ Poisson(1,2)` o la distribuzione dei gradi del reale), ed è la ragione per cui quelle reti avevano reciprocità ≈ 0,001.
+4. **La regola a mano (v1–v5) resta come confronto, non come metodo**: il conteggio era una nostra scelta (`k ~ Poisson(1,2)` o la distribuzione dei gradi del reale), ed è la ragione per cui quelle reti avevano reciprocità ~0,001.
 5. **L'inizializzazione `Q_t` del paper è usata in senso lato**: non c'è la matrice di embedding addestrabile (una riga per utente e snapshot) inizializzata dalle feature: le rappresentazioni del contenuto sono direttamente l'input della LSTM, e la versione addestrabile che entra nella scheda (una proiezione condivisa, §6.12) è stata provata e non ha aiutato. Allo stesso modo l'**allineamento di Procrustes è un pre-processing** e non compare come termine nella loss (anche l'implementazione di riferimento allena con la sola cross-entropy binaria).
 6. **Il fallback dei nodi isolati** proposto dal dottorando **non è servito** e non è stato implementato.
 7. **Dettagli tecnici**: 18 righe dei batch sintetici vengono ignorate in lettura (numero di campi diverso dall'intestazione); il confronto fra encoder copre solo la variante di contenuto "per periodo"; la partizione "tutti presenti" resta poco adatta alla famiglia v7, perché lì il concetto di "utente nuovo" quasi non esiste; i coefficienti del modello di formazione degli archi oscillano un po' fra un addestramento e l'altro (il contenuto fra +0,18 e +0,26), quindi vanno letti come stime.
@@ -345,9 +379,9 @@ Le variabili sono: il punteggio di contenuto di tNodeEmbed, il **grado relativo*
 - **Modello di formazione degli archi** (v7): un modello che impara, sulle transizioni reali, con che probabilità una coppia di utenti diventa un collegamento; poi si applica al sintetico. È l'alternativa alle regole scritte a mano.
 - **Fine-tuning contrastivo** (leva 1): addestrare l'encoder perché avvicini i testi degli utenti collegati e allontani quelli non collegati.
 - **Negativi temporali**: coppie che diventano collegamenti **più avanti** ma non in questo momento; servono a insegnare all'encoder che la stessa coppia "non è ancora" collegata (il tempo nel contesto).
-- **Prevalenza (e correzione della prevalenza)**: quanto è rara una cosa. Le coppie collegate sono rarissime (6,4 × 10⁻⁵), quindi le probabilità del modello vanno riportate a quella scala prima di decidere; è il motivo per cui la decisione "bayesiana" di v7 non produce nessun arco.
+- **Prevalenza (e correzione della prevalenza)**: quanto è rara una cosa. Le coppie collegate sono rarissime (6,4 su 100.000), quindi le probabilità del modello vanno riportate a quella scala prima di decidere; è il motivo per cui la decisione "bayesiana" di v7 non produce nessun arco.
 - **Soglia globale per passo**: una sola soglia per ogni istante di tempo, calcolata su tutte le coppie candidate; è la versione corretta della soglia "a blocchi" usata all'inizio, che rompeva la simmetria fra (u,v) e (v,u).
-- **Omofilia del contenuto (ratio)**: quante volte i due capi di un collegamento si somigliano di più rispetto a due utenti estratti a caso (1 = nessuna differenza). Nel reale è 2,13, nelle reti generate è ~1,00.
+- **Omofilia del contenuto (ratio)**: quante volte i due capi di un collegamento si somigliano di più rispetto a due utenti estratti a caso (1 = nessuna differenza). Nel reale è 2,13, nelle reti generate è ~1,00. Attenzione: **il confronto giusto non è con due utenti qualsiasi** (§6.14) — contro non collegati con la stessa posizione nella rete il 2,13 scende a 1,29–1,55.
 - **Poisson(1,2)**: distribuzione da cui estraevamo il numero di nuovi archi per utente a ogni snapshot nella vecchia regola (v1–v5): **variante scartata**, tenuta nel confronto.
 
 ## 9. Come riprodurre tutto
@@ -385,6 +419,14 @@ uv run python src/analyze_profiles.py  generated_snapshots_growth
 # 6) tabelle e figure di confronto fra tutte le reti (reale + varianti)
 uv run python src/variant_summary.py
 uv run python src/compare_folders.py
+
+# 7) controllo del contenuto A/B/C sulla rete ufficiale (stesso modello, stesso scenario)
+uv run python src/generate_structural.py --partition generated_snapshots_v2 --content real     --variant v8_real
+uv run python src/generate_structural.py --partition generated_snapshots_v2 --content permuted --variant v8_permuted
+uv run python src/generate_structural.py --partition generated_snapshots_v2 --content off      --variant v8_off
+
+# 8) scomposizione dell'omofilia del reale: quanto è struttura (grado, volume, arrivo), quanta è scelta
+uv run python src/analyze_homophily.py real_snapshots       # -> results/homophily_control.csv
 ```
 
 I numeri finiscono in `results/*.csv` (in particolare `v7_report.csv`, `v7_coefficients.csv` per i coefficienti del modello e `variant_summary.csv` per il confronto unico), le figure in `results/figures/`, le reti generate (post + `social_network.edg`) nelle cartelle `Esame Angelantonio Fedele Murolo/generated_snapshots*/`.

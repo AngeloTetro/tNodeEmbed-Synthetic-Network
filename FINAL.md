@@ -51,7 +51,7 @@
 - il **92%** degli archi nuovi coinvolge un utente appena entrato; archi **già presente → già presente**: **0 su 707.604**;
 - gli utenti nuovi si collegano a nodi con grado medio **437** contro una media di **64**;
 - **reciprocità 0,418**; grado uscente medio **32,05**; grado massimo **1.290**;
-- **omofilia del contenuto 2,13** (i collegati si somigliano più del doppio rispetto a due utenti a caso).
+- **omofilia del contenuto 2,13** contro coppie a caso — ma è una misura **in gran parte strutturale** (§10): contro non-archi con la stessa posizione (grado, volume di testo, arrivo) scende a 1,29–1,37, e il residuo lessicale è piccolo (AUC ≈ 0,58), su una rappresentazione che il generatore non usa.
 
 ### 2.1 Il tempo del sintetico: come è stato costruito, e cosa resta una nostra scelta
 
@@ -121,7 +121,7 @@ Le due partizioni restano — `generated_snapshots` (tutti presenti) e `generate
 
 **Modello**: **regressione logistica** su variabili standardizzate, fittata sulle **transizioni di training del reale** (positivi = archi nuovi; negativi = coppie campionate dallo stesso universo di candidati, con negativi appaiati). I **coefficienti sono il risultato scientifico**: dicono quanto pesa la struttura e quanto il contenuto. Controllo di robustezza: un modello ad alberi (gradient boosting) sulle stesse variabili, per la parte non lineare.
 
-**Correzione della prevalenza**: le probabilità vengono riportate alla scala reale (le coppie collegate sono ~6,4 × 10⁻⁵) con uno spostamento dell'intercetta, come in V7.
+**Correzione della prevalenza**: le probabilità vengono riportate alla scala reale (le coppie collegate sono ~6,4 su 100.000) con uno spostamento dell'intercetta, come in V7.
 
 **Decisione e generazione**:
 - **campionamento**: ogni coppia candidata diventa un arco con la *sua* probabilità corretta → **il volume emerge**, non viene scelto da noi;
@@ -194,8 +194,14 @@ uv run python src/generate_structural.py --partition generated_snapshots_growth 
 uv run python src/generate_structural.py --partition <partizione VECCHIA>      --pooling mean_of_posts
 #    la terza è il CONTROLLO: isola quanto pesa il cambio di scenario (attività uniforme -> attività dal reale)
 
-# 4) ABLAZIONE DEL CONTENUTO (stesso modello senza il punteggio di contenuto)
-uv run python src/generate_structural.py --partition generated_snapshots_growth --pooling mean_of_posts --no-content
+# 4) CONTROLLO DEL CONTENUTO: tre modi a parità di modello e di scenario
+#    A: testo autentico | B: testo permutato fra utenti | C: senza testo
+uv run python src/generate_structural.py --partition generated_snapshots_v2 --pooling mean_of_posts --content real     --variant v8_real
+uv run python src/generate_structural.py --partition generated_snapshots_v2 --pooling mean_of_posts --content permuted --variant v8_permuted
+uv run python src/generate_structural.py --partition generated_snapshots_v2 --pooling mean_of_posts --content off      --variant v8_off
+
+# 4b) SCOMPOSIZIONE DELL'OMOFILIA DEL REALE: quanta è struttura (grado, volume, arrivo), quanta è scelta
+uv run python src/analyze_homophily.py real_snapshots      # -> results/homophily_control.csv
 
 # 5) VARIANTI DI CONFRONTO (già disponibili, si rigenerano solo se serve)
 uv run python src/transfer_to_synthetic.py generated_snapshots_growth minilm matched mean_of_posts
@@ -232,7 +238,7 @@ uv run python src/compare_folders.py
 | coefficienti del modello (v7) | contenuto **+0,20**; grado +1,6; utente nuovo **+2,28** | `v7_coefficients*.csv` |
 | v6 (calibrata) | reciprocità **0,420** esatta; grado 6,4–9,4 (il 32 è irraggiungibile col vincolo di accrescimento) | `v6_report.csv` |
 | v7 (inferenza con soglia) | grado medio 3,6–5,8; reciprocità 0,00–0,72 | `v7_report.csv` |
-| omofilia del contenuto | reale **2,13**; tutte le reti generate **≈ 1,00** (1,004 per-post) | `content_*.csv` |
+| omofilia del contenuto | reale **2,13** — ma **1,29–1,37** contro controlli appaiati per grado/volume/arrivo: in gran parte struttura (§10); tutte le reti generate **≈ 1,00** | `content_*.csv`, `homophily_control.csv` |
 
 **Nota sulle partizioni**: le reti già generate (riferimento, v1–v7) usano la **vecchia partizione** (attività uniforme, §2.1). Con la partizione definitiva vanno **rigenerate anche le varianti di confronto** usate nella tabella (transfer, v6, v7), così il confronto con V8 è omogeneo: stesso scenario, stesso numero di passi, stessi utenti presenti a ogni passo. In più si genera **V8 anche sulla vecchia partizione**: è il **controllo** che isola quanto pesa il cambio di scenario (attività uniforme → attività dal reale).
 
@@ -240,15 +246,18 @@ uv run python src/compare_folders.py
 
 ---
 
-## 6. Il controllo che quantifica il contenuto (ablazione)
+## 6. Il controllo che quantifica il contenuto
 
-Tre misure, tutte già strumentate:
+**Quale metrica, per quale domanda.** Nella generazione **non esiste un insieme di archi veri** nel sintetico, quindi un AUC sugli archi non ha significato lì: la rete generata si valuta su **distribuzioni e statistiche di rete** per snapshot (gradi, reciprocità, transitività, modularità, omofilia, crescita) confrontate col reale. L'AUC resta la metrica giusta solo dove le etichette esistono, cioè **sul reale**, e per due domande specifiche: (a) il modello ordina meglio un arco nuovo di un non-arco appaiato? (b) una rappresentazione del contenuto separa un arco da un non-arco con la stessa posizione strutturale? Limite da dichiarare: l'AUC di ablation del modello è **saturo** (0,9818 → 0,9816), quindi è uno strumento debole proprio per misurare il contributo del testo — per quello servono i confronti fra reti.
 
-1. **Sul reale (ranking)**: AUC/AP con negativi appaiati del modello **con** e **senza** il punteggio di contenuto → quanta discriminazione aggiunge il testo, a parità di struttura.
-2. **Sui coefficienti**: il peso del contenuto nel modello fittato, con intervallo di variazione fra addestramenti (in v7: +0,18 ÷ +0,26).
-3. **Sulla rete generata**: le statistiche della rete con e senza contenuto → in particolare **omofilia** e distanza dal reale. Se il contenuto conta, l'omofilia deve salire rispetto a 1,00.
+Quattro misure, tutte strumentate:
 
-**Esito atteso e onesto**: la struttura spiegherà la maggior parte della rete; il contenuto probabilmente resterà debole. Se così fosse, lo diremo **con i numeri** — ed è una conclusione del progetto, non un fallimento.
+1. **Sul reale (ranking)**: AUC/AP con negativi appaiati del modello **con** e **senza** il punteggio di contenuto — saturo: 0,9818 → 0,9816.
+2. **Sui coefficienti**: il peso del contenuto nel modello fittato, con intervallo fra addestramenti (v7: +0,18 ÷ +0,26; V8: +0,14).
+3. **Sulla rete generata, col controllo a testo permutato** (`--content real|permuted|off`): gli stessi profili riassegnati ad altri utenti (stesse statistiche, stessa supervisione, un'unica permutazione per tutti i passi) → se `real` e `permuted` danno la stessa rete, il testo non porta il legame. È il confronto che *misura*; l'AUC satura no.
+4. **Omofilia del contenuto con controlli strutturali** (`src/analyze_homophily.py`): la misura 2,13 contro coppie a caso, ripetuta contro non-archi appaiati per grado, volume di testo e passo di arrivo → dice quanta parte dell'omofilia è scelta di somiglianza e quanta è posizione nella rete.
+
+**Esito misurato**: con testo autentico, testo permutato e senza testo le reti sono **indistinguibili** nelle proprietà relazionali, e il 2,13 del reale è **in gran parte struttura** (§10).
 
 ---
 
@@ -258,7 +267,7 @@ Tre misure, tutte già strumentate:
 
 **Rischio 2 — il contenuto può risultare decorativo.** Se la struttura spiega quasi tutto, il progetto rischia di diventare "un modello strutturale con un termine di contenuto". **Risposta**: la divisione del lavoro è strutturale e va dichiarata — la struttura dà il *meccanismo* (quanti archi, con quale dinamica), il contenuto sceglie *quali coppie* fra quelle ammissibili, ed è l'unica informazione che distingue fra loro i 10.000 utenti sintetici. Il contributo si **misura** (§6).
 
-**Rischio 3 — valutare un modello generativo è più difficile di un AUC.** Si confrontano **distribuzioni** (gradi, reciprocità, triangoli, omofilia, persistenza) e qualche divergenza è fisiologica.
+**Rischio 3 — valutare un modello generativo non si fa con un AUC.** Nel sintetico non ci sono archi veri: la generazione si giudica sulle **distribuzioni e sulle statistiche di rete** per snapshot (gradi, reciprocità, transitività, modularità, omofilia, crescita) contro il reale, e qualche divergenza è fisiologica. L'AUC serve solo dove le etichette esistono, cioè sul reale, e non è un proxy della qualità della rete generata (§6).
 
 **Rischio 4 — lo scenario temporale del sintetico resta in parte una nostra costruzione (§2.1).** Dal reale prendiamo la **curva di arrivo** e, dopo la decisione presa, anche la **forma di attività** (curva per passo + raffiche per utente); restano assunzioni nostre **l'ordine di arrivo** (dedotto dagli `id`) e la variante "tutti presenti". Poiché nel reale il 92% degli archi nuovi coinvolge un entrante, lo scenario resta l'elemento che pesa di più sulla rete generata. **Mitigazione**: dichiararlo come *scenario* e non come dato; le **due varianti** di arrivo come controllo di sensibilità; e il fatto che l'attività non sia più uniforme rende finalmente informativa la variabile "la sorgente ha scritto", che con l'attività costante era inutile.
 
@@ -311,11 +320,21 @@ Queste strade sono **documentate e non vengono riaperte** in questo progetto: no
 | **V8, tutti presenti** | 129.321 | **0,00129** | 12,9 | 102 | 0,003 | 0,152 | 0,003 | 1,00 |
 | **V8, arrivo progressivo** | 159.804 | 0,00160 | 16,0 | 125 | 0,004 | 0,140 | 0,004 | 1,00 |
 | V8 controllo (vecchio scenario) | 168.015 | 0,00168 | 16,8 | 128 | 0,004 | 0,131 | 0,003 | 1,00 |
-| V8 **ablazione senza contenuto** | 153.100 | 0,00153 | 15,3 | 126 | 0,004 | 0,142 | 0,004 | 1,00 |
+| V8 **ablazione senza contenuto** (`growth_v2`) | 153.100 | 0,00153 | 15,3 | 126 | 0,004 | 0,142 | 0,004 | 1,00 |
+
+**Controllo del contenuto A/B/C** — stesso modello fittato sul reale, stesso scenario, partizione `generated_snapshots_v2`, unica differenza il canale testuale sul lato sintetico:
+
+| modalità | archi | densità | reciprocità | grado max | modularità | transitività | omofilia |
+|---|---|---|---|---|---|---|---|
+| A — testo autentico | 128.859 | 0,001289 | 0,0029 | 100 | 0,154 | 0,00269 | 1,0017 |
+| B — testo permutato fra utenti | 123.310 | 0,001233 | 0,0030 | 111 | 0,158 | 0,00248 | 1,0000 |
+| C — senza testo | 124.154 | 0,001242 | 0,0029 | 98 | 0,158 | 0,00259 | 0,9995 |
 
 - **Raggiunto**: la densità coincide con quella reale (0,00129 contro 0,00125) e il grado medio è a 2–2,5× dal reale, **senza imporre statistiche** (v7 si fermava a 0,0004 e 3,6–5,8). Il piano è stato eseguito come scritto: candidati decisi dalla misura sul reale, attività dal reale, campionamento, retroazione, ablazione.
-- **Non raggiunto, dichiarato**: coda dei gradi (102–128 contro 1.290), reciprocità (0,004 contro 0,418), transitivity (0,003 contro 0,034), omofilia (1,00 contro 2,13).
-- **Il contenuto non aggiunge nulla (misurato)**: ablazione 0,9818 → 0,9816 di AUC, rete +4%, omofilia identica.
+- **Non raggiunto, dichiarato**: coda dei gradi (102–128 contro 1.290), reciprocità (0,004 contro 0,418), transitivity (0,003 contro 0,034).
+- **Il contenuto non porta il legame (esperimento controllato, non più solo ablazione)**: nelle tre modalità A/B/C le proprietà relazionali sono **indistinguibili** (reciprocità 0,0029 / 0,0030 / 0,0029; transitività 0,00269 / 0,00248 / 0,00259; grado massimo 100 / 111 / 98; modularità 0,154 / 0,158 / 0,158) e il volume varia di pochi punti percentuali **senza ordine** (`permuted` sta più vicino a `off` che a `real`), entro la rumorosità fra addestramenti (~0,4%). L'ablazione per AUC (0,9818 → 0,9816) va letta come strumento **saturo**: la prova è il confronto fra reti.
+- **L'unico effetto del testo è minimo**: l'omofilia passa da 1,0000 (testo permutato) e 0,9995 (senza testo) a **1,0017** con testo autentico — circa l'1% del divario che nel reale è 2,13.
+- **La scomposizione del 2,13** (`results/homophily_control.csv`, ultimo snapshot): contro coppie a caso **2,133**; contro non-archi appaiati per grado **1,511**; per grado esatto ±10% **1,290**; per grado+volume di testo 1,367; per volume di testo 1,554. Gli estremi degli archi hanno grado medio **403,6** contro **61,7** e **1.297 caratteri** cumulativi contro una mediana di **323**. Il 2,13 è quindi **in gran parte posizione nella rete** (chi viene collegato è chi è molto connesso e scrive molto, e i profili lessicali dei grandi utenti si somigliano da soli), con un **residuo lessicale piccolo** (AUC ≈ 0,575–0,585). Attenzione a non confondere le rappresentazioni: il residuo vive nei profili **TF-IDF+SVD cumulativi**, non nel canale del generatore (**MiniLM per post**, dove il segnale è nullo) — il 2,13 e l'1,00 del modello non misurano la stessa cosa. I controlli fini sono instabili per passo (in un caso il gruppo appaiato è più simile degli archi: 0,42 contro 0,31), quindi 1,29 va preso come limite inferiore.
 - **Il cambio di scenario conta meno del previsto**: ~5% di volume, nessuna metrica strutturale diversa.
-- **Il coefficiente negativo dei vicini in comune (−4,4)** è spiegato: i negativi sono coppie a caso e gli archi veri coinvolgono entranti, che non hanno vicini in comune.
+- **Il coefficiente negativo dei vicini in comune (−4,4; −5,8 nell'ultimo giro)** è spiegato: i negativi sono coppie a caso e gli archi veri coinvolgono entranti, che non hanno vicini in comune.
 - **Cosa servirebbe per andare oltre** (documentato, non intrapreso): modellare esplicitamente le **relazioni** (reciprocità e chiusura triadica come processo, con campionamento condizionato) e una rappresentazione del contenuto che agisca **a livello di coppia** invece che di singolo utente.
