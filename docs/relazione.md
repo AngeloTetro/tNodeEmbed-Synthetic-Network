@@ -343,9 +343,29 @@ Più della metà del divario se ne va appena si confrontano utenti comparabili: 
 
 **In una riga**: il contenuto non porta il legame (controllo A/B/C, §6.13), e il numero che sembrava dire il contrario era per metà struttura.
 
+### 6.15 V9: la relazione è l'evento di arrivo (e un errore mio, trovato misurando)
+
+Dopo V8 restavano tre proprietà lontane: la reciprocità, i triangoli e la coda dei gradi. Guardando il reale con attenzione, quelle tre cose sono **un solo fenomeno**: quando entra un utente nuovo non porta un arco, ne porta **un intero gruppo** — in media 29–83 secondo il periodo, con punte di **1.421**, che è lo stesso ordine del grado massimo reale. È l'arrivo a creare l'hub, non una somma di decisioni indipendenti, e circa il 40% di quegli archi è ricambiato dentro lo stesso arrivo.
+
+V9 cambia quindi l'unità del modello: non più la coppia, ma l'**evento di arrivo**. Sul reale si stimano tre cose — quanti archi porta un arrivo, dove vanno (grado, "la controparte è nuova", attività, contenuto, co-occorrenza) e quanto è ricambiato — e poi si genera arrivo per arrivo, con lo stato che si aggiorna a ogni passo. Il testo resta una delle variabili della scelta, esattamente come in V8.
+
+| rete | archi | grado medio | grado max | reciprocità | modularità | transitivity | clustering | diametro |
+|---|---|---|---|---|---|---|---|---|
+| **reale** | 824.045 | **32,05** | **1.290** | **0,418** | **0,275** | **0,034** | **0,080** | **6** |
+| **V9** | 279.050 | **28,24** | **324** | **0,303** | 0,106 | **0,0203** | **0,042** | **6** |
+| V8 | 129.321 | 12,93 | 102 | 0,003 | 0,152 | 0,003 | 0,005 | 9 |
+
+V9 avvicina tutto: la reciprocità passa da 0,003 a **0,303** (il reale è 0,418), il grado medio da 12,9 a **28,2** (reale 32,05), il grado massimo da 102 a **324**, e per la prima volta anche triangoli e clustering stanno nell'ordine di grandezza giusto (0,0203 contro 0,034 e 0,042 contro 0,080), con il diametro identico al reale.
+
+**Un errore mio, e come l'ho trovato.** La prima versione di V9 sbagliava la coesione nel verso opposto (modularità 0,854 contro 0,275 del reale). Prima di cambiare il modello ho misurato *come era fatta* la rete generata, con lo stesso controllo che usiamo sul reale: il **99,95%** degli archi era fra utenti arrivati **nello stesso istante**, contro l'8,1% del reale. La causa era nel codice: nel fit della scelta le coppie di controllo "non collegate" le pescavo solo fra i presenti già esistenti, mai fra i co-arrivati, quindi la variabile "la controparte è nuova" separava da sola i casi veri dai falsi e imparava una preferenza che nel reale non esiste. Corretto il bacino di pesca, la coesione è rientrata di colpo: transitività da 0,107 a **0,0203**, clustering da 0,141 a **0,042**, archi fra co-arrivati dal 99,95% al **17%**.
+
+**Cosa resta.** Gli scarti residui sono piccoli e **tutti nella stessa direzione**: V9 è un po' più "piatta" del reale (0,25–0,9× su modularità, grado massimo e quota di archi fra co-arrivati). Il filo comune è la **preferenza per i nodi più connessi, che resta sottostimata** (il grado dell'estremo già presente è 165 contro 437), e viene dal trasferire le variabili di grado da una rete di 25.714 utenti a una di 10.000: è la difficoltà di trasferimento che avevamo messo in conto fin dall'inizio.
+
+**Il contenuto, per la quarta volta.** Con lo stesso modello e lo stesso scenario, testo autentico, testo permutato fra utenti e nessun testo danno reti indistinguibili (reciprocità 0,3034 / 0,3034 / 0,3014; transitività 0,0203 / 0,0206 / 0,0207). La risposta alla domanda del progetto è la stessa in entrambi i meccanismi: **il contenuto non decide chi si collega a chi**.
+
 ## 7. Cosa non abbiamo fatto, e i limiti da tenere presenti
 
-0. **V8 (il metodo definitivo) non riproduce tre proprietà del reale**: la coda dei gradi (massimo 102–128 contro 1.290), la **reciprocità** (0,004 contro 0,418) e la **transitivity** (0,003 contro 0,034). Le prime due dipendono da meccanismi relazionali che il modello, così com'è costruito, non cattura; la terza anche dal fatto che i negativi sono coppie a caso (che rende negativo il coefficiente dei vicini in comune).
+0. **V8 non riproduce tre proprietà del reale** — la coda dei gradi (massimo 102–128 contro 1.290), la **reciprocità** (0,004 contro 0,418) e la **transitivity** (0,003 contro 0,034) — e **V9 le porta tutte nell'ordine giusto** (§6.15), restando però un po' più "piatta" del reale: gli scarti residui sono 0,25–0,9× e hanno tutti la stessa causa (la preferenza per i nodi più connessi, sottostimata nel trasferimento fra reti di dimensioni diverse).
 1. **Il contenuto, da solo, non riproduce i collegamenti.** È il risultato principale e va detto per primo: col controllo **A/B/C** (§6.13) la rete non cambia quando il testo passa dal suo proprietario a un altro utente, e nel modello di formazione degli archi il peso del punteggio di contenuto è **~+0,11–0,14** contro **+3,3** dell'"utente nuovo". Con un controllo per arrivo e grado, l'AUC del contenuto sta intorno a 0,49–0,57 (0,5 = caso). Quindi la pipeline spiega *quando* nascono i collegamenti (chi entra, quanto è connesso) ma non *fra chi*, nella misura in cui conta il contenuto. Il numero che sembrava contraddire questa conclusione — l'omofilia **2,13** del reale — è **in gran parte struttura** (§6.14).
 2. **La famiglia per inferenza (v7) non riproduce la struttura del reale**: grado uscente medio 3,6–5,8 contro 32,0; reciprocità da 0,00 a 0,72 (non stabile) contro 0,42; e con l'encoder fine-tuned compare un hub degenerato (un utente collegato a tutti, grado 9.999 contro un massimo reale di 1.290). La famiglia calibrata (v6) centra volume e reciprocità **per costruzione**, non perché li abbia imparati: è la differenza fra *imporre* e *predire*.
 3. **Il fine-tuning dell'encoder non è passato**: migliora la validation ma peggiora entrambe le finestre di test (media 0,519 contro 0,534 per MiniLM; 0,523 contro 0,530 per bge-base). La supervisione (0,49–0,57 di AUC) è troppo debole perché l'encoder impari qualcosa che generalizzi. Il fine-tuning di bge-base ha girato con budget ridotto (4.000 coppie, 1 epoca, batch 8) perché la scheda da 6 GB andava in esaurimento di memoria con batch più grandi.
@@ -382,6 +402,8 @@ Più della metà del divario se ne va appena si confrontano utenti comparabili: 
 - **Prevalenza (e correzione della prevalenza)**: quanto è rara una cosa. Le coppie collegate sono rarissime (6,4 su 100.000), quindi le probabilità del modello vanno riportate a quella scala prima di decidere; è il motivo per cui la decisione "bayesiana" di v7 non produce nessun arco.
 - **Soglia globale per passo**: una sola soglia per ogni istante di tempo, calcolata su tutte le coppie candidate; è la versione corretta della soglia "a blocchi" usata all'inizio, che rompeva la simmetria fra (u,v) e (v,u).
 - **Omofilia del contenuto (ratio)**: quante volte i due capi di un collegamento si somigliano di più rispetto a due utenti estratti a caso (1 = nessuna differenza). Nel reale è 2,13, nelle reti generate è ~1,00. Attenzione: **il confronto giusto non è con due utenti qualsiasi** (§6.14) — contro non collegati con la stessa posizione nella rete il 2,13 scende a 1,29–1,55.
+- **Evento di arrivo** (V9): l'insieme degli archi nuovi che un utente porta con sé quando entra nella rete. È l'unità di V9 al posto della coppia: nel reale un arrivo porta in media 29–83 archi, con punte di 1.421.
+- **Trasferimento (il Rischio 1 del piano)**: le variabili di grado sono espresse in percentili per poter passare da una rete di 25.714 utenti a una di 10.000; è la ragione per cui in V9 la preferenza per i nodi più connessi risulta un po' sottostimata.
 - **Poisson(1,2)**: distribuzione da cui estraevamo il numero di nuovi archi per utente a ogni snapshot nella vecchia regola (v1–v5): **variante scartata**, tenuta nel confronto.
 
 ## 9. Come riprodurre tutto
