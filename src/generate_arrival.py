@@ -234,6 +234,16 @@ def build_choice_dataset(model, embeddings, users, index, edge_sets, masks, rng,
                                                                       users, step)
         if present.size == 0 or not events:
             continue
+        # Negatives must come from the same pool the generation samples from (the users already
+        # present plus the newcomers of this step): otherwise "the partner is new" separates
+        # positives from negatives by construction and the fitted weight is meaningless.
+        newcomers = np.array(sorted(index[owner] for owner in events if owner in index),
+                             dtype=np.int64)
+        pool = np.union1d(present, newcomers)
+        if pool.size == 0:
+            continue
+        values = degree_log[pool]
+        percentile[pool] = (values.argsort().argsort() / max(1, pool.size - 1)).astype(np.float32)
         neighbours = neighbours_of(edge_sets, step, index)
         chosen = list(events)
         if len(chosen) > MAX_EVENTS:
@@ -255,7 +265,7 @@ def build_choice_dataset(model, embeddings, users, index, edge_sets, masks, rng,
                 adjacent.append(1.0 if len(partner_set & neighbours.get(index[partner], set())) > 0
                                 else 0.0)
             for _ in range(NEG_PER_POS * len(partners)):
-                candidate = int(present[rng.integers(0, present.size)])
+                candidate = int(pool[rng.integers(0, pool.size)])
                 owners.append(index[owner])
                 targets.append(candidate)
                 directions.append(1.0 if rng.random() < 0.5 else 0.0)
