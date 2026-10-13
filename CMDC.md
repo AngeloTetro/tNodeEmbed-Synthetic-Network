@@ -88,7 +88,7 @@ Partizioni definitive: `generated_snapshots_v2` (tutti presenti) e
 | rete | archi | grado medio | grado max | reciprocità | modularità | transitivity | clustering | diametro |
 |---|---|---|---|---|---|---|---|---|
 | **reale** | 824.045 | **32,05** | **1.290** | **0,418** | **0,275** | **0,034** | **0,080** | **6** |
-| **V9** | 279.050 | 28,24 | 324 | 0,303 | 0,106 | 0,0203 | 0,042 | 6 |
+| **V9** | 280.298 | 28,30 | 324 | 0,304 | 0,106 | 0,0209 | 0,043 | 6 |
 | V8 | 129.321 | 12,93 | 102 | 0,003 | 0,152 | 0,003 | 0,005 | 9 |
 
 - **V9 è il risultato più avanzato** e supera V8 su tutte le proprietà relazionali (reciprocità,
@@ -146,9 +146,9 @@ Partizioni definitive: `generated_snapshots_v2` (tutti presenti) e
 
 ## 9. Convenzioni e ambiente
 
-- **seed fissi** ovunque; le reti sono **riproducibili**, ma il volume di V9 varia di **~2%** fra un
-  run e l'altro (i lotti di addestramento sono campionati: l'ordine delle chiamate cambia lo stato
-  del generatore casuale). Reciprocità, gradi massimi e coesione non cambiano;
+- **seed fissi** ovunque; le reti sono **riproducibili**: i generatori iterano gli archi in ordine
+  ordinato (l'ordine di iterazione dei set di stringhe non è fissato in Python e faceva derivare il
+  volume di circa il 2% fra un run e l'altro), quindi ripetere i comandi dà gli stessi numeri;
 - **lingue**: script, CSV e figure in **inglese**; i `.md` e la conversazione in **italiano**;
 - **macchina**: una RTX 3060 da 6 GB (il fine-tuning di `bge-base` richiede `--batch 8`);
 - **git**: ramo di lavoro `levers/posts-as-edges` (= `main`, allineati); `Esame .../`, `models/`,

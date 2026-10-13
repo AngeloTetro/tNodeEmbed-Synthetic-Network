@@ -78,11 +78,16 @@ def log(text):
 
 def arrivals(edge_sets, index, step):
     """Eventi di arrivo della transizione `step`: ogni arco nuovo appartiene all'evento del suo
-    estremo nuovo (se sono nuovi entrambi, vince la sorgente), con la direzione rispetto a lui."""
+    estremo nuovo (se sono nuovi entrambi, vince la sorgente), con la direzione rispetto a lui.
+
+    Gli archi si iterano in ordine deterministico (`sorted`): l'ordine di iterazione di un set di
+    stringhe dipende dall'hash del processo e cambierebbe la sequenza casuale a valle, rendendo le
+    ripetizioni diverse fra loro.
+    """
     previous, current = edge_sets[step - 1], edge_sets[step]
     before = {u for edge in previous for u in edge}
     events = {}
-    for source, target in current - previous:
+    for source, target in sorted(current - previous):
         if source in index and source not in before:
             owner, direction, partner = source, 1.0, target
         elif target in index and target not in before:
@@ -209,9 +214,12 @@ def content_scores(model, embeddings, owners, targets, with_content):
 
 
 def neighbours_of(edge_sets, step, index):
-    """Vicinato (entrambe le direzioni) nella rete della transizione, indicizzato come `index`."""
+    """Vicinato (entrambe le direzioni) nella rete della transizione, indicizzato come `index`.
+
+    Anche qui l'iterazione e' ordinata, per lo stesso motivo di `arrivals`.
+    """
     out = {}
-    for a, b in edge_sets[step]:
+    for a, b in sorted(edge_sets[step]):
         i, j = index.get(a), index.get(b)
         if i is None or j is None:
             continue

@@ -183,8 +183,9 @@ def real_arrays(edge_sets, index, n):
     pairs, last_received = [], []
     latest = np.full(n, -1, dtype=np.int32)
     for edges in edge_sets:
-        i = np.array([index[a] for a, b in edges if a in index and b in index], dtype=np.int32)
-        j = np.array([index[b] for a, b in edges if a in index and b in index], dtype=np.int32)
+        ordered = sorted(edges)
+        i = np.array([index[a] for a, b in ordered if a in index and b in index], dtype=np.int32)
+        j = np.array([index[b] for a, b in ordered if a in index and b in index], dtype=np.int32)
         pairs.append((i, j))
         for target in j:
             latest[target] = len(pairs) - 1
@@ -214,7 +215,7 @@ def training_matrix(model, embeddings, users, index, edge_sets, pairs, last_rece
     i, j = pairs[step - 1]
     active = np.asarray(masks[step], dtype=bool)
     state = step_state(i, j, n, last_received[step - 1], step, active)
-    delta = [(index[a], index[b]) for a, b in (edge_sets[step] - edge_sets[step - 1])
+    delta = [(index[a], index[b]) for a, b in sorted(edge_sets[step] - edge_sets[step - 1])
              if a in index and b in index]
     chosen = rng.choice(len(delta), min(max_pos, len(delta)), replace=False)
     positives = [delta[k] for k in chosen]

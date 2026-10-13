@@ -227,10 +227,12 @@ def main():
     mean_edge_degree = float(np.mean([total.get(u, 0) for u in endpoints]))
     mean_user_degree = float(np.mean([total.get(u, 0) for u in users]))
     text_final = np.array([volumes[-1][u] for u in users])
+    edge_characters = float(np.median([volumes[-1].get(u, 0) for u in endpoints]))
+    user_characters = float(np.median(text_final))
     print(f'\ngrado medio: estremi degli archi {mean_edge_degree:.1f} | utenti con testo '
           f'{mean_user_degree:.1f}')
-    print(f'caratteri cumulativi per utente: mediana {np.median(text_final):.0f} | '
-          f'agli estremi degli archi {np.median([volumes[-1].get(u, 0) for u in endpoints]):.0f}')
+    print(f'caratteri cumulativi per utente: mediana {user_characters:.0f} | '
+          f'agli estremi degli archi {edge_characters:.0f}')
     values = np.array([total.get(u, 0) for u in users])
     boundaries = np.quantile(values, np.linspace(0, 1, 11))
     for position in range(10):

@@ -1,0 +1,7 @@
+transition,arrival_events,new_edges,edges_per_event_mean,edges_per_event_median,edges_per_event_max,outgoing_share
+1,3040,106309,34.97,6.0,632,0.6307
+2,2345,123037,52.47,10.0,842,0.6037
+3,1263,105522,83.55,18.0,1202,0.6182
+4,1317,146398,111.16,32.0,946,0.6121
+5,1076,109592,101.85,25.0,1035,0.5051
+all,,590858,,,,

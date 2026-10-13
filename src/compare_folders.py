@@ -7,7 +7,10 @@ Produces figures under results/figures:
   compare_degree_ccdf.png   out-degree distribution of the final snapshot
   compare_profiles.png      profile classification AUC by feature set (generated folders)
 
-Usage: uv run python src/compare_folders.py
+Usage: uv run python src/compare_folders.py [--prefix NAME] [folder ...]
+       (default folders: real_snapshots, generated_snapshots, generated_snapshots_growth;
+        with --prefix the figures are named <NAME>_growth.png etc., so they do not overwrite
+        the ones used by the internal report)
 """
 
 import csv
@@ -26,7 +29,12 @@ BASE = os.path.join(ROOT, 'Esame Angelantonio Fedele Murolo')
 RESULTS = os.path.join(ROOT, 'results')
 FIGURES = os.path.join(RESULTS, 'figures')
 DEFAULT_FOLDERS = ('real_snapshots', 'generated_snapshots', 'generated_snapshots_growth')
-FOLDERS = tuple(sys.argv[1:]) if len(sys.argv) > 1 else DEFAULT_FOLDERS
+ARGUMENTS = list(sys.argv[1:])
+PREFIX = 'compare'
+if ARGUMENTS and ARGUMENTS[0] == '--prefix':
+    PREFIX = ARGUMENTS[1]
+    ARGUMENTS = ARGUMENTS[2:]
+FOLDERS = tuple(ARGUMENTS) if ARGUMENTS else DEFAULT_FOLDERS
 
 
 def read_csv(name):
@@ -60,7 +68,7 @@ def main():
         ax.grid(alpha=0.3)
         ax.legend(fontsize=8)
     figure.tight_layout()
-    figure.savefig(os.path.join(FIGURES, 'compare_growth.png'))
+    figure.savefig(os.path.join(FIGURES, f'{PREFIX}_growth.png'))
     plt.close(figure)
 
     figure, axes = plt.subplots(1, 3, figsize=(15, 4.5))
@@ -77,7 +85,7 @@ def main():
         ax.grid(alpha=0.3)
         ax.legend(fontsize=8)
     figure.tight_layout()
-    figure.savefig(os.path.join(FIGURES, 'compare_structure.png'))
+    figure.savefig(os.path.join(FIGURES, f'{PREFIX}_structure.png'))
     plt.close(figure)
 
     figure, ax = plt.subplots(figsize=(7, 4.5))
@@ -93,7 +101,7 @@ def main():
     ax.grid(alpha=0.3)
     ax.legend(fontsize=8)
     figure.tight_layout()
-    figure.savefig(os.path.join(FIGURES, 'compare_homophily.png'))
+    figure.savefig(os.path.join(FIGURES, f'{PREFIX}_homophily.png'))
     plt.close(figure)
 
     figure, ax = plt.subplots(figsize=(7, 4.5))
@@ -113,7 +121,7 @@ def main():
     ax.grid(alpha=0.3, which='both')
     ax.legend(fontsize=8)
     figure.tight_layout()
-    figure.savefig(os.path.join(FIGURES, 'compare_degree_ccdf.png'))
+    figure.savefig(os.path.join(FIGURES, f'{PREFIX}_degree_ccdf.png'))
     plt.close(figure)
 
     generated = [folder for folder in FOLDERS if folder.startswith('generated')]
@@ -138,7 +146,7 @@ def main():
             ax.legend(fontsize=7)
             ax.grid(alpha=0.3, axis='y')
         figure.tight_layout()
-        figure.savefig(os.path.join(FIGURES, 'compare_profiles.png'))
+        figure.savefig(os.path.join(FIGURES, f'{PREFIX}_profiles.png'))
         plt.close(figure)
     print(f'comparison figures written to {FIGURES}')
 
