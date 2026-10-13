@@ -28,7 +28,7 @@ L'unica informazione **comune** ai due dataset è il **contenuto dei post**: il 
 | analizzare ogni rete (struttura, evoluzione, contenuto, accrescimento) e scomporre l'omofilia del reale (grado, volume, arrivo) | `src/analyze_*.py`, `src/check_real_accretion.py` |
 | tabella e figure di confronto con il reale | `src/variant_summary.py`, `src/compare_folders.py` |
 
-La **rete ufficiale è V8**: un modello di formazione degli archi fittato sul reale (contenuto di tNodeEmbed + grado relativo + arrivo + arco inverso + vicini in comune + attività + recenza) e poi **simulato passo per passo, campionando** ogni coppia con la sua probabilità. Nessuna soglia e nessun conteggio deciso da noi: volume e gradi **emergono**. Documenti: **`FINAL.md`** (piano), **`docs/pipeline.md`** (tecnico), **`docs/relazione.md`** + PDF (divulgativo), **`docs/nota_dottorando.md`** (sintesi per il dottorando).
+La **rete ufficiale del piano è V8**: un modello di formazione degli archi fittato sul reale (contenuto di tNodeEmbed + grado relativo + arrivo + arco inverso + vicini in comune + attività + recenza) e poi **simulato passo per passo, campionando** ogni coppia con la sua probabilità. Nessuna soglia e nessun conteggio deciso da noi: volume e gradi **emergono**. Su questa base è nato **V9** (l'evento di arrivo, `src/generate_arrival.py`), la **variante più avanzata**: supera V8 su reciprocità, scala dei gradi, coda e coesione. Documenti: **`FINAL.md`** (piano), **`docs/pipeline.md`** (tecnico), **`docs/relazione.md`** + PDF (divulgativo), **`docs/nota_dottorando.md`** (sintesi per il dottorando), **`CMDC.md`** (memoria per le sessioni di lavoro).
 
 ## Risultato principale
 

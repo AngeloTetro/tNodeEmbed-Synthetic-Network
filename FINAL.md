@@ -99,7 +99,7 @@ Le due partizioni restano — `generated_snapshots` (tutti presenti) e `generate
 4. **Testa**: punteggio per coppia da `[h_u, h_v, h_u ⊙ h_v]`, addestrata con cross-entropy binaria sulle transizioni di training del reale, early stopping sulla validation; **il test non si tocca** fino alla valutazione.
 - Feature dei nodi **congelate** (la variante addestrabile è stata provata e **peggiora**: 0,512 contro 0,534).
 
-### 3.3 Strato 3 — Il modello di formazione degli archi (V8, **definitivo**)
+### 3.3 Strato 3 — Il modello di formazione degli archi (V8, **il metodo del piano**; V9 in §10)
 
 **Unità di decisione**: la coppia ordinata (sorgente, destinazione) fra utenti presenti al passo t, esclusi self-loop e coppie già collegate.
 
