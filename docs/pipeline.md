@@ -19,6 +19,8 @@
 
 Nessun file originale viene modificato: le cartelle generate sono **nuove** dentro `Esame Angelantonio Fedele Murolo/`.
 
+**Misura dei batch nativi** (`src/consolidate_native.py` → `results/native_batches.csv`), che conferma e quantifica la riga "ordine casuale" della tabella: **batch_0, batch_1 e batch_2** hanno 33.068 / 33.068 / 34.318 post e coprono **tutto** l'intervallo degli id (batch_0 da 5 a 100.451, mediana 49.527; batch_2 da 2 a 100.455, mediana 51.574), condividendo fra loro ~9.500 utenti su ~9.700; **batch_3 ha 2 righe**. Non sono tre (o quattro) periodi consecutivi: sono tre terzi dei post della **stessa** popolazione, e per questo la partizione in 9 step impone l'asse del tempo da sé (§2, `build_synthetic_snapshots.py`). Da qui la **consegna doppia**: i 9 file `.edg` (uno per step, la forma buona) e, per chi lavora con i file nativi, `native_4_batch_<i>.edg` = la rete **ristretta agli utenti di quel batch** (conserva il 93–97% degli archi, proprio perché le popolazioni coincidono quasi del tutto) più `native_4.csv` — è una restrizione **per utenti**, non una suddivisione per periodi, e va letta così.
+
 ## 3. Il tempo è la struttura portante: tNodeEmbed
 
 **Ogni snapshot è un time step** (9 nel reale, 9 nel sintetico partizionato). La pipeline temporale è quella del paper, **senza node2vec**, con il contenuto al posto degli embedding statici:

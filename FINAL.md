@@ -313,6 +313,7 @@ Queste strade sono **documentate e non vengono riaperte** in questo progetto: no
 |---|---|
 | reti generate (V8, due partizioni; più le varianti) | `Esame Angelantonio Fedele Murolo/generated_snapshots*_v8/` |
 | **rete V9** (il meccanismo di arrivo, tre modalità di contenuto) | `Esame Angelantonio Fedele Murolo/generated_snapshots_v2_v9_*/` |
+| **consegna doppia**: i 4 file `.edg` nella forma dei batch nativi (**restrizione per utenti**, non per periodi: i batch non sono slice temporali, §2) | `<cartella V9>/native_4_batch_<0-3>.edg`, `<cartella V9>/native_4.csv`, `results/native_batches.csv` |
 | **V8 di controllo sulla vecchia partizione** (misura l'effetto del cambio di scenario) | `<partizione storica>_v8/` |
 | modelli, report, coefficienti | `models/`, `results/v8_report.csv`, `results/v8_coefficients.csv`, `results/v9_report.csv`, `results/v9_coefficients.csv` |
 | **embedding tNodeEmbed del sintetico** (per le analisi dei profili) | `<cartella generata>/tnodeembed_embeddings.npz`, scritto da **entrambi** i generatori |
