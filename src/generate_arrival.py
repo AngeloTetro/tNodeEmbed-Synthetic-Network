@@ -285,10 +285,11 @@ def build_choice_dataset(model, embeddings, users, index, edge_sets, masks, rng,
                 adjacent.append(1.0 if len(partner_set & neighbours.get(index[partner], set())) > 0
                                 else 0.0)
             for _ in range(NEG_PER_POS * len(partners)):
-                roll = rng.random()
-                if stratified and inversions and roll < 0.30:
+                # Il percorso uniforme non estrae numeri in piu': con `--negatives uniform` la
+                # sequenza casuale (e quindi la rete generata) resta quella documentata.
+                if stratified and inversions and rng.random() < 0.30:
                     candidate, direction = inversions[int(rng.integers(0, len(inversions)))]
-                elif stratified and roll < 0.60:
+                elif stratified and rng.random() < 3.0 / 7.0:
                     candidate = int(hard_degree[int(rng.integers(0, hard_degree.size))])
                     direction = 1.0 if rng.random() < 0.5 else 0.0
                     if candidate in partner_set:
