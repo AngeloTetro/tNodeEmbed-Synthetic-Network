@@ -5,7 +5,7 @@
 Il progetto di esame studia **una rete sociale che evolve nel tempo**. Ci sono due dataset:
 
 - **reale**: 25.714 utenti, 173.475 post, **824.045 collegamenti** (diretti) su **9 snapshot** (2022 → luglio 2025), con lo split dichiarato 6 training / 1 validation / 2 test;
-- **sintetico**: 10.000 utenti con 100.456 post e attributi di profilo, **senza collegamenti e senza date** (il tempo lo imponiamo noi: 9 snapshot), in 4 batch.
+- **sintetico**: 10.000 utenti con 100.456 post e attributi di profilo, **senza collegamenti e senza date** (il tempo lo imponiamo noi: 9 snapshot), in 4 batch che **non sono periodi** (misurato: ognuno copre tutto l'intervallo degli `id`, ~9.500 utenti condivisi su ~9.700, e il quarto ha 2 righe — `results/native_batches.csv`).
 
 L'unica informazione **comune** ai due dataset è il **contenuto dei post**: il reale ha solo campi del post (lingua, conteggi di reazioni/risposte, timestamp) e nessun profilo utente, il sintetico ha **attributi dell'utente** (genere, religione, orientamento politico, età, professione…) ma l'unica cosa che esiste da entrambe le parti è il testo — e quindi l'unica feature utilizzabile, visto che il modello si addestra sul reale e si applica al sintetico. Gli archi sono **interazioni fra due utenti** (leggibili come un follow, senza significato specifico da preservare). Il dataset reale **non va mai modificato**.
 
@@ -24,6 +24,9 @@ L'unica informazione **comune** ai due dataset è il **contenuto dei post**: il 
 | ripartire il sintetico in 9 time step (arrivo e attività **dal reale**) | `src/build_synthetic_snapshots.py` |
 | decidere quali coppie sono candidate (misura sul reale) | `src/measure_source_activity.py` |
 | generare la rete: **modello fittato sul reale + campionamento + retroazione** | `src/generate_structural.py` |
+| generare la rete con l'unità dell'**evento di arrivo** (**V9**, la versione ufficiale) | `src/generate_arrival.py` |
+| scorecard delle varianti e **pendenza di coda** del grado | `src/variant_scorecard.py` |
+| consegna nella forma dei 4 batch nativi (restrizione per utenti) | `src/consolidate_native.py` |
 | varianti di confronto (regole a mano, calibrate, inferenza con soglia) | `src/apply_edge_rules.py`, `src/apply_v6.py`, `src/generate_inference.py` |
 | analizzare ogni rete (struttura, evoluzione, contenuto, accrescimento) e scomporre l'omofilia del reale (grado, volume, arrivo) | `src/analyze_*.py`, `src/check_real_accretion.py` |
 | tabella e figure di confronto con il reale | `src/variant_summary.py`, `src/compare_folders.py` |
@@ -37,6 +40,10 @@ La **rete ufficiale del piano è V8**: un modello di formazione degli archi fitt
 **Male, e dichiarato**: restano lontane la **coda dei gradi** (massimo 102–128 contro 1.290), la **reciprocità** (0,004 contro 0,418) e la **transitivity** (0,003 contro 0,034) *nel modello a coppie (V8)*. L'**omofilia del contenuto** (1,00 nelle reti generate contro 2,13 nel reale) va letta con la sua scomposizione: contro non-archi appaiati per grado e volume di testo il 2,13 scende a **1,29–1,55**, quindi è in gran parte **posizione nella rete** e non scelta di somiglianza (dettagli in `FINAL.md` §10, `results/homophily_control.csv`).
 
 **Il contenuto non porta il legame, misurato**: con lo stesso modello e lo stesso scenario, testo autentico, testo **permutato fra utenti** e assenza di testo danno reti **indistinguibili** nelle proprietà relazionali (reciprocità 0,0029/0,0030/0,0029, transitivity 0,0025/0,0025/0,0026, grado massimo 100/111/98) e un volume che varia di pochi punti percentuali senza ordine. L'ablazione per AUC (0,9818 → 0,9816) è **satura** e da sola non prova nulla: la prova è il confronto fra reti. Il meccanismo che il modello impara è "chi entra e quanto è connesso", non "chi si somiglia".
+
+**Il confronto onesto con tutte le famiglie, e i due limiti nuovi.** Su sette metriche confrontabili V9 è la più vicina al reale **solo sul grado medio** (28,30 contro 32,05): la densità migliore è di V8 (0,00129 contro 0,00125), transitivity e clustering di v6b, la reciprocità di v6a/v6b (0,420, **imposta**), grado massimo e modularità di v2. Quello che V9 ha e le altre no è la **contemporaneità** delle proprietà, **senza imporre statistiche** (`results/variant_scorecard.csv`). La misura che mancava è la **pendenza della coda** (CCDF del grado uscente sull'ultimo decile): reale **−2,35** (esponente **3,35**) contro **−3,33** di V9 (**4,33**) — la coda di V9 è **troppo leggera**, quella di v2/v6b appena troppo pesante. E il **volume** non è un errore di scala: gli archi sono grado medio × utenti, quindi 280.298 su 9.904 utenti sta a ~317.000 alla scala reale (V8 a 0,40 del valore atteso, V9 a 0,88).
+
+**Due verifiche fatte e chiuse.** I 4 batch nativi del sintetico **non sono periodi** (ognuno copre tutto l'intervallo degli `id`, ~9.500 utenti condivisi su ~9.700, il quarto ha 2 righe: `results/native_batches.csv`), quindi la consegna doppia è una **restrizione per utenti**, non una divisione nel tempo. E i **negativi misti** (30% coppie invertite, 30% difficili sul grado, 40% uniformi) sono stati provati in controllo e **peggiorano la rete** (transitivity 0,0115 contro 0,0209, co-arrivati 18,4% contro 12,4%, reciprocità 0,300 contro 0,3035): la configurazione documentata resta quella, e il controllo vive nel ramo `experiment/negativi-stratificati`.
 
 ## Annotazione sulle lingue
 

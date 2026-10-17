@@ -36,7 +36,9 @@ Vincoli concordati con il dottorando (non negoziabili):
 Cartella: `Esame Angelantonio Fedele Murolo/real_snapshots/` (3 file per snapshot:
 `social_network.edg` a due colonne di **id utente**, `posts_current_snapshot.tsv` = solo il periodo,
 `posts_incremental.tsv` = cumulativo) e `synthetic_snapshots/` (4 batch, ~9.700 utenti ciascuno con
-sovrapposizione). I `profiles_*` e `content_attributes_*` usano le label del sintetico.
+sovrapposizione: **misurato**, ognuno copre tutto l'intervallo degli `id` — mediana intorno a
+50.000 — quindi **non sono periodi**, e il quarto batch ha 2 righe: `results/native_batches.csv`).
+I `profiles_*` e `content_attributes_*` usano le label del sintetico.
 
 ## 3. Il tempo: il criterio degli snapshot
 
@@ -95,6 +97,9 @@ Partizioni definitive: `generated_snapshots_v2` (tutti presenti) e
   scala dei gradi, coda, triangoli, clustering, diametro). Gli scarti residui sono 0,25–0,9× e hanno
   **una causa unica**: la preferenza per i nodi più connessi resta sottostimata nel trasferimento da
   25.714 utenti reali a 10.000 sintetici (Rischio 1 del piano).
+- **Il confronto onesto con tutte le famiglie** (`src/variant_scorecard.py` → `results/variant_scorecard.csv`): su **7 metriche confrontabili V9 è la più vicina al reale solo sul grado medio**. La densità migliore è di V8, transitivity e clustering di v6b, la reciprocità di v6a/v6b (0,420, **imposta**) e grado massimo e modularità di v2. V9 vince la **contemporaneità**, non la classifica metrica per metrica. La misura che mancava, la **pendenza di coda** (CCDF del grado uscente, ultimo decile): reale **−2,35** (esponente **3,35**), v2 −2,25, v6b −2,09, **V9 −3,33 (4,33)**, v8 −3,63 → la coda di V9 è **troppo leggera**, quella di v2/v6b appena troppo pesante. Il **volume** non è un difetto: archi = grado medio × utenti, e alla scala reale V9 sta a **0,88** (V8 0,40, v2/v6b 1,29–1,32).
+- **Le due partizioni, provate entrambe su V9**: `_v2` ("tutti presenti", **ufficiale**) contro `_growth_v2` (ingresso progressivo, curva di arrivo del reale). Quasi equivalenti — distanza relativa su otto metriche **3,79 contro 4,39**, che diventa 3,26 contro 3,29 togliendo la quota di co-arrivati (12,4% contro 17,0%, reale 8,1%) — con la progressiva migliore sulla reciprocità (0,3224 contro 0,3035) e l'ufficiale su volume, grado medio, grado massimo e coesione. Artefatti: `generated_snapshots_growth_v2_v9/`, `results/structure_generated_snapshots_growth_v2_v9.csv`, `results/accretion_generated_snapshots_growth_v2_v9.csv`.
+- **La ripetibilità ha un confine, dichiarato**: il **generatore** è deterministico (il rilancio del comando documentato dà 280.299 archi contro 280.298, con gli stessi 8.293 eventi di arrivo, la stessa quota ricambiate 0,4074 e la stessa reciprocità 0,3035), l'**addestramento** no: i pesi variano al terzo decimale fra processi. Le tabelle si citano quindi come **un'unica esecuzione**. Artefatti: `results/v9_check_coefficients.csv` contro `results/v9_coefficients.csv`.
 - **Il contenuto non decide chi si collega a chi**: quattro controlli A/B/C concordi (V8 e V9).
 - **Il 2,13 di omofilia del reale è in gran parte struttura**: contro non-archi appaiati per grado
   scende a 1,51, a 1,29 col grado esatto ±10%; gli estremi degli archi hanno grado medio 403,6
@@ -114,6 +119,7 @@ Partizioni definitive: `generated_snapshots_v2` (tutti presenti) e
   del caso, chi scrive di più non riceve più archi; la parte strutturale (co-interazione sullo stesso
   post) non è verificabile perché il dataset non registra **quale** post è agganciato a un arco;
 - **la leva "più negativi nel fit"** non cambia la coesione e costa 5×.
+- **i negativi "misti"** (30% coppie invertite, 30% difficili sul grado, 40% uniformi — l'unica proposta esterna con un effetto meccanico plausibile): provati in controllo e **peggiorano** la rete — transitivity 0,0115 contro 0,0209, clustering 0,0305 contro 0,043, co-arrivati 18,4% contro 12,4%, grado dell'estremo già presente 104 contro 169 (reale 437), reciprocità 0,300 contro 0,3035. I pesi cambiano molto (novità +0,61 contro +1,22, grado −0,21 contro +1,02) ma la **reciprocità non si muove**: in V9 la genera la tabella delle coppie ricambiate, non il classificatore. La configurazione documentata è il default (`--negatives uniform`, cartella di controllo `generated_snapshots_v2_v9_strat`, coefficienti in `results/v9_strat_coefficients.csv`).
 
 ## 7. Le direzioni aperte
 
@@ -135,20 +141,21 @@ Partizioni definitive: `generated_snapshots_v2` (tutti presenti) e
   `generate_structural.py` (V8), `generate_arrival.py` (V9), `apply_edge_rules.py` (v1–v5),
   `apply_v6.py`, `generate_inference.py` (v7), `finetune_encoder.py`, `analyze_structure.py`,
   `analyze_temporal.py`, `analyze_content.py`, `analyze_profiles.py`, `check_real_accretion.py`,
-  `analyze_homophily.py`, `variant_summary.py`, `compare_folders.py`;
+  `analyze_homophily.py`, `variant_summary.py`, `variant_scorecard.py` (scorecard + pendenza di
+  coda), `consolidate_native.py` (consegna nella forma dei batch nativi), `compare_folders.py`;
   chiusi col ramo post-come-archi: `build_edge_posts.py`, `edge_content_test.py`
 - **risultati** in `results/`: `v8_report.csv`, `v9_report.csv`, i `*_coefficients.csv`,
   `variant_summary.csv` (la tabella unica), `structure_*`, `structure_heavy_*`, `temporal_*`,
   `content_*`, `content_attributes_*`, `accretion_*`, `profiles_*`, `homophily_control.csv`,
-  `compare_folders`, e le figure in `results/figures/`
+  `variant_scorecard.csv`/`.md` (confronto onesto + pendenza di coda), `native_batches.csv`,
+  `v9_strat_coefficients.csv`, `v9_check_coefficients.csv`, `compare_folders`, e le figure in
+  `results/figures/`
 - **reti generate** in `Esame Angelantonio Fedele Murolo/generated_snapshots*_v8*/` e `..._v9*/`
   (ignorate da git, rigenerabili)
 
 ## 9. Convenzioni e ambiente
 
-- **seed fissi** ovunque; le reti sono **riproducibili**: i generatori iterano gli archi in ordine
-  ordinato (l'ordine di iterazione dei set di stringhe non è fissato in Python e faceva derivare il
-  volume di circa il 2% fra un run e l'altro), quindi ripetere i comandi dà gli stessi numeri;
+- **seed fissi** ovunque; le reti sono **riproducibili per il generatore**: i generatori iterano gli archi in ordine ordinato (l'ordine di iterazione dei set di stringhe non è fissato in Python e faceva derivare il volume di circa il 2% fra un run e l'altro) e nessun ramo di flag deve consumare estrazioni in più nel percorso di default. L'**addestramento** invece non è riproducibile al bit: i pesi variano al terzo decimale fra processi, quindi il rilancio del comando documentato dà **280.299** archi invece di 280.298 (stessi 8.293 eventi, stessa reciprocità 0,3035). Le tabelle si citano come **un'unica esecuzione**;
 - **lingue**: script, CSV e figure in **inglese**; i `.md` e la conversazione in **italiano**;
 - **macchina**: una RTX 3060 da 6 GB (il fine-tuning di `bge-base` richiede `--batch 8`);
 - **git**: ramo di lavoro `levers/posts-as-edges` (= `main`, allineati); `Esame .../`, `models/`,
@@ -174,13 +181,29 @@ Partizioni definitive: `generated_snapshots_v2` (tutti presenti) e
    il ciclo sugli eventi significava miliardi di operazioni e un run di fatto infinito.
 5. **La ridirezione dell'output in `cmd` è bufferizzata**: il file di console resta vuoto fino alla
    fine. I log live sono `results/_v8_run.txt` e `results/_v9_run.txt` (scritti con `flush`).
-6. **`cmd` non ha heredoc**: per i commit usare più `-m` (o `-F file`), mai `<<`.
+6. **`cmd` non ha heredoc**: per i commit usare più `-m` (o `-F file`), mai `<<`. Attenzione anche al
+   `;`: in `cmd` **non** separa i comandi (si usa `&&`) e finisce fra gli argomenti del programma.
 7. **PDF**: `pandoc docs/relazione.md -o docs/relazione.pdf --pdf-engine=xelatex -V geometry:margin=2.5cm -V fontsize=10pt`
-   — evitare `≈` e `⁻⁵` (usare `~`, `circa`, "6,4 su 100.000") perché nel font spariscono.
+   — evitare `≈` e `⁻⁵` (usare `~`, `circa`, "6,4 su 100.000") perché nel font spariscono. Le stesse
+   opzioni valgono per `paper.md` → `paper.pdf` e `paper_en.md` → `paper_en.pdf`.
+8. **Nessuna sottocartella dentro una cartella dataset**: `graph_io.snapshots_folder` legge **ogni**
+   sottocartella come uno snapshot, quindi una cartella di appoggio creata lì dentro rompe tutte le
+   analisi (successo con `native_batches/`, poi spostata nella radice come `native_4_*.edg`).
+9. **`results/v9_coefficients.csv` (e `v8_*`) è unico e viene riscritto a ogni run**: per un
+   esperimento salvare i coefficienti a parte (`v9_strat_coefficients.csv`, `v9_check_coefficients.csv`)
+   e poi `git checkout -- results/v9_coefficients.csv`, altrimenti si perde il fit dell'esecuzione
+   documentata.
+10. **I 4 batch nativi del sintetico non sono periodi** (ognuno copre tutto l'intervallo degli `id`,
+    ~9.500 utenti condivisi su ~9.700, il quarto ha 2 righe): non esiste un consolidamento "per
+    periodi" dei 9 passi, solo uno per appartenenza degli utenti — e il numero di run non cambia il
+    fatto.
 
 ## 11. I comandi chiave
 
 Tutti i comandi sono in **`FINAL.md` §4**. I più usati: partizione del sintetico
 (`build_synthetic_snapshots.py --activity from-real`), generazione V9 e V8 (con `--content`), il
-controllo A/B/C, `analyze_*` su reale e su ogni cartella, `variant_summary.py`. Da qui in poi, la
-riga di comando non serve per capire il progetto: bastano `FINAL.md` §10 e `docs/relazione.md` §6.
+controllo A/B/C, `analyze_*` su reale e su ogni cartella, `variant_summary.py`. Due aggiunte:
+`uv run python src/variant_scorecard.py` (scorecard di tutte le varianti con la pendenza di coda) e
+`uv run python src/consolidate_native.py <cartella>` (consegna nella forma dei 4 batch nativi). Da
+qui in poi, la riga di comando non serve per capire il progetto: bastano `FINAL.md` §10 e
+`docs/relazione.md` §6.
