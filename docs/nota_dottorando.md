@@ -31,9 +31,9 @@
 
 | modalità | archi | densità | reciprocità | grado max | modularità | transitivity | omofilia |
 |---|---|---|---|---|---|---|---|
-| A — testo autentico | 128.859 | 0,001289 | 0,0029 | 100 | 0,154 | 0,00269 | 1,0017 |
-| B — testo permutato fra utenti | 123.310 | 0,001233 | 0,0030 | 111 | 0,158 | 0,00248 | 1,0000 |
-| C — senza testo | 124.154 | 0,001242 | 0,0029 | 98 | 0,158 | 0,00259 | 0,9995 |
+| A — testo autentico | 128.831 | 0,001288 | 0,0031 | 107 | 0,154 | 0,00269 | 1,0009 |
+| B — testo permutato fra utenti | 123.294 | 0,001233 | 0,0030 | 96 | 0,159 | 0,00253 | 0,9998 |
+| C — senza testo | 124.560 | 0,001246 | 0,0029 | 106 | 0,156 | 0,00262 | 1,0004 |
 
 - **La densità coincide con quella reale** (0,00129 contro 0,00125) e il grado medio è a 2–2,5 volte dal reale: con la versione precedente, basata su una soglia, si arrivava a 3,6–5,8 di grado medio e a una densità 3-4 volte più bassa. **Nessuno di questi valori è imposto**: emergono dal campionamento.
 - **V6 (calibrata)** centra volume e reciprocità **per costruzione** (0,420 esatta): è utile come confronto, ma è la differenza fra *imporre* e *imparare*.
@@ -51,4 +51,4 @@
 
 ## 5. In una riga
 
-La pipeline riproduce **la struttura di base** (densità e gradi) **imparando** il meccanismo dal reale e senza imporre statistiche; con l'unità di V9 — l'evento di arrivo — riproduce nell'ordine giusto anche **reciprocità, triangoli e coda dei gradi** (0,303 · 0,0203 · 324 contro 0,418 · 0,034 · 1.290 del reale), restando un po' più "piatta" del reale, con un'unica causa: la preferenza per i nodi più connessi è sottostimata nel trasferimento da 25.714 utenti reali a 10.000 sintetici. Sul contenuto il progetto ha due risultati controllati: il canale testuale **non sposta la rete** (A/B/C indistinguibili) e l'omofilia **2,13** del reale è **in gran parte posizione nella rete**, non scelta di somiglianza.
+La pipeline riproduce **la struttura di base** (densità e gradi) **imparando** il meccanismo dal reale e senza imporre statistiche; con l'unità di V9 — l'evento di arrivo — riproduce nell'ordine giusto anche **reciprocità, triangoli e coda dei gradi** (0,304 · 0,0209 · 324 contro 0,418 · 0,034 · 1.290 del reale), restando un po' più "piatta" del reale, con un'unica causa: la preferenza per i nodi più connessi è sottostimata nel trasferimento da 25.714 utenti reali a 10.000 sintetici. Sul contenuto il progetto ha due risultati controllati: il canale testuale **non sposta la rete** (A/B/C indistinguibili) e l'omofilia **2,13** del reale è **in gran parte posizione nella rete**, non scelta di somiglianza.

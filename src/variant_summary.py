@@ -49,6 +49,7 @@ VARIANTS = [
     ('_v9_real', 'v9 evento di arrivo (testo autentico)'),
     ('_v9_permuted', 'v9 evento di arrivo (testo permutato)'),
     ('_v9_off', 'v9 evento di arrivo (senza testo)'),
+    ('_v9', 'v9 evento di arrivo (ingresso progressivo)'),
     ('_v8', 'v8 modello struttura (campionamento)'),
 ]
 
