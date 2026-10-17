@@ -242,7 +242,7 @@ uv run python src/compare_folders.py
 |---|---|---|
 | encoder migliore, negativi appaiati | MiniLM 0,534 → **0,549** con per-post | `encoder_comparison.csv` |
 | **profili dell'utente dal testo** (label solo sintetiche, split 80/20) | schieramento **0,827**, professione **0,867**, età **0,690** di AUC — e **aggiungere la rete non cambia nulla** | `profiles_*.csv` |
-| **evento di arrivo nel reale** | 29–83 archi per evento (mediana 6–32), massimo **1.421**, 63% uscenti, ~40% coppie ricambiate | `_v9_run.txt` |
+| **evento di arrivo nel reale** | da **35 a 111** archi per evento secondo la transizione (mediana 6–32), massimo **1.202**, **51–63%** uscenti, ~40% coppie ricambiate | `arrival_events.csv` |
 | negativi **casuali** (non è la colonna di scelta) | ~0,99 val / 0,96–0,97 test | `encoder_comparison.csv` |
 | fine-tuning dell'encoder | **peggiora** i test (0,519 vs 0,534) | `finetune_report.csv` |
 | feature dei nodi addestrabili | **peggiora** (0,512 vs 0,534) | `encoder_comparison.csv` |
