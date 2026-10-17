@@ -229,11 +229,18 @@ def neighbours_of(edge_sets, step, index):
 
 
 def build_choice_dataset(model, embeddings, users, index, edge_sets, masks, rng, with_content,
-                         steps):
+                         steps, stratified=False):
     """Positivi = archi reali degli eventi; negativi = candidati dello stesso evento.
 
     La co-occorrenza vale 1 se la controparte e' vicina di un'altra controparte dello stesso evento:
     e' il termine che dice se gli archi dell'evento si ammassano sugli stessi intorni o li evitano.
+
+    Con `stratified=True` i negativi diventano misti (proposta di Gemini): 30% inversioni
+    asimmetriche, cioe' la coppia al contrario di un positivo ma solo se quell'arco inverso non
+    esiste davvero, 30% difficili sul grado (candidati del decile piu' connesso del pool) e 40%
+    uniformi come nella configurazione documentata. La parte semantica dei negativi difficili non
+    c'e': scegliere la controparte piu' simile nel testo costerebbe una valutazione del modello per
+    candidato e il canale testuale non porta il legame (controllo A/B/C).
     """
     features, labels = [], []
     for step in steps:
@@ -253,6 +260,8 @@ def build_choice_dataset(model, embeddings, users, index, edge_sets, masks, rng,
         values = degree_log[pool]
         percentile[pool] = (values.argsort().argsort() / max(1, pool.size - 1)).astype(np.float32)
         neighbours = neighbours_of(edge_sets, step, index)
+        directed = {(index[a], index[b]) for a, b in edge_sets[step] if a in index and b in index}
+        hard_degree = pool[np.argsort(-degree_log[pool])[:max(1, pool.size // 10)]]
         chosen = list(events)
         if len(chosen) > MAX_EVENTS:
             chosen = list(rng.choice(chosen, size=MAX_EVENTS, replace=False))
@@ -263,6 +272,9 @@ def build_choice_dataset(model, embeddings, users, index, edge_sets, masks, rng,
             if not partners:
                 continue
             partner_set = {index[partner] for _, partner in edges if partner in index}
+            inversions = [(index[partner], 1.0 - direction) for direction, partner in edges
+                          if partner in index
+                          and (index[partner], index[owner]) not in directed]
             for direction, partner in edges:
                 if partner not in index:
                     continue
@@ -273,10 +285,21 @@ def build_choice_dataset(model, embeddings, users, index, edge_sets, masks, rng,
                 adjacent.append(1.0 if len(partner_set & neighbours.get(index[partner], set())) > 0
                                 else 0.0)
             for _ in range(NEG_PER_POS * len(partners)):
-                candidate = int(pool[rng.integers(0, pool.size)])
+                # Il percorso uniforme non estrae numeri in piu': con `--negatives uniform` la
+                # sequenza casuale (e quindi la rete generata) resta quella documentata.
+                if stratified and inversions and rng.random() < 0.30:
+                    candidate, direction = inversions[int(rng.integers(0, len(inversions)))]
+                elif stratified and rng.random() < 3.0 / 7.0:
+                    candidate = int(hard_degree[int(rng.integers(0, hard_degree.size))])
+                    direction = 1.0 if rng.random() < 0.5 else 0.0
+                    if candidate in partner_set:
+                        candidate = int(pool[rng.integers(0, pool.size)])
+                else:
+                    candidate = int(pool[rng.integers(0, pool.size)])
+                    direction = 1.0 if rng.random() < 0.5 else 0.0
                 owners.append(index[owner])
                 targets.append(candidate)
-                directions.append(1.0 if rng.random() < 0.5 else 0.0)
+                directions.append(direction)
                 tags.append(0.0)
                 adjacent.append(1.0 if len(partner_set & neighbours.get(candidate, set())) > 0
                                 else 0.0)
@@ -397,13 +420,16 @@ def run():
                         help='esponente della riscalatura di k sulla popolazione: 1 = lineare, '
                              'il valore che porta il grado medio generato su quello reale')
     parser.add_argument('--steps', type=int, default=N_SNAPSHOTS)
+    parser.add_argument('--negatives', choices=('uniform', 'stratified'), default='uniform',
+                        help='uniform: la configurazione documentata; stratified: misti 30/30/40')
     args = parser.parse_args()
     with_content = args.content != 'off'
+    stratified = args.negatives == 'stratified'
     open(LOG, 'w').close()
     rng = np.random.default_rng(SEED)
 
     log(f'partition {args.partition} | pooling {args.pooling} | variant {args.variant} '
-        f'| content {args.content}')
+        f'| content {args.content} | negatives {args.negatives}')
     log('training the tNodeEmbed model on the real dataset')
     encoder, users, index, edge_sets, matrices, masks = real_representations('minilm', 'period',
                                                                             args.pooling)
@@ -435,14 +461,14 @@ def run():
 
     log('fitted coefficients of the target-choice model (standardised features):')
     features, labels = build_choice_dataset(model, embeddings, users, index, edge_sets, masks, rng,
-                                           with_content, TRAIN_STEPS)
+                                           with_content, TRAIN_STEPS, stratified)
     scaler = StandardScaler().fit(features)
     classifier = LogisticRegression(max_iter=2000).fit(scaler.transform(features), labels)
     for name, weight in zip(FEATURES, classifier.coef_[0]):
         log(f'  {name:24s} {weight:+.4f}')
 
     val_features, val_labels = build_choice_dataset(model, embeddings, users, index, edge_sets,
-                                                    masks, rng, with_content, (VAL_STEP,))
+                                                    masks, rng, with_content, (VAL_STEP,), stratified)
     auc = roc_auc_score(val_labels,
                         classifier.predict_proba(scaler.transform(val_features))[:, 1])
     log(f'validation transition {VAL_STEP}: AUC {auc:.4f} (diagnostica del fit; la qualita\' della '
