@@ -45,7 +45,7 @@
 | tempo | 9 snapshot (2022 → 2025_07), split **6/1/2** (`2025_07_01_20_val`, `2025_07_21_28_test1`, `2025_07_29_31_test2`) | 4 batch **non ordinati nel tempo** (misurato: ognuno copre tutto l'intervallo degli `id`, ~9.500 utenti condivisi su ~9.700, e `batch_3` ha 2 righe — `results/native_batches.csv`): il tempo lo imponiamo noi (`id` denso 0…100.455) |
 | per utente | solo il testo dei post | 11 attributi di profilo + post |
 
-**Partizioni del sintetico** (generate, mai modificando gli input): `generated_snapshots/` (tutti presenti dal primo passo) e `generated_snapshots_growth/` (arrivo progressivo, curva del reale: 41,8% → 14,2% → 11% → … → 100%).
+**Partizioni del sintetico** (generate, mai modificando gli input): `generated_snapshots/` (tutti presenti dal primo passo) e `generated_snapshots_growth/` (arrivo progressivo, curva del reale: 41,8% → 14,2% → 11% → … → 100%). Sono state prodotte e poi **rimosse** nella pulizia del repository (rigenerabili con `build_synthetic_snapshots.py --activity uniform`); le partizioni definitive restano `generated_snapshots_v2/` e `generated_snapshots_growth_v2/`.
 
 **Fatti del reale che guidano il modello** (misurati, `results/accretion_*.csv`, `structure_*.csv`, `content_*.csv`):
 - il **92%** degli archi nuovi coinvolge un utente appena entrato; archi **già presente → già presente**: **0 su 707.604**;
@@ -315,7 +315,7 @@ Queste strade sono **documentate e non vengono riaperte** in questo progetto: no
 | **rete V9** (il meccanismo di arrivo, tre modalità di contenuto) | `Esame Angelantonio Fedele Murolo/generated_snapshots_v2_v9_*/` |
 | **consegna doppia**: i 4 file `.edg` nella forma dei batch nativi (**restrizione per utenti**, non per periodi: i batch non sono slice temporali, §2) | `<cartella V9>/native_4_batch_<0-3>.edg`, `<cartella V9>/native_4.csv`, `results/native_batches.csv` |
 | **V8 di controllo sulla vecchia partizione** (misura l'effetto del cambio di scenario) | `<partizione storica>_v8/` |
-| modelli, report, coefficienti | `models/`, `results/v8_report.csv`, `results/v8_coefficients.csv`, `results/v9_report.csv`, `results/v9_coefficients.csv` |
+| report e coefficienti | `results/v8_report.csv`, `results/v8_coefficients.csv`, `results/v9_report.csv`, `results/v9_coefficients.csv` (i checkpoint degli encoder, in `models/`, non si consegnano: rigenerabili con `src/finetune_encoder.py`) |
 | **embedding tNodeEmbed del sintetico** (per le analisi dei profili) | `<cartella generata>/tnodeembed_embeddings.npz`, scritto da **entrambi** i generatori |
 | tabelle e figure di confronto | `results/variant_summary.csv`, `results/figures/` |
 | analisi complete su reale e su ogni rete | `results/structure_*.csv`, `temporal_*.csv`, `content_*.csv`, `content_attributes_*.csv`, `accretion_*.csv`, `profiles_*.csv` |

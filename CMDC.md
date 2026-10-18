@@ -59,7 +59,8 @@ conteggi misurano "attività × lunghezza finestra").
 
 Partizioni definitive: `generated_snapshots_v2` (tutti presenti) e
 `generated_snapshots_growth_v2` (arrivo progressivo). Le `generated_snapshots*` senza `_v2`
-(attività uniforme) sono il **controllo storico**.
+(attività uniforme) erano il **controllo storico**: sono state **rimosse** nella pulizia del
+repository (rigenerabili con `--activity uniform`) e i loro numeri restano in `results/*.csv`.
 
 ## 4. La pipeline
 
