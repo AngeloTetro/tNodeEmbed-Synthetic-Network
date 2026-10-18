@@ -27,3 +27,4 @@ v9,generated_snapshots_growth_v2,real,"arrival events, sampled jointly",0.9181,7
 v9_strat,generated_snapshots_v2,real,"arrival events, sampled jointly",0.7673,8175,33.073,0.4098,9968,270373,0.002721,0.3,27.12,283
 v9_check,generated_snapshots_v2,real,"arrival events, sampled jointly",0.9181,8293,33.799,0.4074,9905,280299,0.002857,0.3035,28.3,324
 v9_slope,generated_snapshots_v2,real,"arrival events, sampled jointly",0.918,6966,17.601,0.4071,9680,122608,0.001309,0.289,12.67,156
+v9_closure,generated_snapshots_v2,real,"arrival events, sampled jointly",0.9173,8293,33.801,0.4074,9914,280310,0.002852,0.3035,28.27,325

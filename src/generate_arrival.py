@@ -228,8 +228,18 @@ def neighbours_of(edge_sets, step, index):
     return out
 
 
+def closure_value(partners, neighbours_of_candidate, mode):
+    """Chiusura triadica dentro l'evento: 'binary' (almeno una) o 'count' (la frazione)."""
+    if not partners or not neighbours_of_candidate:
+        return 0.0
+    shared = len(partners & neighbours_of_candidate)
+    if mode == 'binary':
+        return 1.0 if shared else 0.0
+    return shared / len(partners)
+
+
 def build_choice_dataset(model, embeddings, users, index, edge_sets, masks, rng, with_content,
-                         steps, stratified=False):
+                         steps, stratified=False, closure='binary'):
     """Positivi = archi reali degli eventi; negativi = candidati dello stesso evento.
 
     La co-occorrenza vale 1 se la controparte e' vicina di un'altra controparte dello stesso evento:
@@ -241,6 +251,11 @@ def build_choice_dataset(model, embeddings, users, index, edge_sets, masks, rng,
     uniformi come nella configurazione documentata. La parte semantica dei negativi difficili non
     c'e': scegliere la controparte piu' simile nel testo costerebbe una valutazione del modello per
     candidato e il canale testuale non porta il legame (controllo A/B/C).
+
+    `closure` dice come si misura la chiusura triadica dentro l'evento: 'binary' (la variabile
+    documentata, il candidato e' vicino ad almeno un'altra controparte dell'evento) o 'count' (la
+    frazione delle altre controparti a cui il candidato e' vicino). La stessa funzione deve valere
+    in fit e in generazione: cambiarla da un lato solo renderebbe il coefficiente privo di senso.
     """
     features, labels = [], []
     for step in steps:
@@ -282,8 +297,8 @@ def build_choice_dataset(model, embeddings, users, index, edge_sets, masks, rng,
                 targets.append(index[partner])
                 directions.append(direction)
                 tags.append(1.0)
-                adjacent.append(1.0 if len(partner_set & neighbours.get(index[partner], set())) > 0
-                                else 0.0)
+                others = partner_set - {index[partner]}
+                adjacent.append(closure_value(others, neighbours.get(index[partner], set()), closure))
             for _ in range(NEG_PER_POS * len(partners)):
                 # Il percorso uniforme non estrae numeri in piu': con `--negatives uniform` la
                 # sequenza casuale (e quindi la rete generata) resta quella documentata.
@@ -301,8 +316,7 @@ def build_choice_dataset(model, embeddings, users, index, edge_sets, masks, rng,
                 targets.append(candidate)
                 directions.append(direction)
                 tags.append(0.0)
-                adjacent.append(1.0 if len(partner_set & neighbours.get(candidate, set())) > 0
-                                else 0.0)
+                adjacent.append(closure_value(partner_set, neighbours.get(candidate, set()), closure))
         if not owners:
             continue
         scores = content_scores(model, embeddings[step], owners, targets, with_content)
@@ -333,7 +347,8 @@ def head_scores(model, hidden, owner, candidates):
 
 
 def generate(model, embeddings, users, masks, present_masks, scaler, classifier, tables, shares,
-             reverse_rate, exponent, unit, with_content, folder, partition_name, rng):
+             reverse_rate, exponent, unit, with_content, folder, partition_name, rng,
+             closure='binary'):
     """Genera per eventi di arrivo, con lo stato ricalcolato a ogni passo."""
     n = len(users)
     adj = torch.zeros((n, n), dtype=torch.bool, device=DEVICE)
@@ -368,6 +383,7 @@ def generate(model, embeddings, users, masks, present_masks, scaler, classifier,
                 out_linked = adj[owner].cpu().numpy()[candidates].copy()
                 in_linked = adj[:, owner].cpu().numpy()[candidates].copy()
                 near_chosen = np.zeros(candidates.size, dtype=np.float32)
+                chosen_all = set()
                 out_linked[candidates == owner] = True
                 in_linked[candidates == owner] = True
                 chosen = []
@@ -382,9 +398,11 @@ def generate(model, embeddings, users, masks, present_masks, scaler, classifier,
                         allowed = ~(out_linked if direction > 0.5 else in_linked)
                         if not allowed.any():
                             break
+                        closure_now = (near_chosen if closure == 'binary'
+                                       else near_chosen / max(1, len(chosen_all)))
                         matrix = choice_features(
                             content, degree_log, percentile, is_new, active_flag, candidates,
-                            np.full(candidates.size, direction, dtype=np.float32), near_chosen)
+                            np.full(candidates.size, direction, dtype=np.float32), closure_now)
                         weight = classifier.decision_function(scaler.transform(matrix))
                         key = np.where(allowed, weight + rng.gumbel(size=weight.size), -np.inf)
                         partner = int(candidates[int(np.argmax(key))])
@@ -399,9 +417,14 @@ def generate(model, embeddings, users, masks, present_masks, scaler, classifier,
                         chosen.append(partner)
                     else:
                         in_linked[candidates == partner] = True
-                    picks = np.nonzero((adj[partner].cpu().numpy()[candidates])
-                                       | (adj[:, partner].cpu().numpy()[candidates]))[0]
-                    near_chosen[picks] = 1.0
+                    if partner not in chosen_all:
+                        chosen_all.add(partner)
+                        picks = np.nonzero((adj[partner].cpu().numpy()[candidates])
+                                           | (adj[:, partner].cpu().numpy()[candidates]))[0]
+                        if closure == 'binary':
+                            near_chosen[picks] = 1.0
+                        else:
+                            near_chosen[picks] += 1.0
                 events_total += 1
         edges_to_files(adj, users, folder, step, partition_name)
         previous_present = present
@@ -422,14 +445,18 @@ def run():
     parser.add_argument('--steps', type=int, default=N_SNAPSHOTS)
     parser.add_argument('--negatives', choices=('uniform', 'stratified'), default='uniform',
                         help='uniform: la configurazione documentata; stratified: misti 30/30/40')
+    parser.add_argument('--closure', choices=('binary', 'count'), default='binary',
+                        help='chiusura triadica dentro l\'evento: binaria (documentata) o frazione '
+                             'delle altre controparti')
     args = parser.parse_args()
     with_content = args.content != 'off'
     stratified = args.negatives == 'stratified'
+    closure = args.closure
     open(LOG, 'w').close()
     rng = np.random.default_rng(SEED)
 
     log(f'partition {args.partition} | pooling {args.pooling} | variant {args.variant} '
-        f'| content {args.content} | negatives {args.negatives}')
+        f'| content {args.content} | negatives {args.negatives} | closure {args.closure}')
     log('training the tNodeEmbed model on the real dataset')
     encoder, users, index, edge_sets, matrices, masks = real_representations('minilm', 'period',
                                                                             args.pooling)
@@ -461,14 +488,15 @@ def run():
 
     log('fitted coefficients of the target-choice model (standardised features):')
     features, labels = build_choice_dataset(model, embeddings, users, index, edge_sets, masks, rng,
-                                           with_content, TRAIN_STEPS, stratified)
+                                           with_content, TRAIN_STEPS, stratified, closure)
     scaler = StandardScaler().fit(features)
     classifier = LogisticRegression(max_iter=2000).fit(scaler.transform(features), labels)
     for name, weight in zip(FEATURES, classifier.coef_[0]):
         log(f'  {name:24s} {weight:+.4f}')
 
     val_features, val_labels = build_choice_dataset(model, embeddings, users, index, edge_sets,
-                                                    masks, rng, with_content, (VAL_STEP,), stratified)
+                                                    masks, rng, with_content, (VAL_STEP,), stratified,
+                                                    closure)
     auc = roc_auc_score(val_labels,
                         classifier.predict_proba(scaler.transform(val_features))[:, 1])
     log(f'validation transition {VAL_STEP}: AUC {auc:.4f} (diagnostica del fit; la qualita\' della '
@@ -498,7 +526,7 @@ def run():
     events, edges, reversed_edges = generate(
         model, synthetic_embeddings, synthetic_users, synthetic_masks, synthetic_present, scaler,
         classifier, tables, shares, reverse_rate, exponent, unit, with_content, folder,
-        args.partition, rng)
+        args.partition, rng, closure)
 
     row = {'variant': args.variant, 'partition': args.partition, 'content': args.content,
            'operating_point': 'arrival events, sampled jointly', 'val_auc': round(float(auc), 4),
