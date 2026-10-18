@@ -1,0 +1,7 @@
+rete,nodes,max_out_degree,max_atteso_dalla_scala,rapporto_col_massimo_atteso,tail_slope,tail_gamma,grado_estremo_presente,reale_grado_estremo_presente
+V9,9901,328,339,0.967,-3.332,4.33,169.4,436.9
+V9-prog,9897,274,339,0.808,-3.98,4.98,153.3,436.9
+V9-slope,9680,156,328,0.475,-3.478,4.48,73.5,436.9
+v6b,9219,1709,306,5.586,-2.086,3.09,94.9,436.9
+v2,10000,1008,344,2.929,-2.254,3.25,0.0,436.9
+v8,10000,102,344,0.296,-3.63,4.63,71.9,436.9
