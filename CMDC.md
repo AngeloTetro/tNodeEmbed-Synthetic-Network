@@ -123,6 +123,7 @@ Partizioni definitive: `generated_snapshots_v2` (tutti presenti) e
   post) non è verificabile perché il dataset non registra **quale** post è agganciato a un arco;
 - **la leva "più negativi nel fit"** non cambia la coesione e costa 5×.
 - **i negativi "misti"** (30% coppie invertite, 30% difficili sul grado, 40% uniformi — l'unica proposta esterna con un effetto meccanico plausibile): provati in controllo e **peggiorano** la rete — transitivity 0,0115 contro 0,0209, clustering 0,0305 contro 0,043, co-arrivati 18,4% contro 12,4%, grado dell'estremo già presente 104 contro 169 (reale 437), reciprocità 0,300 contro 0,3035. I pesi cambiano molto (novità +0,61 contro +1,22, grado −0,21 contro +1,02) ma la **reciprocità non si muove**: in V9 la genera la tabella delle coppie ricambiate, non il classificatore. La configurazione documentata è il default (`--negatives uniform`, cartella di controllo `generated_snapshots_v2_v9_strat`, coefficienti in `results/v9_strat_coefficients.csv`).
+- **la chiusura triadica misurata come frazione** (`--closure count`, cartella `generated_snapshots_v2_v9_closure`): il coefficiente scende da +0,194 a **+0,051** (la chiusura nel reale è debole) e la rete resta la stessa (280.310 archi, reciprocità 0,3035, transitività 0,0202, hub 169,2) → il divario di triangoli è **concentrazione dei gradi**, non modellazione della chiusura.
 
 ## 7. Le direzioni aperte
 
