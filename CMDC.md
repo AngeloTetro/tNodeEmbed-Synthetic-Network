@@ -142,7 +142,7 @@ Partizioni definitive: `generated_snapshots_v2` (tutti presenti) e
 - **tecnico**: `docs/pipeline.md` (script, scelte, limiti) · **progetto in due minuti**: `docs/project.md`
 - **divulgativo**: `docs/relazione.md` → `docs/relazione.pdf` (rigenerato con
   `pandoc + xelatex`, evitando `≈` e gli apici esponenti che il font non ha)
-- **dottorando**: `docs/nota_dottorando.md` (e `docs/conversazione.md`, lo scambio originale)
+- **dottorando**: `docs/nota_dottorando.md` (e `docs/riferimenti/conversazione.md`, lo scambio originale)
 - **script** in `src/`: `graph_io.py` (I/O condiviso), `content_encoders.py`, `tnodeembed_real.py`,
   `transfer_to_synthetic.py`, `build_synthetic_snapshots.py`, `measure_source_activity.py`,
   `generate_structural.py` (V8), `generate_arrival.py` (V9), `apply_edge_rules.py` (v1–v5),
