@@ -94,9 +94,12 @@ Partizioni definitive: `generated_snapshots_v2` (tutti presenti) e
 | V8 | 129.321 | 12,93 | 102 | 0,003 | 0,152 | 0,003 | 0,005 | 9 |
 
 - **V9 è il risultato più avanzato** e supera V8 su tutte le proprietà relazionali (reciprocità,
-  scala dei gradi, coda, triangoli, clustering, diametro). Gli scarti residui sono 0,25–0,9× e hanno
-  **una causa unica**: la preferenza per i nodi più connessi resta sottostimata nel trasferimento da
-  25.714 utenti reali a 10.000 sintetici (Rischio 1 del piano).
+  scala dei gradi, coda, triangoli, clustering, diametro). Gli scarti residui **non sono una
+  sottostima dell'hub**: la legge di scala del reale (nove snapshot, grado massimo contro utenti,
+  esponente 1,445, R² 0,986) prevede ~339 a 10.000 utenti e V9 arriva a 328 (**97%**), e il rapporto
+  169/437 è il rapporto fra le popolazioni (0,385). Restano la **forma** della coda (a pari dimensione
+  −3,33 contro −1,69: hub relativamente meno estremi) e la **coesione**. Artefatti: `src/tail_scaling.py`,
+  `results/tail_scaling_real.csv`, `results/tail_scaling_summary.csv`.
 - **Il confronto onesto con tutte le famiglie** (`src/variant_scorecard.py` → `results/variant_scorecard.csv`): su **7 metriche confrontabili V9 è la più vicina al reale solo sul grado medio**. La densità migliore è di V8, transitivity e clustering di v6b, la reciprocità di v6a/v6b (0,420, **imposta**) e grado massimo e modularità di v2. V9 vince la **contemporaneità**, non la classifica metrica per metrica. La misura che mancava, la **pendenza di coda** (CCDF del grado uscente, ultimo decile): reale **−2,35** (esponente **3,35**), v2 −2,25, v6b −2,09, **V9 −3,33 (4,33)**, v8 −3,63 → la coda di V9 è **troppo leggera**, quella di v2/v6b appena troppo pesante. Il **volume** non è un difetto: archi = grado medio × utenti, e alla scala reale V9 sta a **0,88** (V8 0,40, v2/v6b 1,29–1,32).
 - **Le due partizioni, provate entrambe su V9**: `_v2` ("tutti presenti", **ufficiale**) contro `_growth_v2` (ingresso progressivo, curva di arrivo del reale). Quasi equivalenti — distanza relativa su otto metriche **3,79 contro 4,39**, che diventa 3,26 contro 3,29 togliendo la quota di co-arrivati (12,4% contro 17,0%, reale 8,1%) — con la progressiva migliore sulla reciprocità (0,3224 contro 0,3035) e l'ufficiale su volume, grado medio, grado massimo e coesione. Artefatti: `generated_snapshots_growth_v2_v9/`, `results/structure_generated_snapshots_growth_v2_v9.csv`, `results/accretion_generated_snapshots_growth_v2_v9.csv`.
 - **La ripetibilità ha un confine, dichiarato**: il **generatore** è deterministico (il rilancio del comando documentato dà 280.299 archi contro 280.298, con gli stessi 8.293 eventi di arrivo, la stessa quota ricambiate 0,4074 e la stessa reciprocità 0,3035), l'**addestramento** no: i pesi variano al terzo decimale fra processi. Le tabelle si citano quindi come **un'unica esecuzione**. Artefatti: `results/v9_check_coefficients.csv` contro `results/v9_coefficients.csv`.
@@ -123,8 +126,11 @@ Partizioni definitive: `generated_snapshots_v2` (tutti presenti) e
 
 ## 7. Le direzioni aperte
 
-1. **La preferenza per l'hub** (l'unica leva residua): come trasferire meglio i percentili di grado
-   fra reti di dimensioni diverse — da qui passano modularità, coda dei gradi e quota new→new.
+1. **Non più il trasferimento dell'hub** (misurato: a pari dimensione il grado massimo di V9 è al 97%
+   di quello che la legge di scala del reale prevede, e il rapporto fra gli hub è il rapporto fra le
+   popolazioni), ma la **concentrazione**: la coda resta più ripida (−3,33 contro −1,69 a pari
+   dimensione) e la coesione sotto (transitività 0,0209 contro 0,0337). È qui che punta il
+   campionamento congiunto dentro l'evento.
 2. **La dipendenza fra i bersagli dello stesso evento** (chiuderebbe la parte triadica).
 3. La **parte strutturale dei post-come-archi**, solo se un giorno arrivasse il file delle
    interazioni (post id + utente).
@@ -197,6 +203,13 @@ Partizioni definitive: `generated_snapshots_v2` (tutti presenti) e
     ~9.500 utenti condivisi su ~9.700, il quarto ha 2 righe): non esiste un consolidamento "per
     periodi" dei 9 passi, solo uno per appartenenza degli utenti — e il numero di run non cambia il
     fatto.
+11. **Confrontare metriche fra reti di dimensioni diverse richiede la scala.** Il grado massimo
+    (324 contro 1.290) e il grado medio dell'estremo già presente (169 contro 437) sembravano
+    sottostime di V9 e sono invece il rapporto fra le popolazioni (0,388 e 0,385 contro 0,389). Il
+    metro giusto è la legge interna del reale (grado massimo contro utenti: esponente 1,445, R² 0,986,
+    `src/tail_scaling.py`), e per la **forma** della coda il riferimento è il reale **al primo
+    snapshot** (10.755 utenti, pendenza −1,69). Lo stesso vale per densità e volume: non si
+    confrontano fra popolazioni diverse.
 
 ## 11. I comandi chiave
 
