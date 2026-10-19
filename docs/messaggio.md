@@ -23,9 +23,7 @@ Generazione. Nessuna soglia e nessuna regola: fitto sul reale e genero passo per
 | Transitivity | 0.034 | 0.0209 |
 | Diameter | 6 | 6 |
 
-Il grado massimo della rete finale è il 95% di quello che la legge di scala del reale prevede a 10.000 utenti (340). A pari dimensione restano due differenze: la coda è più ripida (-3.33 contro -2.35 nel decile superiore) e la coesione è più bassa. Sono i due punti aperti.
-
-[allega: scaling_law.png]
+Il grado massimo della rete finale è 324: il 95% di quello che il reale prevede alla stessa dimensione (340, stimato sui suoi nove snapshot). A pari dimensione restano due differenze: la coda è più ripida (-3.33 contro -2.35 nel decile superiore) e la coesione è più bassa. Sono i due punti aperti.
 
 [allega: out_degree_distribution.png]
 
