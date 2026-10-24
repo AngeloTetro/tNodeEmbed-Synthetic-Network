@@ -4,6 +4,8 @@
 
 *Affiliation: none.*
 
+> **Delivery note.** The official synthetic network is generated on the **progressive-arrival** partition; the "all present" network is the control. The current numbers for both are in `paper.md` (Italian, updated) and `FINAL.md`; this English version still reports the earlier all-present network in its results section and should be re-aligned before distribution.
+
 ---
 
 ## Abstract
