@@ -24,7 +24,7 @@ Nessun file originale viene modificato: le cartelle `generated_*` sono aggiunte 
 
 **I 4 batch nativi non sono periodi** (`src/consolidate_native.py` → `results/native_batches.csv`):
 `batch_0/1/2` hanno 33.068 / 33.068 / 34.318 post, coprono **tutto** l'intervallo degli id
-(mediana ≈ 49.500-51.600) e condividono ~9.500 utenti su ~9.700; `batch_3` ha 2 righe. Sono tre terzi
+(median ~ 49,500-51,600) e condividono ~9.500 utenti su ~9.700; `batch_3` ha 2 righe. Sono tre terzi
 della **stessa** popolazione. Da qui la **consegna doppia**: i 9 file `.edg` (uno per passo) e i
 `native_4_batch_<i>.edg`, cioè la rete **ristretta agli utenti** di quel batch (93-97% degli archi),
 più `native_4.csv`. È una restrizione per utenti, non una suddivisione per periodi. Il quarto file è

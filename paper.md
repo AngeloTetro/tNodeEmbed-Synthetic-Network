@@ -178,7 +178,7 @@ Il costo più visibile è su due righe: gli archi fra co-arrivati salgono dal 12
 
 Quest'ultimo confronto va però letto con cautela: il 41,8% del reale **non è un passo di nascita**, è uno stock preesistente (il primo snapshot contiene 10.755 utenti e 116.441 archi creati prima dell'osservazione). Confrontarlo con la prima generazione di una rete che nasce è un confronto fra oggetti diversi, e non è un criterio.
 
-**Un'estrapolazione da dichiarare.** La legge che riscala `k` è fittata su popolazioni fra 10.755 e 21.082 utenti; al primo passo della partizione progressiva vale `P ≈ 4.100`, quindi è un'estrapolazione sotto il range di fit. Non abbiamo dati reali sotto i 10.000 utenti per convalidarla.
+**Un'estrapolazione da dichiarare.** La legge che riscala `k` è fittata su popolazioni fra 10.755 e 21.082 utenti; al primo passo della partizione progressiva vale `P ~ 4.100`, quindi è un'estrapolazione sotto il range di fit. Non abbiamo dati reali sotto i 10.000 utenti per convalidarla.
 
 ![Confronto fra le partizioni: omofilia](results/figures/compare_homophily.png)
 

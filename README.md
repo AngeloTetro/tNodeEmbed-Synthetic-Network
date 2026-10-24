@@ -76,8 +76,13 @@ uv run python src/plot_pipeline.py                      # schema della pipeline
 uv run python src/consolidate_native.py generated_snapshots_growth_v2_v9
 ```
 
-I PDF (`paper.pdf`, `paper_en.pdf`, `docs/relazione.pdf`) sono più vecchi dei rispettivi markdown:
-vanno rigenerati con il toolchain usato per produrli prima di consegnarli.
+I PDF (`paper.pdf`, `paper_en.pdf`, `docs/relazione.pdf`) si rigenerano dai rispettivi markdown:
+
+```bash
+pandoc paper.md    -o paper.pdf    --pdf-engine=xelatex -V geometry:margin=2.2cm --resource-path=.
+pandoc paper_en.md -o paper_en.pdf --pdf-engine=xelatex -V geometry:margin=2.2cm --resource-path=.
+pandoc docs/relazione.md -o docs/relazione.pdf --pdf-engine=xelatex -V geometry:margin=2.2cm --resource-path=.
+```
 
 ## Cosa si consegna
 

@@ -99,38 +99,27 @@ AUC su validation / test1 / test2 (`results/encoder_comparison.csv`):
 
 In tutte le righe il numero di archi che soddisfano la **restrizione del protocollo originale** ("il test contiene solo utenti già visti") è **0**: è la conferma che il problema denunciato esiste e che il protocollo è stato adattato.
 
-### 6.2 Il transfer e la rete generata
+### 6.2 Le due reti consegnate
 
-**Nota sulle partizioni**: le tabelle da qui a §6.7 si riferiscono alla **prima** partizione del sintetico (attività uniforme), che resta come riferimento storico. I numeri della **partizione definitiva** (attività presa dal reale) e della **rete ufficiale V8** sono in **§6.13**.
+La pipeline finale è **una sola**: il generatore per **eventi di arrivo** (V9). Le reti consegnate sono due, stessa pipeline su due partizioni del sintetico: quella a **ingresso progressivo** (ufficiale) e quella con **tutti presenti dal primo passo** (controllo). Valori dell'ultimo snapshot (`results/structure_*.csv`, `structure_heavy_*.csv`, `content_*.csv`):
 
-Modello addestrato sul reale (MiniLM, negativi appaiati) e applicato al sintetico (`results/transfer_report.csv`):
-
-| | AUC reale (val/test1/test2) | nodi | archi | densità | reciprocità | parole sintetiche nel vocabolario reale |
-|---|---|---|---|---|---|---|
-| tutti presenti | 0,573 / 0,526 / 0,523 | 10.000 | 107.511 | 0,00108 | 0,001 | 55,5% (27.317 su 49.262) |
-| arrivo progressivo | 0,578 / 0,526 / 0,529 | 10.000 | 83.017 | 0,00083 | 0,000 | 55,5% |
-
-La **sovrapposizione di vocabolario** è un controllo utile: poco più di metà delle parole usate nei post sintetici compare anche nei post reali, quindi il modello addestrato sul reale ha comunque una base testuale su cui lavorare. (Nota: qui "nodi" sono gli utenti **presenti** nella partizione, cioè quelli che hanno post; nella tabella §6.3 la stessa colonna conta invece i nodi che **compaiono nella rete**, cioè quelli con almeno un arco — da qui le differenze di nodi e densità per la variante "arrivo progressivo": 10.000 utenti presenti, 9.772 con almeno un arco.)
-
-### 6.3 Struttura: reale contro generato
-
-Valori dell'ultimo snapshot (`results/structure_*.csv`, `structure_heavy_*.csv`):
-
-| grandezza | reale | generato (tutti presenti, **attività uniforme**) | generato (arrivo progressivo, **attività uniforme**) |
+| grandezza | reale | ufficiale (progressiva) | controllo (tutti presenti) |
 |---|---|---|---|
-| nodi | 25.714 | 10.000 | 9.772 |
-| archi | 824.045 | 107.511 | 83.017 |
-| densità | 0,00125 | 0,00108 | 0,00087 |
-| grado uscente medio | 32,0 | 10,8 | 8,5 |
-| grado uscente massimo | 1.290 | 28 | 25 |
-| reciprocità | **0,418** | **0,0011** | **0,0004** |
-| componenti fortemente connesse | 7.343 | 9.965 | 9.735 |
-| k-core massimo | 125 | 19 | 18 |
-| comunità (Louvain) | 9 | 9 | 9 |
-| modularità | 0,275 | 0,167 | 0,204 |
-| transitivity | 0,034 | 0,506 | 0,300 |
-| clustering medio | 0,080 | 0,747 | 0,577 |
-| diametro (approssimato) | 6 | 3 | 4 |
+| nodi con almeno un arco | 25.714 | 9.897 | 9.901 |
+| archi | 824.045 | 271.646 | 280.298 |
+| densità | 0,00125 | 0,00277 | 0,00286 |
+| grado uscente medio | 32,05 | 27,45 | 28,31 |
+| grado uscente massimo | 1.290 | 274 | 328 |
+| reciprocità | **0,418** | **0,3224** | **0,3035** |
+| modularità | 0,275 | 0,107 | 0,103 |
+| transitivity | 0,034 | 0,0212 | 0,0209 |
+| clustering medio | 0,080 | 0,042 | 0,0435 |
+| omofilia del contenuto | 2,13 | 1,001 | 0,999 |
+| diametro (approssimato) | 6 | 6 | 6 |
+
+Le due reti sono **equivalenti** sulla distanza relativa dal reale (`|valore − reale| / |reale|` sommata su sette metriche): **3,84** l'ufficiale, **3,89** il controllo. Il costo della partizione progressiva sta in due numeri: grado massimo **274 contro 328** e quota di archi fra utenti arrivati nello stesso passo **17,0% contro 12,4%** (reale 8,1%).
+
+Le sezioni che seguono (§6.3-§6.8) raccontano le prove fatte **prima** della pulizia del repository, su reti e partizioni che oggi stanno in `archive/`: si leggono come storia del lavoro, non come risultato corrente. I numeri correnti stanno qui sopra, in `FINAL.md` e in `paper.md`.
 
 ![Crescita di nodi e archi nei tre dataset](results/figures/compare_growth.png)
 
@@ -360,18 +349,19 @@ V9 cambia quindi l'unità del modello: non più la coppia, ma l'**evento di arri
 | rete | archi | grado medio | grado max | reciprocità | modularità | transitivity | clustering | diametro |
 |---|---|---|---|---|---|---|---|---|
 | **reale** | 824.045 | **32,05** | **1.290** | **0,418** | **0,275** | **0,034** | **0,080** | **6** |
-| **V9** | 280.298 | **28,30** | **324** | **0,304** | 0,106 | **0,0209** | **0,043** | **6** |
-| V8 | 129.321 | 12,93 | 102 | 0,003 | 0,152 | 0,003 | 0,005 | 9 |
+| **V9, ufficiale** (progressiva) | 271.646 | **27,45** | **274** | **0,3224** | 0,107 | **0,0212** | **0,042** | **6** |
+| V9, controllo (tutti presenti) | 280.298 | 28,31 | 328 | 0,3035 | 0,103 | 0,0209 | 0,0435 | 6 |
+| V8 (storica) | 129.321 | 12,93 | 102 | 0,003 | 0,152 | 0,003 | 0,005 | 9 |
 
-V9 avvicina tutto: la reciprocità passa da 0,003 a **0,304** (il reale è 0,418), il grado medio da 12,9 a **28,3** (reale 32,05), il grado massimo da 102 a **324**, e per la prima volta anche triangoli e clustering stanno nell'ordine di grandezza giusto (0,0209 contro 0,034 e 0,043 contro 0,080), con il diametro identico al reale.
+V9 avvicina tutto: la reciprocità passa da 0,003 a **0,3224** (il reale è 0,418), il grado medio da 12,9 a **27,45** (reale 32,05), il grado massimo da 102 a **274**, e per la prima volta anche triangoli e clustering stanno nell'ordine di grandezza giusto (0,0212 contro 0,034 e 0,042 contro 0,080), con il diametro identico al reale. La rete "tutti presenti", generata con la stessa pipeline, è il **controllo**: leggermente meglio su grado medio, massimo e clustering, leggermente peggio su reciprocità, modularità e transitività.
 
-**Un errore mio, e come l'ho trovato.** La prima versione di V9 sbagliava la coesione nel verso opposto (modularità 0,854 contro 0,275 del reale). Prima di cambiare il modello ho misurato *come era fatta* la rete generata, con lo stesso controllo che usiamo sul reale: il **99,95%** degli archi era fra utenti arrivati **nello stesso istante**, contro l'8,1% del reale. La causa era nel codice: nel fit della scelta le coppie di controllo "non collegate" le pescavo solo fra i presenti già esistenti, mai fra i co-arrivati, quindi la variabile "la controparte è nuova" separava da sola i casi veri dai falsi e imparava una preferenza che nel reale non esiste. Corretto il bacino di pesca, la coesione è rientrata di colpo: transitività da 0,107 a **0,0209**, clustering da 0,141 a **0,043**, archi fra co-arrivati dal 99,95% al **12,4%**.
+**Un errore mio, e come l'ho trovato.** La prima versione di V9 sbagliava la coesione nel verso opposto (modularità 0,854 contro 0,275 del reale). Prima di cambiare il modello ho misurato *come era fatta* la rete generata, con lo stesso controllo che usiamo sul reale: il **99,95%** degli archi era fra utenti arrivati **nello stesso istante**, contro l'8,1% del reale. La causa era nel codice: nel fit della scelta le coppie di controllo "non collegate" le pescavo solo fra i presenti già esistenti, mai fra i co-arrivati, quindi la variabile "la controparte è nuova" separava da sola i casi veri dai falsi e imparava una preferenza che nel reale non esiste. Corretto il bacino di pesca, la coesione è rientrata di colpo: transitività da 0,107 a **0,0209**, clustering da 0,141 a **0,043**. Oggi la quota di archi fra co-arrivati è **12,4%** sul controllo e **17,0%** sull'ufficiale (il reale è 8,1%): il residuo della partizione progressiva sta lì.
 
-**Cosa resta.** Gli scarti residui sono piccoli, e ho voluto capire se la causa che avevo in testa — la preferenza per i nodi più connessi "sottostimata" nel passaggio da 25.714 utenti a 10.000 — reggesse. **Non regge**: il grado massimo cresce con la popolazione secondo una legge che si stima sul reale stesso (i suoi nove snapshot: esponente 1,445, R² 0,986) e a 10.000 utenti quella legge prevede ~339, mentre V9 arriva a 328, cioè il **97%**; e il rapporto fra il grado degli hub (169 contro 437) è esattamente il rapporto fra le popolazioni (0,385). Quello che resta davvero è la **forma** della coda (a pari dimensione la pendenza del decile alto è −3,33 contro −1,69 del reale: i miei hub sono relativamente meno estremi) e la **coesione** (transitività 0,0209 contro 0,0337).
+**Cosa resta.** Gli scarti residui sono piccoli, e ho voluto capire se la causa che avevo in testa — la preferenza per i nodi più connessi "sottostimata" nel passaggio da 25.714 utenti a 10.000 — reggesse. **Non regge**: il grado massimo cresce con la popolazione secondo una legge che si stima sul reale stesso (i suoi nove snapshot: esponente 1,445, R² 0,986) e a 10.000 utenti quella legge prevede ~339, mentre il controllo arriva a **328 (97%)** e la rete ufficiale a **274 (81%)**; e il rapporto fra il grado degli hub (153 contro 437 nell'ufficiale) è vicino al rapporto fra le popolazioni (0,35 contro 0,385). Quello che resta davvero è la **forma** della coda (a pari dimensione la pendenza del decile alto è −3,98 nell'ufficiale e −3,33 nel controllo, contro −1,69 del reale: gli hub sono relativamente meno estremi) e la **coesione** (transitività 0,0212 contro 0,0337).
 
-**Il contenuto, per la quarta volta.** Con lo stesso modello e lo stesso scenario, testo autentico, testo permutato fra utenti e nessun testo danno reti indistinguibili (reciprocità 0,3035 / 0,3021 / 0,3037; transitività 0,0209 / 0,0207 / 0,0211). La risposta alla domanda del progetto è la stessa in entrambi i meccanismi: **il contenuto non decide chi si collega a chi**.
+**Il contenuto, per la quarta volta.** Con lo stesso modello e lo stesso scenario, testo autentico, testo permutato fra utenti e contenuto azzerato danno reti indistinguibili (reciprocità 0,3224 / 0,3229 / 0,3227; transitività 0,0212 / 0,0207 / 0,0213). La risposta alla domanda del progetto è la stessa in entrambi i meccanismi: **il contenuto non decide chi si collega a chi**.
 
-*Nota sulle cifre*: tutti i numeri vengono da un'**unica esecuzione finale** (dopo aver reso deterministica l'iterazione degli archi nei generatori). Il **generatore** è ripetibile al bit; l'**addestramento** no: i pesi della rete variano al terzo decimale fra un processo e l'altro, quindi rilanciando il comando documentato escono **280.299** archi invece di 280.298 — un arco su 280 mila — con gli **stessi** 8.293 eventi di arrivo, la stessa quota ricambiate (0,4074) e la stessa reciprocità (0,3035).
+*Nota sulle cifre*: tutti i numeri vengono da un'**unica esecuzione finale** (dopo aver reso deterministica l'iterazione degli archi nei generatori). Il **generatore** è ripetibile al bit; l'**addestramento** no: i pesi della rete variano al terzo decimale fra un processo e l'altro, quindi rilanciando il comando documentato escono **271.655** archi invece di 271.646 — 9 archi su 271 mila — con gli **stessi** 7.776 eventi di arrivo, la stessa quota ricambiate (0,4435) e la stessa reciprocità (0,3224).
 
 ### 6.16 Le verifiche fatte alla fine (e cosa ho scoperto controllando)
 
