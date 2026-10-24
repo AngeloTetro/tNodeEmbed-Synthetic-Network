@@ -3,6 +3,3 @@ ufficiale_real,generated_snapshots_growth_v2,real,"arrival events, sampled joint
 ufficiale_permuted,generated_snapshots_growth_v2,permuted,"arrival events, sampled jointly",0.918,7777,33.648,0.4444,9905,261680,0.002668,0.3229,26.42,248
 ufficiale_off,generated_snapshots_growth_v2,off,"arrival events, sampled jointly",0.9177,7776,34.933,0.4435,9890,271640,0.002777,0.3227,27.47,275
 ufficiale_check,generated_snapshots_growth_v2,real,"arrival events, sampled jointly",0.9181,7776,34.935,0.4435,9886,271655,0.00278,0.3224,27.48,275
-controllo_real,generated_snapshots_v2,real,"arrival events, sampled jointly",0.9181,8293,33.799,0.4074,9904,280298,0.002858,0.3035,28.3,324
-controllo_permuted,generated_snapshots_v2,permuted,"arrival events, sampled jointly",0.9181,8203,33.457,0.4075,9896,274448,0.002803,0.3021,27.73,344
-controllo_off,generated_snapshots_v2,off,"arrival events, sampled jointly",0.9177,8293,33.799,0.4073,9898,280292,0.002861,0.3037,28.32,326

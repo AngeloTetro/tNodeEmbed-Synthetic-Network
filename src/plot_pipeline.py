@@ -19,16 +19,15 @@ BOXES = {
     'content': (0.27, 0.62, 0.20, 0.24, 'Content representation\none vector per post\n(MiniLM), mean per user'),
     'tnode': (0.52, 0.62, 0.20, 0.24, 'tNodeEmbed\nno node2vec\nProcrustes + LSTM\npair head [hu, hv, hu*hv]'),
     'fit': (0.27, 0.30, 0.20, 0.22, 'Fit on the real\n(transitions 1-5)\nvalidation 6, test untouched'),
-    'v8': (0.52, 0.42, 0.20, 0.16, 'V8: pairwise model\nlogistic + sampling\nwith feedback'),
-    'v9': (0.52, 0.22, 0.20, 0.16, 'V9: arrival events\nk per newcomer, target\nchoice, reciprocity'),
+    'v9': (0.52, 0.32, 0.20, 0.20, 'V9: arrival events\nk per newcomer, target choice,\nreciprocity, feedback'),
     'scenario': (0.02, 0.30, 0.20, 0.22, 'Synthetic scenario\n100,456 posts -> 9 steps\narrival curve + activity\n(measured on the real)'),
-    'network': (0.77, 0.42, 0.21, 0.24, 'Generated synthetic\nnetwork\n(synthetic to synthetic)'),
+    'network': (0.77, 0.42, 0.21, 0.24, 'Generated synthetic\nnetwork\nsynthetic to synthetic\n(official + control)'),
     'eval': (0.77, 0.12, 0.21, 0.22, 'Evaluation\nstructure, evolution,\ncontent, controls\n(real vs generated)'),
 }
 ARROWS = [
     ('real', 'content'), ('content', 'tnode'), ('tnode', 'fit'), ('real', 'fit'),
-    ('fit', 'v8'), ('fit', 'v9'), ('scenario', 'v9'), ('scenario', 'v8'),
-    ('v8', 'network'), ('v9', 'network'), ('network', 'eval'), ('real', 'eval'),
+    ('fit', 'v9'), ('scenario', 'v9'),
+    ('v9', 'network'), ('network', 'eval'), ('real', 'eval'),
 ]
 
 
@@ -36,7 +35,7 @@ def main():
     os.makedirs(FIGURES, exist_ok=True)
     figure, ax = plt.subplots(figsize=(13, 6.2))
     for key, (x, y, width, height, text) in BOXES.items():
-        colour = {'v9': '#d8e8f8', 'v8': '#f2f2f2', 'network': '#dff0d8',
+        colour = {'v9': '#d8e8f8', 'network': '#dff0d8',
                   'eval': '#fdf2d0'}.get(key, '#ffffff')
         ax.add_patch(FancyBboxPatch((x, y), width, height, boxstyle='round,pad=0.012',
                                     linewidth=1.2, edgecolor='#333333', facecolor=colour))

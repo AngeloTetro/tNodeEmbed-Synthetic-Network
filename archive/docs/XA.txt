@@ -1,0 +1,123 @@
+XA.txt
+Briefing tecnico su dati, modello di riferimento e obiettivo del progetto
+(descrizione di fatti e misure; nessuna indicazione di metodo)
+
+=====================================================================
+1. I DUE DATASET
+=====================================================================
+
+1.1 DATASET REALE
+-----------------
+25.714 utenti, 173.475 post, 824.045 archi diretti senza pesi, 9 snapshot dal 2022 a luglio 2025.
+Cartella: "Esame Angelantonio Fedele Murolo/real_snapshots/", una sottocartella per snapshot:
+  2022 | 2023 | 2024 | 2025_01-03 | 2025_04-05 | 2025_06 | 2025_07_01_20_val |
+  2025_07_21_28_test1 | 2025_07_29_31_test2
+Il dataset reale non va modificato in alcun modo.
+
+Ogni snapshot contiene tre file.
+
+- social_network.edg
+  La rete sociale fra gli utenti visti fino a quello snapshot, cumulativa (contiene anche gli archi
+  degli snapshot precedenti). Due colonne separate da tab: id dell'utente sorgente, id dell'utente
+  destinazione. Nessuna intestazione, nessun peso, nessun id di post, nessun tipo di interazione.
+  Gli id sono gli account_id degli utenti (verificato: i 25.714 nodi dell'ultimo snapshot sono tutti
+  account_id, nessuno è un id di post). Archi per snapshot (righe del file):
+    2022 116.442 | 2023 222.751 | 2024 345.788 | 2025_01-03 451.310 | 2025_04-05 597.708 |
+    2025_06 707.300 | val 725.345 | test1 792.919 | test2 824.046 (di cui 1 self-loop)
+
+- posts_current_snapshot.tsv
+  I soli post pubblicati nell'intervallo temporale dello snapshot.
+
+- posts_incremental.tsv
+  I post pubblicati in quello snapshot più tutti quelli degli snapshot precedenti (cumulativo).
+
+Colonne dei due file dei post (identiche):
+  id (del post) | content (testo del post) | account_id (utente che lo ha scritto) | created_at |
+  language | replies_count | reblogs_count | reactions_counts | quotes_count | timestamp
+Colonne che contano, in entrambi i dataset: id, account_id e content. Le altre esistono ma non si
+considerano, né come feature né come argomento per accettare o scartare un metodo.
+
+Per snapshot: post della finestra / post cumulativi / utenti cumulativi con almeno un post / archi cumulativi
+  2022               13.066 /  31.961 / 14.535 / 116.442
+  2023               13.343 /  45.304 / 17.816 / 222.751
+  2024               13.427 /  58.731 / 20.174 / 345.788
+  2025_01-03          8.085 /  66.816 / 21.266 / 451.310
+  2025_04-05         14.169 /  80.985 / 22.407 / 597.708
+  2025_06            26.048 / 107.033 / 23.435 / 707.300
+  2025_07_01_20_val   4.218 / 111.251 / 23.690 / 725.345
+  2025_07_21_28_test1 27.101 / 138.352 / 25.623 / 792.919
+  2025_07_29_31_test2 35.123 / 173.475 / 26.717 / 824.046
+
+Split temporale dichiarato: 6 snapshot di training (2022 -> 2025_06), 1 di validation (2025_07_01_20),
+2 di test (2025_07_21_28, 2025_07_29_31).
+
+Proprietà strutturale misurata: ogni arco nuovo di una transizione coinvolge almeno un utente che compare
+per la prima volta nella rete; sugli 8 passi non esiste alcun arco fra due utenti entrambi già presenti
+nella rete dello snapshot precedente (0 su 707.604 archi nuovi).
+
+1.2 DATASET SINTETICO
+---------------------
+10.002 utenti, 100.456 post (100.455 con testo), nessun arco. Il tempo è la successione degli snapshot
+(unità di tempo t1…t9): ogni post va assegnato a uno dei nove snapshot.
+Quattro file in "Esame Angelantonio Fedele Murolo/synthetic_snapshots/":
+  batch_0_synthetic.tsv  33.068 righe / 9.680 utenti
+  batch_1_synthetic.tsv  33.068 righe / 9.690 utenti
+  batch_2_synthetic.tsv  34.318 righe / 9.825 utenti
+  batch_3_synthetic.tsv       2 righe /     2 utenti
+I batch non sono gruppi disgiunti di utenti: si sovrappongono per 9.500-9.514 utenti ciascuno.
+
+Colonne: id (del post) | account_id | username | user_bio | nationality | state_of_origin | gender |
+ethnicity | religion | political_leaning | interests | age_interval | profession | format_style |
+exact_level_found | content
+Da username a exact_level_found sono attributi di profilo dell'utente: esistono solo nel sintetico, ma
+per il sintetico vale la stessa regola del reale, cioè non si considerano, non si usano come feature e
+non si generano.
+
+1.3 COSA HANNO IN COMUNE I DUE DATASET
+--------------------------------------
+Le colonne che contano, in entrambi i dataset, sono id, account_id e content; content è l'unica con
+informazione testuale, ed è l'unica colonna di contenuto comune.
+
+Lunghezza del testo, in token del tokenizer di all-MiniLM-L6-v2 (limite del modello: 256 token):
+  reale     media 51 | mediana 19 | p90 106 | massimo 2.953 | il 3,72% dei post supera 256 token
+  sintetico media 50 | mediana 48 | p90  80 | massimo   254 | nessun post supera 256 token
+Nel reale i post con testo sono 154.580 (somma dei post delle 9 finestre).
+
+=====================================================================
+2. IL MODELLO DI RIFERIMENTO: tNodeEmbed
+=====================================================================
+Paper: "Node Embedding over Temporal Graphs", Uriel Singer, Ido Guy, Kira Radinsky, IJCAI 2019
+  https://www.ijcai.org/proceedings/2019/0640.pdf
+Blog degli autori:
+  https://medium.com/@urielsinger/tnodeembed-node-embedding-over-temporal-graphs-b7bcbf59938e
+Implementazione di riferimento degli autori presente nel progetto: cartella "tNodeEmbed/".
+
+Cosa fa: impara rappresentazioni dei nodi che evolvono nel tempo su un grafo temporale rappresentato come
+sequenza di snapshot. Allinea gli embedding di snapshot consecutivi con una trasformazione ortogonale
+(Procrustes, stimata sui nodi comuni e applicata anche ai nuovi) e modella la dinamica temporale con una
+LSTM. La loss ottimizza congiuntamente le rappresentazioni dei nodi e l'obiettivo del task (link
+prediction temporale, node classification). Nella versione del paper le feature iniziali dei nodi sono
+prodotte con node2vec (sezione 3.1).
+
+Protocollo di valutazione del paper: predire nuovi archi fra coppie di nodi gia' visti negli snapshot di
+training. Applicato al dataset reale produce 0 archi di test, perché ogni arco nuovo coinvolge almeno un
+utente mai visto prima.
+
+=====================================================================
+3. OBIETTIVO DEL PROGETTO
+=====================================================================
+Costruire una rete sociale fra gli utenti sintetici (sintetico verso sintetico) che riproduca le
+proprietà della rete reale. Il modello si addestra sul dataset reale e viene applicato per inferenza al
+dataset sintetico; non si creano collegamenti fra utenti sintetici e utenti reali.
+Il dataset sintetico non contiene archi: la rete va generata. Il tempo, in entrambi i dataset, è la
+successione degli snapshot (una unità di tempo per snapshot, t1…t9); i nomi delle cartelle sono
+etichette, non un calendario. I post sintetici vanno quindi assegnati a uno dei nove snapshot, così che
+la loro successione ricrei un'evoluzione della rete analoga a quella reale (il reale ha 9 snapshot e il
+suo accrescimento è la dimensione portante della sua evoluzione).
+L'unica informazione testuale disponibile in entrambi i dataset è content.
+La rete generata va confrontata con quella reale su struttura (densità, distribuzione dei gradi,
+reciprocità, modularità, transitività, omofilia del contenuto), evoluzione temporale (crescita,
+persistenza degli archi) e contenuto.
+
+
+Il modello va trainato sulla base del content dei post, gli altri attributi non vanno considerati. È il content dei post a dover dare origine alla rete nel sintetico, spero sia chiaro.

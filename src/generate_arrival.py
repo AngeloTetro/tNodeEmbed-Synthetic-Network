@@ -38,6 +38,7 @@ Output: <partition>_<variant>/, results/v9_report.csv, results/v9_coefficients.c
 import argparse
 import csv
 import os
+import shutil
 import traceback
 
 import numpy as np
@@ -46,7 +47,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_auc_score
 from sklearn.preprocessing import StandardScaler
 
-from apply_edge_rules import edges_to_files, metrics_from_folder
+from graph_io import metrics_from_folder
 from transfer_to_synthetic import (BASE, DEVICE, N_SNAPSHOTS, SEED, node_embeddings,
                                    prepare_pairs, procrustes_chain, real_representations,
                                    synthetic_representations, train_model)
@@ -57,9 +58,9 @@ REPORT = os.path.join(RESULTS, 'v9_report.csv')
 LOG = os.path.join(RESULTS, '_v9_run.txt')
 
 
-def coefficients_path(variant):
-    """One coefficient file per run: the generic name was overwritten by every run."""
-    return os.path.join(RESULTS, f'v9_{variant}_coefficients.csv')
+def coefficients_path(partition, variant):
+    """One coefficient file per run, named after the generated folder."""
+    return os.path.join(RESULTS, f'coefficients_{partition}_{variant}.csv')
 
 
 TRAIN_STEPS = (1, 2, 3, 4, 5)
@@ -80,6 +81,22 @@ def log(text):
     print(text, flush=True)
     with open(LOG, 'a', encoding='utf-8') as f:
         f.write(text + '\n')
+
+
+def edges_to_files(adj, users, folder, t, source_partition):
+    """Write snapshot_t/social_network.edg and copy the partition'sposts for that step."""
+    directory = os.path.join(folder, f'snapshot_{t + 1}')
+    os.makedirs(directory, exist_ok=True)
+    for name in ('posts_current_snapshot.tsv', 'posts_incremental.tsv'):
+        origin = os.path.join(BASE, source_partition, f'snapshot_{t + 1}', name)
+        destination = os.path.join(directory, name)
+        if not os.path.exists(destination) and os.path.exists(origin):
+            shutil.copyfile(origin, destination)
+    rows, columns = torch.nonzero(adj, as_tuple=True)
+    with open(os.path.join(directory, 'social_network.edg'), 'w', encoding='utf-8',
+              newline='') as f:
+        for source, target in zip(rows.tolist(), columns.tolist()):
+            f.write(f'{users[source]}\t{users[target]}\r\n')
 
 
 def arrivals(edge_sets, index, step):
@@ -448,7 +465,6 @@ def run():
     parser.add_argument('--exponent', type=float, default=1.0,
                         help='esponente della riscalatura di k sulla popolazione: 1 = lineare, '
                              'il valore che porta il grado medio generato su quello reale')
-    parser.add_argument('--steps', type=int, default=N_SNAPSHOTS)
     parser.add_argument('--negatives', choices=('uniform', 'stratified'), default='uniform',
                         help='uniform: la configurazione documentata; stratified: misti 30/30/40')
     parser.add_argument('--closure', choices=('binary', 'count'), default='binary',
@@ -467,7 +483,7 @@ def run():
     encoder, users, index, edge_sets, matrices, masks = real_representations('minilm', 'period',
                                                                             args.pooling)
     aligned = procrustes_chain(matrices, masks)
-    model = train_model(aligned, prepare_pairs(edge_sets, users, index, matrices, masks, 'matched'),
+    model = train_model(aligned, prepare_pairs(edge_sets, users, index, masks, 'matched'),
                         index, matrices[0].shape[1])
     embeddings = node_embeddings(model, matrices)
     log(f'real users {len(users)} | edges last snapshot {len(edge_sets[-1])}')
@@ -509,7 +525,8 @@ def run():
         f'rete si giudica sulle sue statistiche, non qui)')
 
     os.makedirs(RESULTS, exist_ok=True)
-    with open(coefficients_path(args.variant), 'w', encoding='utf-8', newline='') as f:
+    with open(coefficients_path(args.partition, args.variant), 'w', encoding='utf-8',
+              newline='') as f:
         f.write('feature,coefficient\n')
         for name, weight in zip(FEATURES, classifier.coef_[0]):
             f.write(f'{name},{weight:.6f}\n')
@@ -543,6 +560,9 @@ def run():
     if os.path.exists(REPORT):
         with open(REPORT, encoding='utf-8', newline='') as f:
             existing = list(csv.DictReader(f))
+    key = (args.variant, args.partition, args.content)
+    existing = [r for r in existing
+                if (r.get('variant'), r.get('partition'), r.get('content')) != key]
     with open(REPORT, 'w', encoding='utf-8', newline='') as f:
         writer = csv.DictWriter(f, fieldnames=FIELDS)
         writer.writeheader()

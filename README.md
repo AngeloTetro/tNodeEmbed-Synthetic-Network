@@ -68,11 +68,16 @@ uv run python src/analyze_homophily.py generated_snapshots_growth_v2_v9
 uv run python src/analyze_profiles.py  generated_snapshots_growth_v2_v9
 uv run python src/check_real_accretion.py generated_snapshots_growth_v2_v9
 
-# 4. tabelle e consegna
+# 4. tabelle, figure e consegna
 uv run python src/variant_scorecard.py      # reale contro ufficiale e controllo
 uv run python src/tail_scaling.py           # legge di scala del reale
+uv run python src/compare_folders.py --prefix compare   # figure di confronto
+uv run python src/plot_pipeline.py                      # schema della pipeline
 uv run python src/consolidate_native.py generated_snapshots_growth_v2_v9
 ```
+
+I PDF (`paper.pdf`, `paper_en.pdf`, `docs/relazione.pdf`) sono più vecchi dei rispettivi markdown:
+vanno rigenerati con il toolchain usato per produrli prima di consegnarli.
 
 ## Cosa si consegna
 

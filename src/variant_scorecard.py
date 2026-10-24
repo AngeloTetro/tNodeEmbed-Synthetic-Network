@@ -1,4 +1,4 @@
-"""Scorecard of the delivered network and of its control against the real one, last snapshot.
+﻿"""Scorecard of the delivered network and of its control against the real one, last snapshot.
 
 Two networks are compared: the official one (V9 on the progressive-arrival partition) and the
 control (V9 with every user present from the first step). For every metric the file reports the
@@ -114,7 +114,7 @@ def main():
 
     rows = []
     for label in labels:
-        row = {'rete': label}
+        row = {'network': label}
         row.update(table[label])
         comparable = []
         for key, _ in METRICS:
@@ -131,7 +131,7 @@ def main():
 
     with open(os.path.join(RESULTS, 'variant_scorecard.csv'), 'w', encoding='utf-8',
               newline='') as f:
-        fields = ['rete'] + [key for key, _ in METRICS] + \
+        fields = ['network'] + [key for key, _ in METRICS] + \
                  ['tail_slope', 'tail_gamma', 'tail_from', 'tail_points'] + \
                  [f'dist_{key}' for key, _ in METRICS] + ['dist_total', 'dist_mean']
         writer = csv.DictWriter(f, fieldnames=fields)
@@ -164,12 +164,12 @@ def main():
                  'metriche confrontabili (densita, grado medio, grado massimo, reciprocita, '
                  'modularita, transitivity, clustering):')
     lines.append('')
-    lines.append('| rete | somma | media |')
+    lines.append('| network | sum | mean |')
     lines.append('|---|---:|---:|')
     for row in rows:
-        if row['rete'] == 'reale':
+        if row['network'] == 'reale':
             continue
-        lines.append(f"| {row['rete']} | {row['dist_total']:.2f} | {row['dist_mean']:.3f} |")
+        lines.append(f"| {row['network']} | {row['dist_total']:.2f} | {row['dist_mean']:.3f} |")
     with open(os.path.join(RESULTS, 'variant_scorecard.md'), 'w', encoding='utf-8') as f:
         f.write('\n'.join(lines) + '\n')
 

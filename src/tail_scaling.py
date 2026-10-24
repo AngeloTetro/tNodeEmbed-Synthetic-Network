@@ -36,12 +36,8 @@ BASE = os.path.join(ROOT, 'Esame Angelantonio Fedele Murolo')
 RESULTS = os.path.join(ROOT, 'results')
 
 FOLDERS = [
-    ('generated_snapshots_v2_v9_real', 'V9'),
-    ('generated_snapshots_growth_v2_v9', 'V9-prog'),
-    ('generated_snapshots_v2_v9_slope', 'V9-slope'),
-    ('generated_snapshots_v2_v6b', 'v6b'),
-    ('generated_snapshots_rule_v2', 'v2'),
-    ('generated_snapshots_v2_v8', 'v8'),
+    ('generated_snapshots_growth_v2_v9', 'ufficiale'),
+    ('generated_snapshots_v2_v9_real', 'controllo'),
 ]
 QUANTILE = 0.90
 
@@ -125,14 +121,14 @@ def main():
         expected = float(np.exp(intercept + slope * np.log(row['nodes'])))
         accretion = last_row(os.path.join(RESULTS, f'accretion_{folder}.csv'))
         rows.append({
-            'rete': label,
+            'network': label,
             'nodes': row['nodes'],
             'max_out_degree': row['max_out_degree'],
-            'max_atteso_dalla_scala': int(round(expected)),
-            'rapporto_col_massimo_atteso': round(row['max_out_degree'] / expected, 3),
+            'expected_max': int(round(expected)),
+            'ratio_to_expected': round(row['max_out_degree'] / expected, 3),
             'tail_slope': row['tail_slope'],
             'tail_gamma': row['tail_gamma'],
-            'grado_estremo_presente': accretion.get('mean_prev_degree_of_existing_end', ''),
+            'existing_endpoint_degree': accretion.get('mean_prev_degree_of_existing_end', ''),
         })
         print(f"  {label:>8}: {row['nodes']:>6} utenti | grado massimo {row['max_out_degree']:>5} "
               f"| atteso dalla scala {expected:>6.0f} | rapporto {row['max_out_degree'] / expected:>5.2f} "
@@ -142,19 +138,20 @@ def main():
     real_hub = real_accretion.get('mean_prev_degree_of_existing_end', '')
     with open(os.path.join(RESULTS, 'tail_scaling_summary.csv'), 'w', encoding='utf-8',
               newline='') as f:
-        fields = ['rete'] + [key for key in rows[0] if key != 'rete'] + ['reale_grado_estremo_presente']
+        fields = ['network'] + [key for key in rows[0] if key != 'network'] + \
+                 ['real_existing_endpoint_degree']
         writer = csv.DictWriter(f, fieldnames=fields)
         writer.writeheader()
         for row in rows:
-            writer.writerow(dict(row, reale_grado_estremo_presente=real_hub))
+            writer.writerow(dict(row, real_existing_endpoint_degree=real_hub))
 
     if real_hub:
         print()
         print('il grado medio dell\'estremo gia\' presente, contro il rapporto fra le popolazioni:')
         for row in rows:
-            value = row['grado_estremo_presente'] or float('nan')
+            value = row['existing_endpoint_degree'] or float('nan')
             ratio = float(value) / float(real_hub) if value else float('nan')
-            print(f"  {row['rete']:>8}: {float(value):>6.1f} contro {float(real_hub):.1f} del reale "
+            print(f"  {row['network']:>8}: {float(value):>6.1f} contro {float(real_hub):.1f} del reale "
                   f"| rapporto {ratio:.3f} | rapporto fra popolazioni "
                   f"{row['nodes'] / sizes[-1]:.3f}")
     print()

@@ -61,7 +61,9 @@ reciprocità 0,3224 / 0,3229 / 0,3227, omofilia del contenuto ~1,00 in tutte. Ne
 contenuto pesa **+0,05** contro **+1,22** della "controparte nuova" e +1,02 del grado.
 
 L'omofilia 2,13 del reale non contraddice questa lettura: scomposta, scende a **1,51** contro non-archi
-appaiati per grado e a **1,29** con grado uguale entro il 10% — è in gran parte struttura.
+appaiati per grado e a **1,29** con grado uguale entro il 10% — è in gran parte struttura. Sulla rete
+ufficiale la stessa scomposizione dà **1,001 / 1,000 / 0,980 / 1,001 / 1,014**: nessuna omofilia di
+contenuto (`results/homophily_control_generated_snapshots_growth_v2_v9.csv`).
 
 ## Cosa resta aperto
 
@@ -78,7 +80,8 @@ appaiati per grado e a **1,29** con grado uguale entro il 10% — è in gran par
 
 `Esame Angelantonio Fedele Murolo/` con dieci cartelle: la rete reale, il dataset sintetico, le due
 partizioni e le sei reti V9 (tre modalità di contenuto × ufficiale e controllo). Ogni rete ha i 9 file
-`.edg` (uno per passo) e i 4 file nella forma dei batch nativi. I numeri stanno in `results/*.csv`, le
+`.edg` (uno per passo) e i 4 file nella forma dei batch nativi — il quarto è vuoto per costruzione,
+perché `batch_3` ha due righe (`results/native_batches.csv`). I numeri stanno in `results/*.csv`, le
 figure in `results/figures/` e `docs/riferimenti/`.
 
 Riproduzione completa in `README.md`; dettaglio tecnico e limiti in `docs/pipeline.md`; tentativi

@@ -7,21 +7,21 @@ __pycache__/
 # configurazione dello strumento (non è lavoro di progetto)
 .commandcode/
 
-# dataset: input originali (1,1 GB, read-only, mai modificati) e cartelle generate
-# (ricostruibili con gli script e i seed fissi). Sono congelati nel file zip di snapshot.
+# dataset: input originali (read-only, mai modificati) e cartelle generate
+# (ricostruibili con gli script e i seed fissi). Sono congelati nel file zip di consegna.
 Esame Angelantonio Fedele Murolo/
 
-# encoder fine-tuned (binari, ricostruibili con src/finetune_encoder.py)
-models/
+# encoder fine-tuned alla radice del progetto (binari, ricostruibili con archive/src/finetune_encoder.py)
+# NB: senza lo slash iniziale questa regola ignorava anche tNodeEmbed/src/models/, che è codice
+# di riferimento e deve restare versionato.
+/models/
 
-# log di lavoro degli script (ricostruibili a ogni giro)
-results/_*.txt
-results/_*.log
+# log di lavoro degli script (sovrascritti a ogni giro), ovunque si trovino
+**/results/_*.txt
+**/results/_*.log
 
 # archivio di snapshot, se creato dentro il progetto
 *.zip
 
 # materiale di lavoro non prodotto dal progetto
 LLM/
-XA.txt
-docs/riferimenti/gemini.md

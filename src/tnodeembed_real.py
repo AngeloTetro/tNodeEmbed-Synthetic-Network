@@ -124,6 +124,63 @@ class TNodeEmbed(nn.Module):
         return self.head(torch.cat([h_left, h_right, h_left * h_right], dim=1)).squeeze(1)
 
 
+def make_pair_builder(edge_sets, users, index, masks, negatives_mode):
+    """Prepare the (positives, negatives) sampler for one transition.
+
+    Positives: the new edges of the transition, capped at MAX_PAIRS.
+    Negatives: pairs never connected, sampled uniformly ("random") or matched to the positive
+    on the source and on the target's arrival snapshot and degree ("matched").
+    """
+    n_users = len(users)
+    degrees = []
+    for edges in edge_sets:
+        deg = {}
+        for a, b in edges:
+            deg[a] = deg.get(a, 0) + 1
+            deg[b] = deg.get(b, 0) + 1
+        degrees.append(deg)
+    arrival = np.full(n_users, N_SNAPSHOTS, dtype=int)
+    for t, mask in enumerate(masks):
+        arrival[mask & (arrival == N_SNAPSHOTS)] = t
+
+    def build(step):
+        delta = [(a, b) for a, b in (edge_sets[step] - edge_sets[step - 1])
+                 if a in index and b in index]
+        positives = random.sample(delta, min(MAX_PAIRS, len(delta)))
+        negatives, seen = [], set()
+        if negatives_mode == 'random':
+            while len(negatives) < len(positives):
+                a, b = random.choice(users), random.choice(users)
+                if a != b and (a, b) not in seen and (a, b) not in edge_sets[-1]:
+                    seen.add((a, b))
+                    negatives.append((a, b))
+        else:
+            degree_previous = degrees[step - 1]
+            pool = sorted(range(n_users), key=lambda u: (arrival[u], degree_previous.get(users[u], 0)))
+            position = {u: i for i, u in enumerate(pool)}
+            for a, b in positives:
+                target = index[b]
+                p, chosen = position[target], None
+                for offset in range(1, 20000):
+                    for candidate_position in (p - offset, p + offset):
+                        if 0 <= candidate_position < n_users:
+                            candidate = pool[candidate_position]
+                            candidate_id = users[candidate]
+                            if (candidate != index[a] and arrival[candidate] == arrival[target]
+                                    and (a, candidate_id) not in edge_sets[-1]
+                                    and (a, candidate_id) not in seen):
+                                chosen = candidate_id
+                                break
+                    if chosen is not None:
+                        break
+                if chosen is not None:
+                    seen.add((a, chosen))
+                    negatives.append((a, chosen))
+        return positives, negatives
+
+    return build
+
+
 def run(encoder_name, content, negatives_mode, pooling='concat', features='frozen', verbose=True):
     snapshots = sorted(os.listdir(os.path.join(BASE, 'real_snapshots')))
     edge_sets = [load_edges(os.path.join(BASE, 'real_snapshots', s, 'social_network.edg'))
@@ -170,51 +227,7 @@ def run(encoder_name, content, negatives_mode, pooling='concat', features='froze
 
     aligned = procrustes_chain(matrices, masks)
 
-    degrees = []
-    for edges in edge_sets:
-        deg = {}
-        for a, b in edges:
-            deg[a] = deg.get(a, 0) + 1
-            deg[b] = deg.get(b, 0) + 1
-        degrees.append(deg)
-    arrival = np.full(n_users, N_SNAPSHOTS, dtype=int)
-    for t, mask in enumerate(masks):
-        arrival[mask & (arrival == N_SNAPSHOTS)] = t
-
-    def build_pairs(step):
-        delta = [(a, b) for a, b in (edge_sets[step] - edge_sets[step - 1])
-                 if a in index and b in index]
-        positives = random.sample(delta, min(MAX_PAIRS, len(delta)))
-        negatives, seen = [], set()
-        if negatives_mode == 'random':
-            while len(negatives) < len(positives):
-                a, b = random.choice(users), random.choice(users)
-                if a != b and (a, b) not in seen and (a, b) not in edge_sets[-1]:
-                    seen.add((a, b))
-                    negatives.append((a, b))
-        else:
-            degree_previous = degrees[step - 1]
-            pool = sorted(range(n_users), key=lambda u: (arrival[u], degree_previous.get(users[u], 0)))
-            position = {u: i for i, u in enumerate(pool)}
-            for a, b in positives:
-                target = index[b]
-                p, chosen = position[target], None
-                for offset in range(1, 20000):
-                    for candidate_position in (p - offset, p + offset):
-                        if 0 <= candidate_position < n_users:
-                            candidate = pool[candidate_position]
-                            candidate_id = users[candidate]
-                            if (candidate != index[a] and arrival[candidate] == arrival[target]
-                                    and (a, candidate_id) not in edge_sets[-1]
-                                    and (a, candidate_id) not in seen):
-                                chosen = candidate_id
-                                break
-                    if chosen is not None:
-                        break
-                if chosen is not None:
-                    seen.add((a, chosen))
-                    negatives.append((a, chosen))
-        return positives, negatives
+    build_pairs = make_pair_builder(edge_sets, users, index, masks, negatives_mode)
 
     def tensors(step, pairs):
         """Sequence of representations from the first snapshot up to this time step."""

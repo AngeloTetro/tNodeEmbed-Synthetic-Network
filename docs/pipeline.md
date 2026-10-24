@@ -27,7 +27,8 @@ Nessun file originale viene modificato: le cartelle `generated_*` sono aggiunte 
 (mediana ≈ 49.500-51.600) e condividono ~9.500 utenti su ~9.700; `batch_3` ha 2 righe. Sono tre terzi
 della **stessa** popolazione. Da qui la **consegna doppia**: i 9 file `.edg` (uno per passo) e i
 `native_4_batch_<i>.edg`, cioè la rete **ristretta agli utenti** di quel batch (93-97% degli archi),
-più `native_4.csv`. È una restrizione per utenti, non una suddivisione per periodi.
+più `native_4.csv`. È una restrizione per utenti, non una suddivisione per periodi. Il quarto file è
+**vuoto per costruzione**: `batch_3` contiene due righe, quindi nessun utente.
 
 ## 3. Il tempo è la struttura portante: tNodeEmbed
 
@@ -120,6 +121,7 @@ distanza relativa dal reale (3,84 contro 3,89 su sette metriche, definizione in
 | `src/check_real_accretion.py <cartella>` | archi nuovi per estremi (nuovo/presente) e grado dell'estremo già presente | `results/accretion_*.csv` |
 | `src/variant_scorecard.py` | reale contro ufficiale e controllo, con distanza relativa dichiarata e pendenza di coda | `results/variant_scorecard.csv`, `.md` |
 | `src/tail_scaling.py` | legge di scala del reale (grado massimo contro utenti) e confronto a pari dimensione | `results/tail_scaling_real.csv`, `tail_scaling_summary.csv` |
+| `src/measure_arrivals.py` | misura degli eventi di arrivo del reale: archi per evento, quota uscente, ricambiati | `results/arrival_events.csv` |
 | `src/consolidate_native.py <cartella>` | consegna nei 4 file nella forma dei batch nativi | `results/native_batches.csv`, `<cartella>/native_4_batch_<i>.edg` |
 | `src/compare_folders.py` | confronto grafico fra cartelle | `results/figures/compare_*.png` |
 | `src/plot_pipeline.py` | schema della pipeline | `results/figures/paper_pipeline.png` |
@@ -146,9 +148,11 @@ Le famiglie abbandonate (regole a mano, v6, v7, V8) hanno gli script in `archive
 - **L'omofilia del reale è in gran parte struttura** (`results/homophily_control_real_snapshots.csv`):
   contro coppie a caso **2,133**; contro non-archi appaiati per grado **1,511**; per grado ±10%
   **1,290**; per volume di testo 1,554; per grado+volume 1,367. Gli estremi degli archi hanno grado
-  medio 403,6 contro 61,7 e 1.297 caratteri contro una mediana di 323.
+  medio 403,6 contro 61,7 e 1.297 caratteri contro una mediana di 323. Sulla rete ufficiale lo
+  stesso protocollo dà **1,001 / 1,000 / 0,980 / 1,001 / 1,014**
+  (`results/homophily_control_generated_snapshots_growth_v2_v9.csv`): nessuna omofilia di contenuto.
 - **Legge di scala**: il reale prevede ~339 di grado massimo a 10.000 utenti (esponente 1,445,
-  R² 0,986). La rete ufficiale sta a **274 (81%)**, il controllo a 328-324 (~97%). È il costo più
+  R² 0,986). La rete ufficiale sta a **274 (81%)**, il controllo a **328 (96%)**. È il costo più
   visibile della partizione progressiva.
 - **Coda**: pendenza CCDF sull'ultimo decile −3,98 (ufficiale), −3,33 (controllo), −2,349 (reale, che
   al primo snapshot con 10.755 utenti sta a −1,69). A pari dimensione la coda generata è **più

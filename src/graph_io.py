@@ -92,3 +92,29 @@ def load_network(folder):
 def cumulative_docs(folder):
     directories, names = snapshots_folder(folder)
     return names, [load_docs(os.path.join(d, 'posts_incremental.tsv')) for d in directories]
+
+
+def metrics_from_folder(folder):
+    """Nodes, edges, density, reciprocity and degrees of the last snapshot of a folder.
+
+    Used by the generators to fill their report row without re-reading the CSV tables.
+    """
+    directory = sorted(os.path.join(folder, d) for d in os.listdir(folder)
+                       if os.path.isdir(os.path.join(folder, d)))[-1]
+    edges = set()
+    with open(os.path.join(directory, 'social_network.edg'), encoding='utf-8-sig',
+              newline='') as f:
+        for line in f:
+            parts = line.rstrip('\r\n').split('\t')
+            if len(parts) >= 2 and parts[0].strip() and parts[1].strip():
+                edges.add((parts[0].strip(), parts[1].strip()))
+    nodes = {n for edge in edges for n in edge}
+    out_degree = {}
+    for source, _ in edges:
+        out_degree[source] = out_degree.get(source, 0) + 1
+    reciprocal = sum(1 for a, b in edges if (b, a) in edges) / max(1, len(edges))
+    return {'nodes': len(nodes), 'edges': len(edges),
+            'density': round(len(edges) / max(1, len(nodes) * (len(nodes) - 1)), 6),
+            'reciprocity': round(reciprocal, 4),
+            'mean_out_degree': round(len(edges) / max(1, len(nodes)), 2),
+            'max_out_degree': max(out_degree.values()) if out_degree else 0}

@@ -8,9 +8,9 @@ Produces figures under results/figures:
   compare_profiles.png      profile classification AUC by feature set (generated folders)
 
 Usage: uv run python src/compare_folders.py [--prefix NAME] [folder ...]
-       (default folders: real_snapshots, generated_snapshots, generated_snapshots_growth;
-        with --prefix the figures are named <NAME>_growth.png etc., so they do not overwrite
-        the ones used by the internal report)
+       (default folders: real_snapshots, generated_snapshots_growth_v2_v9,
+        generated_snapshots_v2_v9_real; with --prefix the figures are named
+        <NAME>_growth.png etc., so they do not overwrite the ones used by the internal report)
 """
 
 import csv
@@ -28,7 +28,11 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BASE = os.path.join(ROOT, 'Esame Angelantonio Fedele Murolo')
 RESULTS = os.path.join(ROOT, 'results')
 FIGURES = os.path.join(RESULTS, 'figures')
-DEFAULT_FOLDERS = ('real_snapshots', 'generated_snapshots', 'generated_snapshots_growth')
+DEFAULT_FOLDERS = ('real_snapshots', 'generated_snapshots_growth_v2_v9',
+                   'generated_snapshots_v2_v9_real')
+LABELS = {'real_snapshots': 'real',
+          'generated_snapshots_growth_v2_v9': 'official',
+          'generated_snapshots_v2_v9_real': 'control'}
 ARGUMENTS = list(sys.argv[1:])
 PREFIX = 'compare'
 if ARGUMENTS and ARGUMENTS[0] == '--prefix':
@@ -59,8 +63,8 @@ def main():
         if not rows:
             continue
         axis = np.arange(1, len(rows) + 1)
-        axes[0].plot(axis, numeric(rows, 'nodes'), marker='o', label=folder)
-        axes[1].plot(axis, numeric(rows, 'edges'), marker='o', label=folder)
+        axes[0].plot(axis, numeric(rows, 'nodes'), marker='o', label=LABELS.get(folder, folder))
+        axes[1].plot(axis, numeric(rows, 'edges'), marker='o', label=LABELS.get(folder, folder))
     axes[0].set_title('nodes per snapshot')
     axes[1].set_title('edges per snapshot')
     for ax in axes:
@@ -76,9 +80,9 @@ def main():
         if not rows:
             continue
         axis = np.arange(1, len(rows) + 1)
-        axes[0].plot(axis, numeric(rows, 'density'), marker='o', label=folder)
-        axes[1].plot(axis, numeric(rows, 'reciprocity'), marker='o', label=folder)
-        axes[2].plot(axis, numeric(rows, 'modularity'), marker='o', label=folder)
+        axes[0].plot(axis, numeric(rows, 'density'), marker='o', label=LABELS.get(folder, folder))
+        axes[1].plot(axis, numeric(rows, 'reciprocity'), marker='o', label=LABELS.get(folder, folder))
+        axes[2].plot(axis, numeric(rows, 'modularity'), marker='o', label=LABELS.get(folder, folder))
     for ax, title in zip(axes, ('density', 'reciprocity', 'modularity')):
         ax.set_title(title)
         ax.set_xlabel('snapshot index')
@@ -93,7 +97,7 @@ def main():
         if not rows:
             continue
         ax.plot(np.arange(1, len(rows) + 1), numeric(rows, 'homophily_ratio'), marker='o',
-                label=folder)
+                label=LABELS.get(folder, folder))
     ax.axhline(1.0, color='gray', linestyle='--', linewidth=1)
     ax.set_xlabel('snapshot index')
     ax.set_ylabel('edge similarity / random pairs')
@@ -114,7 +118,7 @@ def main():
         for source, _ in edges:
             degrees[source] = degrees.get(source, 0) + 1
         values = np.sort(np.array(list(degrees.values())))
-        ax.loglog(values, 1 - np.arange(len(values)) / len(values), label=folder)
+        ax.loglog(values, 1 - np.arange(len(values)) / len(values), label=LABELS.get(folder, folder))
     ax.set_xlabel('out-degree')
     ax.set_ylabel('P(out-degree > x)')
     ax.set_title('out-degree distribution, final snapshot')
@@ -142,7 +146,7 @@ def main():
             ax.set_xticklabels(attributes, rotation=20, ha='right')
             ax.axhline(0.5, color='gray', linestyle='--', linewidth=1)
             ax.set_ylabel('AUC (one-vs-rest macro)')
-            ax.set_title(folder)
+            ax.set_title(LABELS.get(folder, folder))
             ax.legend(fontsize=7)
             ax.grid(alpha=0.3, axis='y')
         figure.tight_layout()
