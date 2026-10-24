@@ -54,8 +54,14 @@ from transfer_to_synthetic import (BASE, DEVICE, N_SNAPSHOTS, SEED, node_embeddi
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 RESULTS = os.path.join(ROOT, 'results')
 REPORT = os.path.join(RESULTS, 'v9_report.csv')
-COEFFICIENTS = os.path.join(RESULTS, 'v9_coefficients.csv')
 LOG = os.path.join(RESULTS, '_v9_run.txt')
+
+
+def coefficients_path(variant):
+    """One coefficient file per run: the generic name was overwritten by every run."""
+    return os.path.join(RESULTS, f'v9_{variant}_coefficients.csv')
+
+
 TRAIN_STEPS = (1, 2, 3, 4, 5)
 VAL_STEP = 6
 NEG_PER_POS = 10
@@ -503,7 +509,7 @@ def run():
         f'rete si giudica sulle sue statistiche, non qui)')
 
     os.makedirs(RESULTS, exist_ok=True)
-    with open(COEFFICIENTS, 'w', encoding='utf-8', newline='') as f:
+    with open(coefficients_path(args.variant), 'w', encoding='utf-8', newline='') as f:
         f.write('feature,coefficient\n')
         for name, weight in zip(FEATURES, classifier.coef_[0]):
             f.write(f'{name},{weight:.6f}\n')

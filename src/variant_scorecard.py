@@ -1,13 +1,20 @@
-"""Scorecard of the generated networks against the real one, on the final snapshot.
+"""Scorecard of the delivered network and of its control against the real one, last snapshot.
 
-One row per folder: the structural metrics already in results/, the relative distance from
-the real network for every metric, and the slope of the out-degree CCDF tail (the measure
-that tells a tail that is too light from one that is too heavy, which the maximum degree
-alone cannot).
+Two networks are compared: the official one (V9 on the progressive-arrival partition) and the
+control (V9 with every user present from the first step). For every metric the file reports the
+value and the relative distance from the real network, defined once and for all as
 
-The raw edge count is printed with the others but does NOT enter the count of wins: it is
-the mean out-degree multiplied by the number of users, so it moves with the population
-(10.000 synthetic users against 25.714 real ones) and is not comparable across domains.
+    distance = |value - real| / |real|
+
+stored as a fraction with four decimals. The raw edge count and the node count do not enter the
+aggregate: they move with the population (9.900 synthetic users against 25.714 real ones), so
+they are not comparable across domains. Homophily does not enter either: every generated network
+sits at 1,00, so it contributes the same constant to all of them.
+
+The aggregate is the sum of the seven comparable distances (and its mean); it is a descriptive
+index, not a criterion. The two partitions differ by 0,04 on it, and reversing the normalisation
+(e.g. dividing by the maximum instead of the real value) reverses the order: they are
+equivalent, and the official one is chosen for the realism of arrivals, not for this number.
 
 Usage: uv run python src/variant_scorecard.py
 Output: results/variant_scorecard.csv, results/variant_scorecard.md
@@ -26,26 +33,21 @@ RESULTS = os.path.join(ROOT, 'results')
 
 FOLDERS = [
     ('real_snapshots', 'reale'),
-    ('generated_snapshots_rule_v2', 'v2'),
-    ('generated_snapshots_v2_v6a', 'v6a'),
-    ('generated_snapshots_v2_v6b', 'v6b'),
-    ('generated_snapshots_v2_v7c', 'v7c'),
-    ('generated_snapshots_v2_v8', 'v8'),
-    ('generated_snapshots_v2_v9_real', 'V9'),
-    ('generated_snapshots_growth_v2_v9', 'V9-prog'),
+    ('generated_snapshots_growth_v2_v9', 'ufficiale'),
+    ('generated_snapshots_v2_v9_real', 'controllo'),
 ]
 
 METRICS = [
-    ('edges', 'struttura', 'archi'),
-    ('nodes', 'struttura', 'nodi'),
-    ('density', 'struttura', 'densita'),
-    ('out_degree_mean', 'struttura', 'grado medio'),
-    ('out_degree_max', 'struttura', 'grado massimo'),
-    ('reciprocity', 'struttura', 'reciprocita'),
-    ('modularity', 'struttura', 'modularita'),
-    ('transitivity', 'pesante', 'transitivity'),
-    ('avg_clustering', 'pesante', 'clustering'),
-    ('homophily_ratio', 'contenuto', 'omofilia'),
+    ('edges', 'archi'),
+    ('nodes', 'nodi'),
+    ('density', 'densita'),
+    ('out_degree_mean', 'grado medio'),
+    ('out_degree_max', 'grado massimo'),
+    ('reciprocity', 'reciprocita'),
+    ('modularity', 'modularita'),
+    ('transitivity', 'transitivity'),
+    ('avg_clustering', 'clustering'),
+    ('homophily_ratio', 'omofilia'),
 ]
 
 DECIMALS = {'edges': 0, 'nodes': 0, 'out_degree_max': 0, 'density': 6, 'out_degree_mean': 2,
@@ -54,6 +56,8 @@ DECIMALS = {'edges': 0, 'nodes': 0, 'out_degree_max': 0, 'density': 6, 'out_degr
 
 SCALE_DEPENDENT = {'edges', 'nodes'}
 NO_DISCRIMINATION = {'homophily_ratio'}
+COMPARABLE = [key for key, _ in METRICS
+              if key not in SCALE_DEPENDENT and key not in NO_DISCRIMINATION]
 
 
 def read_rows(path):
@@ -112,37 +116,31 @@ def main():
     for label in labels:
         row = {'rete': label}
         row.update(table[label])
-        for key, _, _ in METRICS:
-            row[f'dist_{key}'] = '' if label == 'reale' else fmt_distance(
-                distance(table[label].get(key), reference.get(key)))
+        comparable = []
+        for key, _ in METRICS:
+            if label == 'reale':
+                row[f'dist_{key}'] = ''
+                continue
+            value = distance(table[label].get(key), reference.get(key))
+            row[f'dist_{key}'] = '' if np.isnan(value) else round(value, 4)
+            if key in COMPARABLE and not np.isnan(value):
+                comparable.append(value)
+        row['dist_total'] = round(float(np.sum(comparable)), 4) if comparable else ''
+        row['dist_mean'] = round(float(np.mean(comparable)), 4) if comparable else ''
         rows.append(row)
-
-    counts = {label: [] for label in labels if label != 'reale'}
-    for key, _, name in METRICS:
-        if key in SCALE_DEPENDENT or key in NO_DISCRIMINATION:
-            continue
-        values = {label: distance(table[label].get(key), reference.get(key))
-                  for label in labels if label != 'reale'}
-        usable = {label: value for label, value in values.items() if not np.isnan(value)}
-        if not usable:
-            continue
-        best = min(usable.values())
-        for label, value in usable.items():
-            if value == best:
-                counts[label].append(name)
 
     with open(os.path.join(RESULTS, 'variant_scorecard.csv'), 'w', encoding='utf-8',
               newline='') as f:
-        fields = ['rete'] + [key for key, _, _ in METRICS] + \
+        fields = ['rete'] + [key for key, _ in METRICS] + \
                  ['tail_slope', 'tail_gamma', 'tail_from', 'tail_points'] + \
-                 [f'dist_{key}' for key, _, _ in METRICS]
+                 [f'dist_{key}' for key, _ in METRICS] + ['dist_total', 'dist_mean']
         writer = csv.DictWriter(f, fieldnames=fields)
         writer.writeheader()
         writer.writerows(rows)
 
-    lines = ['| metrica | ' + ' | '.join(labels) + ' | chi e\' piu\' vicino |',
+    lines = ['| metrica | ' + ' | '.join(labels) + ' | piu\' vicino |',
              '|---' * (len(labels) + 2) + '|']
-    for key, _, name in METRICS:
+    for key, name in METRICS:
         cells = []
         for label in labels:
             value = table[label].get(key)
@@ -157,31 +155,35 @@ def main():
         elif key in NO_DISCRIMINATION:
             note = 'nessuna: tutte vicine a 1,00'
         else:
-            note = ', '.join(winners)
+            note = ', '.join(winners) if len(winners) < len(usable) else 'pari'
         lines.append('| ' + name + ' | ' + ' | '.join(cells) + ' | ' + note + ' |')
     tail_cells = [format_number(table[label].get('tail_slope'), 'tail_slope') for label in labels]
     lines.append('| pendenza di coda (CCDF, ultimo decile) | ' + ' | '.join(tail_cells) + ' | - |')
-    gamma_cells = [format_number(table[label].get('tail_gamma'), 'tail_gamma') for label in labels]
-    lines.append('| esponente di coda (1 - pendenza) | ' + ' | '.join(gamma_cells) + ' | - |')
     lines.append('')
-    lines.append('| rete | metriche su cui e\' piu\' vicina |')
-    lines.append('|---|---|')
-    for label, names in counts.items():
-        lines.append(f'| {label} | ' + (', '.join(names) if names else 'nessuna') + ' |')
+    lines.append('Distanza relativa dal reale, `|v - reale| / |reale|`, sommata sulle sette '
+                 'metriche confrontabili (densita, grado medio, grado massimo, reciprocita, '
+                 'modularita, transitivity, clustering):')
+    lines.append('')
+    lines.append('| rete | somma | media |')
+    lines.append('|---|---:|---:|')
+    for row in rows:
+        if row['rete'] == 'reale':
+            continue
+        lines.append(f"| {row['rete']} | {row['dist_total']:.2f} | {row['dist_mean']:.3f} |")
     with open(os.path.join(RESULTS, 'variant_scorecard.md'), 'w', encoding='utf-8') as f:
         f.write('\n'.join(lines) + '\n')
 
     print('\n'.join(lines))
     print()
     real_mean = float(reference['out_degree_mean'])
-    print(f'volume atteso alla scala del reale: grado medio reale {real_mean:.2f} x nodi della rete')
+    print(f'volume alla scala del reale: grado medio reale {real_mean:.2f} x nodi della rete')
     for label in labels:
         row = table[label]
         if row.get('edges') in ('', None):
             continue
         edges, nodes = float(row['edges']), float(row['nodes'])
         expected = real_mean * nodes
-        print(f'{label:>8}: archi {edges:>9.0f} | nodi {nodes:>6.0f} | attesi {expected:>9.0f} '
+        print(f'{label:>10}: archi {edges:>9.0f} | nodi {nodes:>6.0f} | attesi {expected:>9.0f} '
               f'| rapporto {edges / expected:.2f}')
     print('written results/variant_scorecard.csv and results/variant_scorecard.md')
 
@@ -193,12 +195,6 @@ def format_number(value, key):
     if decimals == 0:
         return f'{float(value):.0f}'
     return f'{float(value):.{decimals}f}'.replace('.', ',')
-
-
-def fmt_distance(value):
-    if np.isnan(value):
-        return ''
-    return round(value, 3)
 
 
 if __name__ == '__main__':

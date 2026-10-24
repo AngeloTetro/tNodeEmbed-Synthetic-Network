@@ -1,0 +1,43 @@
+partition generated_snapshots_growth_v2 | pooling mean_of_posts | variant v9_check_growth | content real | negatives uniform | closure binary
+training the tNodeEmbed model on the real dataset
+real users 20363 | edges last snapshot 824046
+esponente della riscalatura di k: 1.000 (pendenza log-log stimata sul reale: 1.791). Il sintetico ha 10.000 utenti contro i 25.714 del reale e i suoi ultimi passi ereditano la tabella dell'ultima transizione di training: senza riscalatura il grado medio uscirebbe 80 contro 32, con l'esponente 1 esce nell'ordine giusto.
+unita' di scala della tabella normalizzata: 1230357.1
+  transizione 1: eventi 3040 | k normalizzato atteso 4747.4 | quota uscente 0.631
+  transizione 2: eventi 2345 | k normalizzato atteso 5417.1 | quota uscente 0.604
+  transizione 3: eventi 1263 | k normalizzato atteso 8320.4 | quota uscente 0.618
+  transizione 4: eventi 1317 | k normalizzato atteso 8198.0 | quota uscente 0.612
+  transizione 5: eventi 1076 | k normalizzato atteso 7233.5 | quota uscente 0.505
+    bidirezionalita: uscente 0 | grado 0: 0.421
+    bidirezionalita: uscente 0 | grado 1: 0.377
+    bidirezionalita: uscente 0 | grado 2: 0.467
+    bidirezionalita: uscente 1 | grado 0: 0.421
+    bidirezionalita: uscente 1 | grado 1: 0.353
+    bidirezionalita: uscente 1 | grado 2: 0.410
+  quota di coppie ricambiate usata in generazione: 0.395
+fitted coefficients of the target-choice model (standardised features):
+    passo 1: 121407 righe (11037 positivi)
+    passo 2: 203071 righe (18461 positivi)
+    passo 3: 355608 righe (32328 positivi)
+    passo 4: 445126 righe (40466 positivi)
+    passo 5: 425304 righe (38664 positivi)
+  content_score            +0.0488
+  partner_degree_log       +1.0214
+  partner_percentile       +0.9091
+  partner_new              +1.2155
+  partner_active           -0.0259
+  outgoing                 +0.1395
+  partner_co_occurrence    +0.1944
+    passo 6: 196350 righe (17850 positivi)
+validation transition 6: AUC 0.9181 (diagnostica del fit; la qualita' della rete si giudica sulle sue statistiche, non qui)
+generating on generated_snapshots_growth_v2 -> generated_snapshots_growth_v2_v9_check_growth (arrival events)
+    passo 1: nuovi 1619 | popolazione 1619 | archi finora 9517
+    passo 2: nuovi 1497 | popolazione 1619 | archi finora 20290
+    passo 3: nuovi 1335 | popolazione 3116 | archi finora 47898
+    passo 4: nuovi 1214 | popolazione 4451 | archi finora 85070
+    passo 5: nuovi 1130 | popolazione 5665 | archi finora 122809
+    passo 6: nuovi 945 | popolazione 6795 | archi finora 160668
+    passo 7: nuovi 542 | popolazione 7740 | archi finora 185872
+    passo 8: nuovi 1004 | popolazione 8282 | archi finora 237000
+    passo 9: nuovi 714 | popolazione 9286 | archi finora 271655
+  -> {'variant': 'v9_check_growth', 'partition': 'generated_snapshots_growth_v2', 'content': 'real', 'operating_point': 'arrival events, sampled jointly', 'val_auc': 0.9181, 'events': 7776, 'edges_per_event': 34.935, 'reverse_share': 0.4435, 'nodes': 9886, 'edges': 271655, 'density': 0.00278, 'reciprocity': 0.3224, 'mean_out_degree': 27.48, 'max_out_degree': 275}
