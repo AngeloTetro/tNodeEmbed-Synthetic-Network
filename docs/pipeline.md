@@ -152,7 +152,7 @@ Le famiglie abbandonate (regole a mano, v6, v7, V8) hanno gli script in `archive
   stesso protocollo dà **1,001 / 1,000 / 0,980 / 1,001 / 1,014**
   (`results/homophily_control_generated_snapshots_growth_v2_v9.csv`): nessuna omofilia di contenuto.
 - **Legge di scala**: il reale prevede ~339 di grado massimo a 10.000 utenti (esponente 1,445,
-  R² 0,986). La rete ufficiale sta a **274 (81%)**, il controllo a **328 (96%)**. È il costo più
+  R² 0,986). La rete ufficiale sta a **274 (81%)**, il controllo a **328 (97%)**. È il costo più
   visibile della partizione progressiva.
 - **Coda**: pendenza CCDF sull'ultimo decile −3,98 (ufficiale), −3,33 (controllo), −2,349 (reale, che
   al primo snapshot con 10.755 utenti sta a −1,69). A pari dimensione la coda generata è **più
