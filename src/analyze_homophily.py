@@ -15,7 +15,7 @@ Riporta il rapporto contro ogni controllo e l'AUC fra archi veri e coppie appaia
 più la curva della somiglianza per decile di grado e il grado medio degli estremi.
 
 Usage: uv run python src/analyze_homophily.py [folder]
-Output: results/homophily_control.csv
+Output: results/homophily_control_<folder>.csv
 """
 
 import csv
@@ -251,7 +251,7 @@ def main():
               f'utenti): somiglianza interna {value:.4f}')
 
     os.makedirs(RESULTS, exist_ok=True)
-    path = os.path.join(RESULTS, 'homophily_control.csv')
+    path = os.path.join(RESULTS, f'homophily_control_{folder_name}.csv')
     with open(path, 'w', encoding='utf-8', newline='') as f:
         writer = csv.DictWriter(f, fieldnames=['control', 'pairs', 'edge_similarity',
                                                'control_similarity', 'ratio', 'auc_edges_vs_control'])

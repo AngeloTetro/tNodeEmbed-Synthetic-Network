@@ -1,25 +1,50 @@
 # Dalla rete reale alla rete sintetica: tNodeEmbed sul testo dei post
 
-Il progetto studia come **ricostruire la rete di collegamenti** di una popolazione di cui si osserva
-soltanto il **testo dei post**: si impara il meccanismo di formazione dei legami da una rete sociale
-reale (25.714 utenti, 824.045 archi, 9 snapshot) e lo si applica per inferenza a un dataset sintetico
-(10.000 utenti, nessun arco, nessuna data) ripartito in 9 passi temporali. La pipeline ufficiale è
-**V9, il modello per eventi di arrivo**: l'unità non è la coppia di utenti ma l'utente che entra, che
-si porta dietro un gruppo di archi. Numeri, limiti e risultati negativi: **`FINAL.md` §10**.
+Il progetto ricostruisce la **rete di collegamenti** di una popolazione di cui si osserva soltanto il
+**testo dei post**. Il meccanismo di formazione dei legami si impara da una rete sociale reale
+(25.714 utenti, 824.045 archi, 9 snapshot) e si applica a un dataset sintetico (10.000 utenti,
+nessun arco, nessuna data) ripartito in 9 passi temporali.
 
-## Da dove cominciare
+Due reti consegnate, stessa pipeline:
 
-| documento | a cosa serve |
+| rete | partizione del sintetico | ruolo |
+|---|---|---|
+| `generated_snapshots_growth_v2_v9` | ingresso progressivo, con la curva di arrivo del reale | **ufficiale** |
+| `generated_snapshots_v2_v9_real` | tutti gli utenti presenti dal primo passo | **controllo** |
+
+La scelta della progressiva è **concettuale**, non metrica: nel reale il 58% degli utenti finali entra
+durante il periodo osservato, e una rete che nasce deve avere arrivi. Sulle metriche le due sono
+equivalenti (distanza relativa dal reale 3,84 contro 3,89 su sette metriche); la progressiva paga su
+grado medio (27,45 contro 28,30), grado massimo (274 contro 324) e quota di archi fra utenti
+arrivati nello stesso passo (17,0% contro 12,4%, reale 8,1%).
+
+## I tre compiti
+
+1. **Link prediction sul reale** con tNodeEmbed: rappresentazioni dei nodi dal testo (MiniLM, media
+   dei post), Procrustes a catena, LSTM, testa di coppia `[h_u, h_v, h_u⊙h_v]`. Serve a scegliere
+   l'encoder (6 confrontati, negativi appaiati) e a misurare quanto il contenuto separi un arco da un
+   non-arco. Esito: il contenuto da solo sta sul caso (AUC 0,51-0,57).
+2. **Generazione**: V9, il modello per **eventi di arrivo**. L'unità non è la coppia ma l'utente che
+   entra, che si porta dietro k archi (`results/arrival_events.csv`: media 35-111 per transizione,
+   massimo 1.202). k viene da una tabella fittata sul reale e riscalata sulla popolazione; i partner si
+   scelgono con una logistica a sette variabili (grado, percentile, novità, attività, direzione,
+   co-occorrenza, punteggio di contenuto).
+3. **Predizione degli attributi** sul sintetico: dai post dell'utente (TF-IDF + SVD, 128 dimensioni)
+   si predice `political_leaning` (AUC 0,827), `profession` (0,867), `age_interval` (0,690). Il grafo
+   non aggiunge nulla; gli embedding di tNodeEmbed vanno peggio (0,619 / 0,587 / 0,514). Il task esiste
+   solo sul sintetico: il reale non ha attributi.
+
+## Dove guardare
+
+| documento | contenuto |
 |---|---|
-| `docs/project.md` | il progetto in due minuti |
-| `FINAL.md` | il piano e l'esito (§4 i comandi, §10 i risultati) |
-| `docs/relazione.md` + `docs/relazione.pdf` | la relazione divulgativa |
-| `docs/pipeline.md` | il dettaglio tecnico: script, scelte, limiti |
-| `docs/nota_dottorando.md` | la sintesi tecnica per il dottorando |
-| `docs/messaggio.md` | il messaggio di aggiornamento da mandargli |
-| `paper.md` / `paper_en.md` (+ PDF) | l'articolo in italiano e in inglese |
+| `FINAL.md` | sintesi di consegna: cosa c'è, cosa dicono i numeri, cosa resta aperto |
+| `docs/pipeline.md` | dettaglio tecnico: script, dati, scelte, limiti |
+| `docs/relazione.md` (+ PDF) | relazione divulgativa |
+| `paper.md` / `paper_en.md` (+ PDF) | articolo in italiano e in inglese |
 | `CMDC.md` | memoria di lavoro: stato, comandi, trappole |
-| `docs/riferimenti/` | materiali di consultazione (note su tNodeEmbed, conversazione originale) |
+| `archive/storico.md` | tutti i tentativi precedenti, con meccanismo e metriche |
+| `docs/riferimenti/` | figure e note di consultazione |
 
 ## Come si rigenera tutto
 
@@ -27,34 +52,49 @@ si porta dietro un gruppo di archi. Numeri, limiti e risultati negativi: **`FINA
 # 1. le due partizioni del sintetico (attività e curva di arrivo dal reale)
 uv run python src/build_synthetic_snapshots.py --activity from-real
 
-# 2. la rete V9 nelle tre modalità del controllo A/B/C
-uv run python src/generate_arrival.py --partition generated_snapshots_v2 --content real    --variant v9_real
-uv run python src/generate_arrival.py --partition generated_snapshots_v2 --content permuted --variant v9_permuted
-uv run python src/generate_arrival.py --partition generated_snapshots_v2 --content off     --variant v9_off
+# 2. la rete ufficiale e il suo controllo, ciascuno nelle tre modalità di contenuto
+uv run python src/generate_arrival.py --partition generated_snapshots_growth_v2 --variant v9_real     --content real
+uv run python src/generate_arrival.py --partition generated_snapshots_growth_v2 --variant v9_permuted --content permuted
+uv run python src/generate_arrival.py --partition generated_snapshots_growth_v2 --variant v9_off      --content off
+uv run python src/generate_arrival.py --partition generated_snapshots_v2        --variant v9_real     --content real
+uv run python src/generate_arrival.py --partition generated_snapshots_v2        --variant v9_permuted --content permuted
+uv run python src/generate_arrival.py --partition generated_snapshots_v2        --variant v9_off      --content off
 
-# 3. le analisi di una cartella, poi le tabelle di confronto
-uv run python src/analyze_structure.py generated_snapshots_v2_v9_real
-uv run python src/analyze_content.py   generated_snapshots_v2_v9_real
-uv run python src/check_real_accretion.py generated_snapshots_v2_v9_real
-uv run python src/analyze_profiles.py generated_snapshots_v2_v9_real
-uv run python src/variant_scorecard.py      # confronto con il reale + pendenza di coda
-uv run python src/tail_scaling.py           # legge di scala del reale e confronto a pari dimensione
+# 3. le analisi di una rete, per ogni cartella che interessa
+uv run python src/analyze_structure.py generated_snapshots_growth_v2_v9
+uv run python src/analyze_temporal.py  generated_snapshots_growth_v2_v9
+uv run python src/analyze_content.py   generated_snapshots_growth_v2_v9
+uv run python src/analyze_homophily.py generated_snapshots_growth_v2_v9
+uv run python src/analyze_profiles.py  generated_snapshots_growth_v2_v9
+uv run python src/check_real_accretion.py generated_snapshots_growth_v2_v9
+
+# 4. tabelle e consegna
+uv run python src/variant_scorecard.py      # reale contro ufficiale e controllo
+uv run python src/tail_scaling.py           # legge di scala del reale
+uv run python src/consolidate_native.py generated_snapshots_growth_v2_v9
 ```
-
-I comandi completi, con le varianti di confronto, sono in `FINAL.md` §4.
-
-## I risultati in una riga
-
-V9 riproduce reciprocità (0,304 contro 0,418), grado medio (28,30 contro 32,05), grado massimo (324
-contro 1.290, ma **97%** di quanto la legge di scala del reale prevede a 10.000 utenti), transitività
-(0,0209 contro 0,0337) e diametro (6 contro 6). Il contenuto **non** decide chi si collega a chi:
-il controllo A/B/C (testo autentico, permutato, assente) dà reti indistinguibili, e l'omofilia 2,13
-del reale è in gran parte struttura. Restano aperti la **forma** della coda (a pari dimensione più
-ripida: −3,33 contro −1,69) e la **coesione**.
 
 ## Cosa si consegna
 
-Le reti in `Esame Angelantonio Fedele Murolo/`: `generated_snapshots_v2_v9_{real,permuted,off}/`
-(la consegna), `generated_snapshots_growth_v2_v9/` (controllo di sensibilità), le due partizioni e la
-riga di confronto V8 (`..._v2_v8_*`). I numeri sono in `results/*.csv`, le figure in `results/figures/`.
-Il riferimento stabile della consegna è il tag **`consegna-progetto`**.
+`Esame Angelantonio Fedele Murolo/` con dieci cartelle: `real_snapshots/`, `synthetic_snapshots/`, le
+due partizioni (`generated_snapshots_v2`, `generated_snapshots_growth_v2`) e le sei reti V9
+(`generated_snapshots_growth_v2_v9{,_permuted,_off}`, `generated_snapshots_v2_v9_{real,permuted,off}`).
+Ogni rete ufficiale ha i 9 file `.edg` (uno per passo) e i 4 file nella forma dei batch nativi.
+I numeri sono in `results/*.csv`, le figure in `results/figures/` e `docs/riferimenti/`.
+
+Il riferimento stabile della consegna è il tag **`consegna-progetto`**. I tentativi precedenti sono in
+`archive/` (descrizione in `archive/storico.md`, CSV e script originali).
+
+## Tre cose da sapere sui numeri
+
+- **Non riproducibilità al bit**: il generatore è deterministico (stessi eventi, stessi archi per
+  evento), ma i pesi della rete addestrata variano al terzo decimale fra processi. Una ripetizione
+  della configurazione ufficiale dà **271.655** archi invece di 271.646 (9 archi, 0,003%).
+- **Coefficienti**: un file per run in `results/coefficients_<cartella>.csv`. Quelli di
+  `coefficients_generated_snapshots_growth_v2_v9.csv` vengono da una ripetizione indipendente della
+  stessa configurazione, perché la run che ha generato la rete consegnata scriveva su un file unico
+  sovrascritto (corretto in `src/generate_arrival.py`).
+- **Distanza dal reale**: definita una volta in `src/variant_scorecard.py` come
+  `|valore − reale| / |reale|`, sommata sulle sette metriche confrontabili (densità, grado medio,
+  grado massimo, reciprocità, modularità, transitività, clustering). Archi e nodi sono esclusi perché
+  dipendono dalla scala, l'omofilia perché tutte le reti generate stanno a 1,00.

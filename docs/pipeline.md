@@ -1,11 +1,14 @@
 # pipeline.md — la pipeline definitiva
 
-## 1. Impianto (confermato dal dottorando)
+## 1. Impianto
 
 - Si **addestra sul dataset reale** e si fa **inferenza sul dataset sintetico**.
-- Per ora **solo collegamenti sintetico↔sintetico**.
-- L'**unica feature è il `content`** dei post: è l'unica informazione comune ai due dataset (il reale ha gli attributi del post, il sintetico ha gli attributi dell'utente; l'unica cosa equiparabile è il testo).
-- Il sintetico **non ha l'accrescimento** del reale (quasi tutti gli utenti sono presenti dal primo batch), quindi va **partizionato in 9 snapshot** per ricreare un'evoluzione della rete analoga a quella reale.
+- Solo collegamenti sintetico↔sintetico.
+- L'**unica feature comune ai due dataset è il `content`** dei post: il reale ha attributi del post,
+  il sintetico attributi dell'utente, e l'unica cosa equiparabile è il testo.
+- Il sintetico **non ha l'accrescimento** del reale, quindi va **partizionato in 9 snapshot** per
+  ricreare un'evoluzione analoga. Due partizioni provate: **ingresso progressivo** con la curva di
+  arrivo del reale (ufficiale) e **tutti presenti dal primo passo** (controllo).
 
 ## 2. I due dataset
 
@@ -14,126 +17,165 @@
 | utenti | 25.714 nodi | 10.000 |
 | post | 173.475 cumulativi / 154.580 per periodo | 100.474 righe nei batch (100.456 con `id` valido) |
 | archi | 824.045 diretti | nessuno |
-| tempo | 9 snapshot (2022 → luglio 2025), **split dichiarato 6 training / 1 validation / 2 test** | nessuna data: 4 batch con ordine casuale, `id` dei post in sequenza densa (0…100.455); il tempo lo imponiamo noi (9 snapshot) |
-| per utente | solo i post (`content`) | 11 attributi dell'utente, più `format_style` (che descrive il *post*, non l'utente) e i post |
+| tempo | 9 snapshot (2022 → luglio 2025), split **6 training / 1 validation / 2 test** | nessuna data: 4 batch con ordine casuale, `id` in sequenza densa; il tempo lo imponiamo noi (9 snapshot) |
+| per utente | solo i post (`content`) | 11 attributi dell'utente, più `format_style` (del *post*, non dell'utente) e i post |
 
-Nessun file originale viene modificato: le cartelle generate sono **nuove** dentro `Esame Angelantonio Fedele Murolo/`.
+Nessun file originale viene modificato: le cartelle `generated_*` sono aggiunte nostre.
 
-**Misura dei batch nativi** (`src/consolidate_native.py` → `results/native_batches.csv`), che conferma e quantifica la riga "ordine casuale" della tabella: **batch_0, batch_1 e batch_2** hanno 33.068 / 33.068 / 34.318 post e coprono **tutto** l'intervallo degli id (batch_0 da 5 a 100.451, mediana 49.527; batch_2 da 2 a 100.455, mediana 51.574), condividendo fra loro ~9.500 utenti su ~9.700; **batch_3 ha 2 righe**. Non sono tre (o quattro) periodi consecutivi: sono tre terzi dei post della **stessa** popolazione, e per questo la partizione in 9 step impone l'asse del tempo da sé (§2, `build_synthetic_snapshots.py`). Da qui la **consegna doppia**: i 9 file `.edg` (uno per step, la forma buona) e, per chi lavora con i file nativi, `native_4_batch_<i>.edg` = la rete **ristretta agli utenti di quel batch** (conserva il 93–97% degli archi, proprio perché le popolazioni coincidono quasi del tutto) più `native_4.csv` — è una restrizione **per utenti**, non una suddivisione per periodi, e va letta così.
+**I 4 batch nativi non sono periodi** (`src/consolidate_native.py` → `results/native_batches.csv`):
+`batch_0/1/2` hanno 33.068 / 33.068 / 34.318 post, coprono **tutto** l'intervallo degli id
+(mediana ≈ 49.500-51.600) e condividono ~9.500 utenti su ~9.700; `batch_3` ha 2 righe. Sono tre terzi
+della **stessa** popolazione. Da qui la **consegna doppia**: i 9 file `.edg` (uno per passo) e i
+`native_4_batch_<i>.edg`, cioè la rete **ristretta agli utenti** di quel batch (93-97% degli archi),
+più `native_4.csv`. È una restrizione per utenti, non una suddivisione per periodi.
 
 ## 3. Il tempo è la struttura portante: tNodeEmbed
 
-**Ogni snapshot è un time step** (9 nel reale, 9 nel sintetico partizionato). La pipeline temporale è quella del paper, **senza node2vec**, con il contenuto al posto degli embedding statici:
+Ogni snapshot è un time step (9 nel reale, 9 nel sintetico). La pipeline è quella del paper, **senza
+node2vec**, con il contenuto al posto degli embedding statici:
 
-1. **rappresentazioni per time step** — per ogni snapshot `t` e ogni utente, un vettore che rappresenta il contenuto dei suoi post fino a `t` (encoder scelto al §4); in questa variante le rappresentazioni **sostituiscono** la matrice `Q_t` appresa del paper (non c'è una matrice di embedding addestrabile inizializzata dalle feature: le feature *sono* l'input del modello);
-2. **allineamento** — Procrustes ortogonale a catena fra snapshot consecutivi (`R_t` stimata in forma chiusa sui nodi comuni e applicata a tutti, nuovi inclusi) come passo di pre-processing; **non** compare come termine esplicito nella loss (anche l'implementazione di riferimento allena con la sola cross-entropy binaria);
-3. **LSTM** — la sequenza dei time step di ogni nodo viene compressa nell'embedding temporale;
-4. **testa del task** — link prediction: ogni coppia `(u, v)` è rappresentata dai due embedding temporali **e dal loro prodotto elemento per elemento** (`[h_u, h_v, h_u ⊙ h_v]`), con ottimizzazione end-to-end della loss del task (eq. 1–4 del paper).
+1. **rappresentazioni per passo** — per ogni snapshot e ogni utente, il vettore del contenuto dei suoi
+   post fino a quel passo (encoder scelto al §4); sostituiscono la matrice `Q_t` appresa del paper;
+2. **allineamento** — Procrustes ortogonale a catena fra snapshot consecutivi, stimato sui nodi comuni;
+3. **LSTM** — comprime la sequenza dei passi nell'embedding temporale del nodo;
+4. **testa di coppia** — `[h_u, h_v, h_u ⊙ h_v]`, addestrata end-to-end sulla link prediction.
 
-Il modello si allena sui **6 snapshot di training** del reale, si controlla su **1 di validation** e si misura su **2 di test**; poi si applica al sintetico per generare la rete, **snapshot per snapshot**.
+Il modello si allena sulle 5 transizioni di training, si controlla su 1 e si misura su 2; poi si
+applica al sintetico **congelato** (encoder, Procrustes, LSTM e testa non si riaddestrano).
 
-## 4. La feature: il contenuto, e l'encoder
+## 4. Il contenuto e l'encoder
 
-Il contenuto è l'unica feature, quindi l'encoder è la leva principale. Famiglie disponibili (dalla letteratura recente: [rassegna MTEB](https://arxiv.org/html/2406.01607v2), [classifica modelli](https://awesomeagents.ai/leaderboards/embedding-model-leaderboard-mteb-march-2026/)): TF-IDF/LSA, embedding densi statici (word2vec/GloVe/FastText), contextual (BERT/SBERT), universal text embeddings (BGE, GTE, E5, mxbai, fino ai modelli LLM-based), sparse neurali (SPLADE++) e late interaction (ColBERT).
+Nove candidati, **sei eseguiti**: `all-MiniLM-L6-v2`, `bge-small-en-v1.5`, `bge-base-en-v1.5`,
+`gte-small`, `gte-base`, più `tf-idf+svd` come riferimento classico. `bge-large`, `GIST-small` e
+`mxbai` non sono stati eseguiti.
 
-**Ambiente di calcolo**: la macchina ha una **NVIDIA GeForce RTX 3060 con 6 GB di VRAM**. Sono quindi praticabili i modelli della fascia piccola e media (MiniLM, BGE-small/base, GTE-small/base, mxbai) e il **fine-tuning di un encoder piccolo** sul segnale del task; i modelli da 7B (e5-mistral, Qwen3-Embedding, LLM2Vec) solo in quantizzazione 4-bit.
+**Come si sceglie**: pipeline completa sul reale con ciascun encoder, **negativi appaiati**, media
+dell'AUC su validation e due test. Vince **MiniLM (0,534)**, davanti a `gte-base` (0,532) e
+`bge-base` (0,530); con i negativi casuali i valori sono ~0,99 in validation e 0,95-0,96 nei test,
+ma non è quella la colonna della scelta.
 
-Candidati al confronto (**9 candidati**, **6 portati a termine**): `all-MiniLM-L6-v2`, `bge-small-en-v1.5`, `bge-base-en-v1.5`, `bge-large-en-v1.5`, `gte-small`, `gte-base`, `GIST-small-Embedding-v0`, `mxbai-embed-large-v1`, più `tf-idf+svd` come riferimento classico; opzionale un encoder **fine-tuned** con loss contrastiva sui collegamenti del reale. (bge-large, GIST-small e mxbai non sono stati eseguiti: non entrano nel confronto.)
+**Per post, non concatenato (misurato)**: unire i post in una stringa faceva tagliare il testo al
+limite di token (MiniLM: 256), con il 28% dei token sopravvissuti nei periodi più attivi e perdita
+concentrata sugli hub. `--pooling mean_of_posts` codifica ogni post e media: MiniLM 0,534 → **0,549**,
+bge-base 0,530 → 0,540, tf-idf 0,505 → 0,524.
 
-**Come si sceglie**: si addestra la pipeline tNodeEmbed sul reale con ciascun encoder e si confrontano i risultati su validation e test **con i negativi appaiati** (la stessa modalità usata poi nel transfer); il criterio è la media dell'AUC sui tre valori (validation, test1, test2) e l'encoder che la ottiene più alta diventa quello della pipeline. La scelta è guidata dai numeri, non da preferenze. Nel confronto attuale il campo è stretto: `minilm` 0,534 davanti a `gte-base` 0,532 e `bge-base` 0,530. (Con i negativi casuali i valori sono ~0,99 su validation e 0,95–0,97 sui test: non è quella la colonna della scelta.)
+**Leve scartate** (dettaglio in `archive/storico.md`): fine-tuning contrastivo dell'encoder (0,519
+contro 0,534), feature dei nodi addestrabili (0,512 contro 0,534), `Q_t` completo del paper (~70M
+parametri, non entra in 6 GB), "post come arco" (AUC 0,515-0,517).
 
-**Fine-tuning dell'encoder (tentato, esito negativo)**: `src/finetune_encoder.py` addestra l'encoder con una loss contrastiva sugli archi reali delle transizioni di training, con negativi **appaiati** (stesso mittente, destinazione simile per arrivo e grado), negativi **temporali** (coppie che diventano archi più avanti ma non in quel passo: è il tempo nel contesto) e negativi in-batch; early stopping su un AUC proxy di validation, test mai toccato. Al confronto di protocollo i due encoder fine-tuned **non migliorano**: `finetuned-minilm` **scende sulla validation** (0,549 contro **0,571** del base) e **peggiora su entrambe le finestre di test** (0,509 e 0,500; media 0,519 contro 0,534); `finetuned-bge-base` fa 0,523 di media contro 0,530. La supervisione è troppo debole e l'encoder si adatta alla finestra di training/validation senza generalizzare ai periodi successivi. Criterio di tenuta **non soddisfatto**: la pipeline resta sugli encoder pre-addestrati, e il fine-tuning viene riutilizzato solo come casella del confronto V7.
+## 5. La generazione: V9, eventi di arrivo
 
-**Rappresentazione del contenuto: per post, non concatenato (misurato).** La prima versione univa i post di un utente in un'unica stringa, che l'encoder poi tagliava al suo limite di token (MiniLM: 256 token): misurato sui dati reali, il 10–19% degli utenti perdeva parte del testo e nei periodi più attivi sopravviveva il **28%** dei token, con la perdita concentrata sugli utenti più attivi (proprio gli hub). La variante `mean_of_posts` codifica **ogni post separatamente** e fa la media dei suoi vettori: migliora il protocollo su **tutti** gli encoder (media val+test: MiniLM 0,534 → **0,549**; bge-base 0,530 → **0,540**; tf-idf 0,505 → **0,524**) e anche nel transfer (0,541 → **0,552**), senza alcun addestramento aggiuntivo. Si attiva con `--pooling mean_of_posts` in `tnodeembed_real.py` e `generate_inference.py`, e come quarto argomento di `transfer_to_synthetic.py`.
+L'unità non è la coppia ma **l'utente che entra**. Nasce da un fatto misurato: nel reale **nessun
+arco nuovo collega due utenti già presenti** (`results/accretion_real_snapshots.csv`, quota
+"vecchio→vecchio" 0,0000% in tutte le transizioni), quindi ogni arco appartiene all'evento del suo
+estremo nuovo. Un evento porta in media da **35 a 111** archi secondo la transizione (mediana 6-32,
+massimo **1.202**), il **51-63%** è uscente e ~**40%** delle coppie è ricambiato dentro l'evento.
 
-**Feature dei nodi addestrabili (la `Q_t` del paper): provate, non aiutano.** `--features trainable` in `tnodeembed_real.py` aggiunge una proiezione condivisa inizializzata dal contenuto e addestrata con la loss del compito: media val+test **0,512** contro 0,534 della versione congelata (test2 0,476). La versione completa del paper (una riga per utente e snapshot, ~70M parametri) non entra nei 6 GB di VRAM e non è stata provata; ha però più capacità, quindi il rischio di overfitting è maggiore, non minore. Conclusione: il pezzo mancante non era l'addestrabilità delle feature.
+La generazione, per ogni passo e per ogni entrante:
 
-**Eppure la rete generata non cambia.** Con la rappresentazione per-post la rete del transfer mantiene **omofilia del contenuto 1,004** (era 0,996; il reale è **2,13**) e il coefficiente del contenuto nel modello di formazione degli archi resta **≈ +0,20** (`results/v7_coefficients_pooled.csv`; +0,18/+0,26 secondo il giro, la stima varia fra un addestramento e l'altro) contro **+2,28** di "l'utente è nuovo". Il modello discrimina un po' meglio, la rete no: la struttura continua a nascere dal meccanismo relazionale (arrivo e grado), che il modello basato sul solo contenuto **non vede**.
+1. **k** archi dall'evento, campionato dalla tabella reale dei k normalizzati e riscalato su
+   `popolazione^esponente` (`--exponent 1`, configurazione documentata);
+2. la **direzione** (uscente/entrante) con la quota reale del passo;
+3. il **partner** con una logistica a sette variabili, fittata sul reale: `content_score` (uscita
+   della testa di coppia), `partner_degree_log`, `partner_percentile`, `partner_new`,
+   `partner_active`, `outgoing`, `partner_co_occurrence`. Pesi: contenuto **+0,05**, novità
+   **+1,22**, grado log **+1,02**, percentile **+0,91**, co-occorrenza +0,19, uscente +0,14,
+   attività −0,03;
+4. le coppie **ricambiate** pescate fra gli uscenti già scelti, con la tabella reale per direzione e
+   classe di grado.
 
-## 5. Cosa gira, e cosa produce
+Lo stato (gradi, percentile, chi è nuovo, chi ha scritto, vicinato) si ricalcola **a ogni passo**
+sulla rete appena generata.
+
+**Numeri della rete ufficiale** (ultimo snapshot, testo autentico): 9.897 nodi con archi, 271.646
+archi, densità 0,002774, grado medio **27,45** (reale 32,05), mediano 10 (4), massimo **274**
+(1.290), reciprocità **0,3224** (0,4177), transitività **0,0212** (0,0337), clustering 0,0420
+(0,0804), modularità 0,1074 (0,2751), omofilia del contenuto 1,00 (2,13), diametro 6.
+
+**Controllo "tutti presenti"**: 9.904 nodi, 280.298 archi, grado medio 28,30, massimo 324,
+reciprocità 0,3035, transitività 0,0209, clustering 0,0433, modularità 0,1058, omofilia 0,999,
+diametro 6.
+
+**Perché la progressiva è ufficiale**, e cosa costa: nel reale il 41,8% degli utenti finali è già
+collegato al primo snapshot e il restante 58% entra durante il periodo, quindi una rete che nasce deve
+avere arrivi. Il prezzo è dichiarato: grado medio 27,45 contro 28,30, massimo 274 contro 324, archi
+fra utenti arrivati nello stesso passo **17,0%** contro 12,4% (reale 8,1%), e primo passo con il
+**15,7%** dei nodi collegati contro il 41,8% del reale. Le due reti restano equivalenti sulla
+distanza relativa dal reale (3,84 contro 3,89 su sette metriche, definizione in
+`src/variant_scorecard.py`), e invertendo la normalizzazione l'ordine si inverte: non è un criterio.
+
+## 6. Cosa gira, e cosa produce
 
 | script | cosa fa | output |
 |---|---|---|
-| `src/content_encoders.py` | interfaccia unica per gli encoder del contenuto | — |
-| `src/tnodeembed_real.py` | pipeline tNodeEmbed sul reale, un giro per encoder (training/validation/test) | `results/encoder_comparison.csv` |
-| `src/build_synthetic_snapshots.py` | partizione del sintetico in 9 time step: variante "tutti presenti" e variante "arrivo progressivo" | `Esame Angelantonio Fedele Murolo/generated_snapshots_v2/`, `generated_snapshots_growth_v2/` (le definitive); le `generated_snapshots*` senza suffisso sono il controllo storico ad attività uniforme |
-| `src/transfer_to_synthetic.py` | inferenza del modello addestrato sul reale: rete sintetico↔sintetico per ogni snapshot | **dentro la cartella della partizione**: `snapshot_t/social_network.edg`, `tnodeembed_embeddings.npz`, più `results/transfer_report.csv` |
-| `src/analyze_structure.py <cartella>` | struttura: nodi, archi, densità, gradi (distribuzione, k-core), reciprocità, transitivity e clustering, componenti deboli/forti e gigante, diametro e cammino medio, modularità e comunità | `results/structure_*.csv`, `structure_heavy_*.csv` + figure |
-| `src/analyze_temporal.py <cartella>` | evoluzione: delta per snapshot, crescita, densificazione (E ~ N^α), arrivi e turnover, persistenza degli archi (Jaccard), stabilità delle comunità (NMI) | `results/temporal_*.csv` + figure |
-| `src/analyze_content.py <cartella>` | contenuto: omofilia degli archi vs coppie casuali, similarità dentro/fuori le comunità, comunità vs attributi | `results/content_*.csv` + figure |
-| `src/analyze_profiles.py <cartella>` | profili (solo sulle cartelle generate): classificazione di `political_leaning`, `profession`, `age_interval` da contenuto, da embedding tNodeEmbed e da contenuto+rete | `results/profiles_*.csv` + figure |
-| `src/compare_folders.py` | mette a confronto reale e partizioni leggendo i CSV | `results/figures/compare_*.png` |
-| `src/apply_edge_rules.py` | varianti di regola v1–v5 (conteggio deciso da noi: Poisson / quota reale) | `results/edge_rules_report.csv` |
-| `src/apply_v6.py` | **V6**: soglia calibrata sulle statistiche del reale (v6a grado medio finale, v6b crescita per snapshot) | `results/v6_report.csv` |
-| `src/generate_inference.py` | **V7**: modello di formazione degli archi fittato sul reale + generazione per inferenza (`--encoder`, `--threshold block\|global`, `--variant`) | `results/v7_report.csv`, `results/v7_coefficients.csv` |
-| `src/check_real_accretion.py <cartella>` | verifica del meccanismo di accrescimento: quota "già presente → già presente" e grado dell'estremo già presente | `results/accretion_*.csv` |
-| `src/finetune_encoder.py` | fine-tuning contrastivo dell'encoder (leva 1), con negativi appaiati e temporali | `models/finetuned-*`, `results/finetune_report.csv` |
-| `src/measure_source_activity.py` | misura che decide il disegno: quota di archi nuovi con sorgente (e con almeno un capo) attiva nel periodo | `results/source_activity.csv` |
-| `src/generate_structural.py` | **V8, il metodo principale**: modello di formazione degli archi fittato sul reale + campionamento + retroazione (`--content {real,permuted,off}`: testo autentico, controllo a testo permutato, ablazione senza testo). Scrive anche `tnodeembed_embeddings.npz` | `results/v8_report.csv`, `results/v8_coefficients.csv` |
-| `src/analyze_homophily.py <cartella>` | scompone l'omofilia del contenuto: rapporto contro coppie a caso e contro non-archi appaiati per grado (classi e grado esatto ±10%), volume di testo e passo di arrivo, con l'AUC archi-contro-controllo e la curva per decile di grado | `results/homophily_control.csv` |
-| `src/generate_arrival.py` | **V9**: il meccanismo di arrivo. Sul reale stima quanti archi porta ogni evento di arrivo (media 34,97–111,16 per transizione, massimo 1.202), dove vanno (grado, novità, attività, contenuto, co-occorrenza) e la bidirezionalità; genera arrivo per arrivo con k riscalato sulla popolazione (`--content {real,permuted,off}`, `--exponent`). Scrive anche `tnodeembed_embeddings.npz` | `results/v9_report.csv`, `results/v9_coefficients.csv` |
-| `src/variant_summary.py` | tabella unica di confronto fra il reale e tutte le varianti | `results/variant_summary.csv` + figure |
-| `src/variant_scorecard.py` | **scorecard delle varianti**: distanza relativa dal reale su ogni metrica per tutte le reti già prodotte, con la **pendenza di coda** del grado uscente (CCDF sull'ultimo decile, soglia e punti nel CSV) | `results/variant_scorecard.csv`, `results/variant_scorecard.md` |
-| `src/tail_scaling.py` | **scala della coda**: stima sul reale la legge "grado massimo contro numero di utenti" (nove snapshot), la usa come metro a 10.000 utenti e confronta a pari dimensione la pendenza di coda delle reti generate | `results/tail_scaling_real.csv`, `results/tail_scaling_summary.csv` |
-| `src/consolidate_native.py <cartella>` | misura i 4 batch nativi del sintetico (che **non** sono slice temporali) e scrive la rete generata nella loro forma: 4 `.edg` **ristretti agli utenti** di ciascun batch, nella radice della cartella (ogni sottocartella verrebbe letta come snapshot) | `results/native_batches.csv`, `<cartella>/native_4_batch_<i>.edg`, `<cartella>/native_4.csv` |
-| `src/graph_io.py` | libreria condivisa di lettura (edge list, post, attributi) | — |
+| `src/content_encoders.py` | interfaccia unica per gli encoder | — |
+| `src/tnodeembed_real.py` | pipeline tNodeEmbed sul reale, un giro per encoder | `results/encoder_comparison.csv` |
+| `src/build_synthetic_snapshots.py` | partizione del sintetico in 9 passi (tutti presenti / arrivo progressivo) | `generated_snapshots_v2/`, `generated_snapshots_growth_v2/` |
+| `src/generate_arrival.py` | **V9**: fit sul reale e generazione per eventi di arrivo (`--content {real,permuted,off}`, `--exponent`, `--closure`, `--negatives`) | `results/v9_report.csv`, `results/coefficients_<cartella>.csv`, `tnodeembed_embeddings.npz` |
+| `src/analyze_structure.py <cartella>` | nodi, archi, densità, gradi, k-core, reciprocità, transitività, clustering, componenti, diametro, modularità | `results/structure_*.csv`, `structure_heavy_*.csv` + figure |
+| `src/analyze_temporal.py <cartella>` | delta per passo, crescita, densificazione, arrivi, persistenza (Jaccard), stabilità delle comunità (NMI) | `results/temporal_*.csv` + figure |
+| `src/analyze_content.py <cartella>` | omofilia del contenuto, similarità dentro/fuori le comunità, comunità vs attributi | `results/content_*.csv`, `content_attributes_*.csv` + figure |
+| `src/analyze_homophily.py [cartella]` | scompone l'omofilia: casuale, grado, grado ±10%, arrivo+grado, volume di testo, grado+volume | `results/homophily_control_<cartella>.csv` |
+| `src/analyze_profiles.py <cartella>` | profili (solo sintetico): `political_leaning`, `profession`, `age_interval` da contenuto, da embedding e da contenuto+rete | `results/profiles_*.csv` + figure |
+| `src/check_real_accretion.py <cartella>` | archi nuovi per estremi (nuovo/presente) e grado dell'estremo già presente | `results/accretion_*.csv` |
+| `src/variant_scorecard.py` | reale contro ufficiale e controllo, con distanza relativa dichiarata e pendenza di coda | `results/variant_scorecard.csv`, `.md` |
+| `src/tail_scaling.py` | legge di scala del reale (grado massimo contro utenti) e confronto a pari dimensione | `results/tail_scaling_real.csv`, `tail_scaling_summary.csv` |
+| `src/consolidate_native.py <cartella>` | consegna nei 4 file nella forma dei batch nativi | `results/native_batches.csv`, `<cartella>/native_4_batch_<i>.edg` |
+| `src/compare_folders.py` | confronto grafico fra cartelle | `results/figures/compare_*.png` |
+| `src/plot_pipeline.py` | schema della pipeline | `results/figures/paper_pipeline.png` |
+| `src/graph_io.py` | libreria di lettura (edge list, post, attributi) | — |
 
-Struttura, evoluzione e contenuto girano **sia sul reale sia su ogni cartella generata**; `analyze_profiles.py` solo sulle cartelle generate (i profili non esistono nel reale) e `compare_folders.py` una volta sola. I risultati numerici stanno in **CSV/TSV** (`results/`), le **figure** le producono gli script di analisi stessi (`results/figures/`). Nessuna relazione: si scrive solo se e quando serve.
+Le famiglie abbandonate (regole a mano, v6, v7, V8) hanno gli script in `archive/src/` e i numeri in
+`archive/storico.md`.
 
-## 6. Note, vincoli e limiti noti
+## 7. Note, vincoli e limiti noti
 
-- **Quale metrica, per quale domanda**: la rete generata **non si valuta con un AUC** — nel sintetico non ci sono archi veri — ma con **distribuzioni e statistiche di rete** per snapshot contro il reale (gradi, reciprocità, transitività, modularità, omofilia, crescita). L'AUC resta corretta solo sul reale, per il *fit* predittivo e per il diagnostico sul contenuto (una rappresentazione separa un arco da un non-arco appaiato?). In particolare l'AUC di ablation (0,9818 → 0,9816) è **satura** e non è lo strumento giusto per misurare il contributo del testo: per quello valgono il controllo a testo permutato e la scomposizione dell'omofilia.
-- **Semantica dell'arco**: nessun significato specifico da preservare — è **un'interazione fra due utenti**; si può leggere come un follow, ma non è necessariamente un follow.
-- **Utenti reali**: **non esistono profili o attributi** oltre ai post; l'unica feature utilizzabile è il `content`. Il dataset reale **non va modificato** in alcun modo.
-- **`exact_level_found`** (0–5) nel sintetico deriva dal progetto originale sulla **tossicità** di post e commenti: è irrilevante per questa pipeline e non viene usato.
-- **Restrizione del paper**: applicata al reale produce **0 archi** in tutte le transizioni; per questo la valutazione usa l'intera transizione e due modalità di negativi (casuali e appaiati), entrambe riportate nel CSV.
-- **Le famiglie di generazione**, con **V8 come metodo del piano** e **V9 come variante più avanzata**:
-  - **V8 — modello di formazione degli archi, per inferenza con campionamento (`src/generate_structural.py`)**, la rete ufficiale del piano. Si fitta sul reale un modello (regressione logistica su variabili standardizzate, con correzione della prevalenza) che dice con che probabilità una coppia candidata diventa un arco, e poi si **genera passo per passo con retroazione**: a ogni passo le variabili si ricalcolano sullo stato della rete generata, ogni coppia candidata diventa arco con la **sua** probabilità (**nessuna soglia**, nessun conteggio deciso da noi), il volume e la distribuzione dei gradi **emergono**. Variabili: punteggio di contenuto di tNodeEmbed, **grado relativo** (percentile nella popolazione, per trasferire fra popolazioni di dimensioni diverse), "l'utente è nuovo", **arco inverso** esistente, **vicini in comune**, attività della sorgente e della destinazione nel periodo, recenza (passi dall'ultimo arco ricevuto), passo temporale. Controllo non lineare: un modello ad alberi sulle stesse variabili (l'AUC passa da 0,982 a 0,986).
-  - **Quali coppie sono candidate non lo scegliamo noi**: `results/source_activity.csv` mostra che nel reale **almeno un capo ha scritto nel periodo nel 100%** degli archi nuovi (fatto dei dati → entra nella definizione dei candidati), mentre la *sorgente* è attiva solo nel **68–81%** (→ resta una variabile che il modello pesa da sé).
-  - **calibrata sul reale (v6)**: "cosa serve per somigliare al reale" — le statistiche del reale imposte (reciprocità 0,42, crescita per snapshot).
-  - **regole a mano (v1–v5)**: conteggio deciso da noi (`k ~ Poisson(1,2)`, quota reale). Tenute solo come confronto.
-- **Esiti di V8** (ultimo snapshot, `results/variant_summary.csv`): densità **0,00129** contro **0,00125** del reale (praticamente identica) e grado uscente medio 12,9–16,8 contro 32,05 — mentre la versione precedente per soglia (v7) si fermava a 0,0004–0,0006 e a 3,6–5,8. Modularità 0,13–0,15 contro 0,275. **Tutto emerso dal campionamento**, senza imposizioni.
-- **V9 — il meccanismo di arrivo (`src/generate_arrival.py`), la seconda famiglia**: l'unità di formazione degli archi non è la coppia ma **l'evento di arrivo**. Nasce dalla diagnosi dei tre gap di V8 (reciprocità 0,003, transitività 0,003, grado massimo 102): nel reale sono un solo fenomeno, l'arrivo di un utente nuovo. Misurato sul reale: ogni evento porta in media da 35 a 111 archi secondo la transizione (mediana 6–32), con massimo **1.202**, cioè l'hub nasce da un singolo arrivo; il 51–63% degli archi dell'evento è uscente e ~40% delle coppie è ricambiato dentro l'evento (`results/arrival_events.csv`). Esito (ultimo snapshot, testo autentico): archi 280.298, grado medio **28,30** (reale 32,05; V8 12,93), grado massimo **324** (reale 1.290; V8 102), reciprocità **0,304** (reale 0,418; V8 0,003), transitività **0,0209** (reale 0,034; V8 0,003), clustering 0,043 (reale 0,080), modularità 0,106 (reale 0,275), diametro 6 come il reale. Dopo la correzione descritta qui sotto gli scarti sono tutti **dello stesso segno e contenuti**, ma il filo comune **non è la preferenza per l'hub**: la misura dice che il grado massimo di V9 è il **97%** di quello che la legge di scala del reale prevede a 10.000 utenti (328 contro ~339, stimati su nove snapshot: esponente 1,445, R² 0,986) e che il grado medio dell'estremo già presente (169 contro 437) è **il rapporto fra le popolazioni** (0,385), non una sottostima (`src/tail_scaling.py` → `results/tail_scaling_real.csv`). Il controllo A/B/C (`--content`) dà reti indistinguibili anche qui.
-- **Il confronto con le altre famiglie, senza filtri** (`src/variant_scorecard.py` → `results/variant_scorecard.csv` e `.md`): su **7 metriche confrontabili** V9 è la più vicina al reale **solo sul grado medio** (28,30 contro 32,05). La densità è di v8 (0,00129 contro 0,00125), transitivity e clustering di v6b (0,0258 e 0,0978 contro 0,0337 e 0,0804), la reciprocità di v6a/v6b (0,420, **imposta**) e grado massimo e modularità di v2 (1.008 e 0,357, contro 1.290 e 0,275). Quello che V9 ha e le altre no è la **contemporaneità**: scala dei gradi, coesione e verso della coda insieme, senza imporre statistiche. Attenzione al **grado massimo**: lì v2 e v6b sembrano migliori solo perché il confronto ignora la dimensione — stanno a **2,9** e **5,6 volte** il valore atteso dalla legge di scala del reale, mentre V9 sta a **0,97** (v8 a 0,30).
-- **Pendenza della coda, a pari dimensione** (CCDF del grado uscente, ultimo decile; soglia e punti usati nel CSV): il reale sull'ultimo snapshot sta a **-2,35** (esponente 3,35), ma il confronto corretto è con il reale **al primo snapshot** (10.755 utenti), che sta a **-1,69**. V9 sta a **-3,33**, v2 -2,25, v6b -2,09, v8 -3,63 → la coda di V9 è **troppo ripida**, cioè i suoi hub sono relativamente **meno estremi** del vero, mentre v2/v6b la tagliano troppo poco. È questo, insieme alla coesione, lo scarto residuo vero: non il massimo.
-- **Il volume degli archi non è un errore di scala**: archi = grado medio × utenti, quindi i 280.298 di V9 su 9.904 utenti stanno a **317.000** circa alla scala del reale (10.000 utenti con il grado medio reale), mentre i 824.045 reali sono 32,05 × 25.714. La differenza con il reale è la **popolazione**: sul riferimento V9 sta a 0,88, V8 a 0,40, v2/v6b a 1,29–1,32.
-- **La riscalatura è una scelta di bersaglio, ora dichiarata**: `--exponent 1` porta il sintetico sulla **densità matura** del reale (0,00286 contro 0,00125, cioè 2,3×) invece di quella che il reale aveva a 10.000 utenti (0,00101, con grado medio 10,8). Provata l'alternativa dettata dalla legge del reale (`--exponent 1,79`, cartella `generated_snapshots_v2_v9_slope`, 122.608 archi): la densità coincide (0,00131) e il grado medio scende a **12,67**, ma il grado massimo cade a **0,48** del previsto, la transitività si dimezza (**0,00998**), la reciprocità scende a 0,289 e i co-arrivati salgono al **17,3%** → è uno **scambio, non un miglioramento**, e la configurazione documentata resta `--exponent 1`.
-- **Il bug che la diagnostica ha trovato (e che vale come metodo)**: `check_real_accretion.py` sulla rete generata mostrava **99,95%** di archi fra utenti arrivati **nello stesso passo**, contro l'**8,1%** del reale. La causa era nel fit della scelta: i negativi venivano campionati **solo fra i presenti già esistenti**, mai fra i co-arrivati, quindi la variabile "la controparte è nuova" separava positivi e negativi *da sola* (coefficiente gonfiato a +1,38) e in generazione la scelta andava quasi tutta sui co-arrivati. Correzione: negativi dallo **stesso insieme dei candidati della generazione** (presenti più nuovi del passo) e percentile ricalcolato su quell'insieme. Effetto: transitività da 0,107 a **0,0209**, clustering da 0,141 a 0,043, new→new dal 99,95% al **12,4%**. Lezione: **prima di toccare il modello, misurare la composizione della rete generata** — la diagnosi ha risolto in un colpo quello che sembrava un problema di forma del modello.
-- **Una leva scartata sulla coesione**: rifare il fit con **100 negativi per positivo** invece di 10 non cambiava la coesione (modularità 0,856 contro 0,854, transitività 0,114 contro 0,107, volume e reciprocità identici) e costava cinque volte tanto → configurazione riportata a 10.
-- **Negativi misti, la proposta di Gemini: provati e scartati** (`--negatives stratified`: 30% inversioni asimmetriche, 30% difficili sul grado, 40% uniformi come nella configurazione documentata; cartella `generated_snapshots_v2_v9_strat`). Esito negativo e netto: transitivity 0,0115 contro 0,0209, clustering 0,0305 contro 0,043, co-arrivati 18,4% contro 12,4%, grado dell'estremo già presente 104 contro 169, grado massimo 283 contro 324, reciprocità 0,300 contro 0,3035, AUC di fit 0,767 contro 0,918 (distribuzione di negativi diversa, quindi non confrontabile). I coefficienti si spostano — "nuova" +0,61 contro +1,22, "grado log" −0,21 contro +1,02, "uscente" +0,47 contro +0,14 — ma la **reciprocità non cambia**: la genera la tabella delle coppie ricambiate, non il classificatore. Artefatti: `results/v9_strat_coefficients.csv`, `results/_v9_strat_run.txt`.
-- **Chiusura triadica dentro l'evento, misurata meglio: nessun effetto** (`--closure count`, cartella `generated_snapshots_v2_v9_closure`): la co-occorrenza diventa la **frazione** delle altre controparti dell'evento a cui il candidato è vicino (stessa funzione in fit e generazione), e il coefficiente fittato scende da **+0,194 a +0,051** — con una misura più fine la chiusura nel reale è **debole**. La rete non cambia (280.310 archi, reciprocità 0,3035, transitività 0,0202 contro 0,0209, clustering 0,0411 contro 0,0433, hub 169,2 contro 169,4). Quindi il divario di triangoli non è un problema di modellazione della chiusura ma di **concentrazione dei gradi**. Artefatti: `results/v9_closure_coefficients.csv`, `results/_v9_closure_run.txt`.
-- **Riproducibilità**: la deriva di ~2% fra run aveva una causa precisa — l'ordine di iterazione dei set di archi (stringhe) non è fissato in Python, quindi la sequenza casuale a valle cambiava da un processo all'altro. I generatori ora iterano gli archi in **ordine ordinato** e, con `--negatives uniform`, non consumano nessuna estrazione in più: il rilancio della configurazione documentata dà **280.299** archi contro 280.298, con gli **stessi** 8.293 eventi di arrivo, la stessa quota ricambiate (0,4074) e la stessa reciprocità (0,3035). Il residuo di un arco su 280 mila è nei **pesi della rete addestrata**, che variano al terzo decimale fra processi (coefficienti a confronto in `results/v9_check_coefficients.csv`), non nel generatore; le tabelle dei documenti vengono da un'**unica esecuzione finale** dei sei modelli (V8 e V9, tre modalità A/B/C ciascuno) con le stesse analisi.
-- **Distanze che restano, dichiarate**: coda dei gradi (grado massimo 102–128 contro 1.290), **reciprocità** (0,004 contro 0,418: il coefficiente dell'arco inverso esce leggermente negativo, quindi il modello non riproduce il ricambio dei legami), **transitivity** (0,003 contro 0,034) e **omofilia del contenuto** (1,00 contro il 2,13 del reale, che però è in gran parte struttura: scomposizione qui sotto).
-- **L'omofilia del reale è in gran parte struttura (scomposta, `src/analyze_homophily.py`, ultimo snapshot)**: contro coppie a caso **2,133**; contro non-archi appaiati per grado a classi larghe **1,511**; per grado esatto ±10% **1,290**; per grado+volume di testo 1,367; per volume di testo 1,554; l'AUC archi-contro-controllo scende da 0,702 a 0,575. Gli estremi degli archi hanno grado medio **403,6** contro **61,7** e **1.297 caratteri** cumulativi contro una mediana di **323**; la somiglianza interna per decile di grado sale da 0,079 a 0,291. Resta quindi un **residuo lessicale piccolo** (AUC ≈ 0,58), che vive nei profili **TF-IDF+SVD cumulativi** — non nel canale del generatore (**MiniLM per post**, dove il segnale è nullo): il 2,13 e l'1,00 del modello non misurano la stessa cosa. I controlli fini sono instabili per passo (in un caso il gruppo appaiato è più simile degli archi veri, 0,42 contro 0,31), quindi 1,29 è un **limite inferiore**.
-- **Il coefficiente dei vicini in comune è negativo (−6,1 nell'ultima esecuzione)**: non è un errore. I negativi sono coppie estratte a caso e gli archi veri coinvolgono spesso utenti appena entrati, che per definizione non hanno vicini in comune; il modello impara quindi che, *contro una coppia a caso*, i triangoli non aiutano. È una proprietà della competizione scelta, e spiega la transitivity bassa della rete generata.
-- **Controllo del contenuto A/B/C (la misura che chiude la discussione)**: con lo stesso modello fittato sul reale e lo stesso scenario (`generated_snapshots_v2`), le tre modalità `--content real|permuted|off` danno reti **indistinguibili** nelle proprietà relazionali — archi 128.831 / 123.294 / 124.560, reciprocità 0,0031 / 0,0030 / 0,0029, transitività 0,00269 / 0,00253 / 0,00262, grado massimo 107 / 96 / 106, modularità 0,154 / 0,159 / 0,156 — e l'omofilia resta intorno a 1,00 (1,0009 / 0,9998 / 1,0004). Il volume varia di pochi punti percentuali **senza ordine** (`permuted` sta più vicino a `off` che a `real`). L'ablazione per AUC (0,9818 → 0,9816) è **satura** e da sola non proverebbe nulla: la prova è il confronto fra reti.
-- **Il ramo "i post come archi" (chiuso, esito negativo)**: l'ipotesi era che il `content` di un post *sia* la relazione fra due utenti (il post come unità del legame, il testo come feature di coppia, la reciprocità come due post diversi in momenti diversi). Accertato che nel `.edg` gli id sono **utenti** (tutte e nove le cartelle hanno esattamente due colonne, e nessun campo coincide con un id di post), l'unico modo di agganciare un post a un arco è una regola, quindi l'ipotesi è stata messa alla prova come regola. Esiti sul reale, con lo stesso protocollo appaiato del progetto: (a) le feature per-post — miglior post del capo sinistro, del capo destro, coppie di post, top-k — danno **AUC 0,515–0,517**, indistinguibile dalla media dei post (0,5166) e cioè dal caso; (b) i post di una coppia reciproca **non** si somigliano più di quelli di due utenti a caso (AUC instabile fra 0,18 e 0,66); (c) chi scrive più post **non** riceve più archi (Spearman ≈ 0 nelle finestre di test; il 10% che scrive di più prende ~10% degli archi, cioè esattamente in proporzione). Non è un artefatto di troncamento (misurato: il 3,72% dei post supera i 256 token dell'encoder, pari al 18,5% dei token) né della media (bypassata apposta con le feature per-post). La parte **strutturale** dell'idea — co-interazione sullo stesso post, quindi triangoli — non è verificabile: servirebbe sapere *quale* post è agganciato a ciascun arco, informazione che il dataset non contiene. Artefatti: `src/build_edge_posts.py` (copertura e volume per arco), `src/edge_content_test.py` (le prove (a) e (b)), `results/edge_posts_report.csv`, `results/edge_content_report.csv`, `results/reciprocity_content.csv`. Conclusione: coerente con l'A/B/C, il contenuto non porta il legame nemmeno a livello di post singolo.
-- **Le due partizioni, provate entrambe su V9** (`_v2` "tutti presenti" contro `_growth_v2`, ingresso con la curva del reale): quasi equivalenti — distanza relativa dal reale **3,79 contro 4,39** su otto metriche, **3,26 contro 3,29** senza la quota di co-arrivati (12,4% contro 17,0%, reale 8,1%). La progressiva vince la reciprocità (0,3224 contro 0,3035), l'attuale vince volume, grado medio, grado massimo, clustering e grado dell'estremo già presente; la differenza nasce da quanti entranti sono disponibili a ogni passo, con il peso +1,22 su "la controparte è nuova". Ufficiale resta `_v2`, la progressiva è il controllo. Artefatti: `generated_snapshots_growth_v2_v9/`, `results/structure_generated_snapshots_growth_v2_v9.csv`, `results/accretion_generated_snapshots_growth_v2_v9.csv`.
-- **Scenario del sintetico**: curva di arrivo **e forma di attività** vengono dal reale (l'attività: distribuzione dei post per utente attivo per periodo — media 3,7, mediana 2, p90 9 — con ~62% di utenti silenziosi a ogni passo). **Correzione**: la *curva aggregata per passo* del reale **non** è utilizzabile, perché gli snapshot reali hanno durata diversa (un anno, tre mesi, 20 giorni, 8 giorni, 3 giorni) e quei conteggi misurano "attività × lunghezza della finestra"; copiarla concentrava tutte le raffiche sugli stessi passi. Il profilo aggregato **emerge** dalla struttura di arrivo. Effetto misurato del cambio di scenario: **~5% sul volume e nessuna metrica strutturale diversa**.
-- **Risultato centrale (contenuto vs struttura)**: le reti generate hanno **omofilia del contenuto ≈ 1,00** e il confronto A/B/C mostra che il canale testuale non sposta le proprietà relazionali della rete; nel modello fittato il contenuto pesa un ordine di grandezza meno dell'arrivo di un utente nuovo. La pipeline spiega *quando* nasce un arco, non *fra chi* per via del contenuto. Coerente con l'AUC con negativi appaiati **sul reale** (0,49–0,57) e con il fallimento del fine-tuning (§4). Il **2,13** del reale, l'unico numero che sembrava contraddire questa lettura, è **in gran parte struttura** (scomposizione qui sopra).
-- **Reciprocità nella famiglia per inferenza**: dipende dalla decisione e dall'encoder, non dalla struttura reale — 0,016 (soglia a blocchi, MiniLM) → 0,183 (soglia globale, MiniLM) → 0,721 (soglia globale + encoder fine-tuned, con un hub degenerato di grado 9.999). La soglia "a blocchi" del primo tentativo rompeva la simmetria (u,v)/(v,u): era un artefatto di calcolo, ora corretto con la soglia globale calcolata su tutte le coppie candidate del passo.
-- **Encoder**: il fine-tuning contrastivo con negativi appaiati e **temporali** è stato fatto (MiniLM e bge-base) e **non passa il criterio di tenuta**: migliora la validation ma peggiora entrambe le finestre di test (media 0,519 vs 0,534; 0,523 vs 0,530). La supervisione è troppo debole e l'encoder si adatta alla finestra di training/validation. Nota di ambiente: il fine-tuning di `bge-base` richiede `--batch 8` sulla GPU da 6 GB.
-- **Righe scartate**: nei batch sintetici 18 righe non hanno il numero di campi dell'intestazione e vengono ignorate in lettura; per questo i post usati sono 100.456 su 100.474 righe. (Un `id` non valido non fa scartare la riga: riceve un identificatore di ripiego.)
-- **Tracciabilità**: il progetto **è sotto git** (ramo di lavoro `levers/posts-as-edges`, `main` allineato allo stesso commit, tag `consegna-progetto` come riferimento della consegna); le scritture avvengono solo in `results/` e nelle cartelle `generated_*`, quindi nessun file originale del dataset viene toccato.
+- **Quale metrica, per quale domanda**: la rete generata **non si valuta con un AUC** — nel sintetico
+  non ci sono archi veri — ma con statistiche di rete per snapshot contro il reale. L'AUC resta
+  corretta sul reale: fit del modello e diagnostica del contenuto. L'AUC di ablation è **satura**
+  (0,9818 → 0,9816) e non misura il contributo del testo; per quello valgono il controllo a testo
+  permutato e la scomposizione dell'omofilia.
+- **Restrizione del paper**: applicata al reale produce **0 archi** in tutte le transizioni; per
+  questo la valutazione usa l'intera transizione e due modalità di negativi (casuali e appaiati).
+- **Negativi casuali contro appaiati**: i primi sono facili (~0,99 in validation), i secondi sono la
+  prova onesta (0,51-0,57) e sono la colonna di scelta. Gli appaiati hanno stesso mittente, stessa
+  classe di arrivo e grado vicino (prossimità in una lista ordinata per arrivo e grado).
+- **Il contenuto non decide chi si collega a chi**: le tre reti ufficiali (testo vero, permutato,
+  azzerato) sono indistinguibili — archi 271.646 / 261.680 / 271.640, reciprocità 0,3224 / 0,3229 /
+  0,3227, omofilia ~1,00. Il termine di contenuto pesa +0,05 contro +1,22 della "controparte nuova".
+- **L'omofilia del reale è in gran parte struttura** (`results/homophily_control_real_snapshots.csv`):
+  contro coppie a caso **2,133**; contro non-archi appaiati per grado **1,511**; per grado ±10%
+  **1,290**; per volume di testo 1,554; per grado+volume 1,367. Gli estremi degli archi hanno grado
+  medio 403,6 contro 61,7 e 1.297 caratteri contro una mediana di 323.
+- **Legge di scala**: il reale prevede ~339 di grado massimo a 10.000 utenti (esponente 1,445,
+  R² 0,986). La rete ufficiale sta a **274 (81%)**, il controllo a 328-324 (~97%). È il costo più
+  visibile della partizione progressiva.
+- **Coda**: pendenza CCDF sull'ultimo decile −3,98 (ufficiale), −3,33 (controllo), −2,349 (reale, che
+  al primo snapshot con 10.755 utenti sta a −1,69). A pari dimensione la coda generata è **più
+  ripida**: gli hub sono meno estremi del vero.
+- **Il primo passo della progressiva è più vuoto del reale** (15,7% dei nodi collegati contro 41,8%).
+  Non è un errore di misura: la legge di k si applica alla popolazione presente, che al primo passo è
+  solo quella entrata. La legge è però fittata su popolazioni fra 10.755 e 21.082, quindi a 10.000 e
+  sotto è un'**estrapolazione**. La riga "nodi collegati al primo passo" del reale misura uno stock
+  preesistente, non un passo di nascita, e non va usata come criterio.
+- **Riproducibilità**: i generatori iterano gli archi in ordine ordinato; il generatore è
+  deterministico (stessi eventi, stessa quota di ricambiati), l'addestramento no: i pesi variano al
+  terzo decimale e il volume di ~10 archi su 271.646 (0,003%). Le tabelle vengono da un'unica
+  esecuzione.
+- **Bug trovato dalla diagnostica, tenuto come metodo**: la prima versione campionava i negativi del
+  fit solo fra i presenti, quindi "la controparte è nuova" separava le classi da sola (peso +1,38) e
+  il 99,95% degli archi finiva fra co-arrivati; corretto con negativi dallo stesso pool della
+  generazione, la transitività è passata da 0,107 a 0,0209.
+- **Scenario del sintetico**: curva di arrivo e forma di attività vengono dal reale. La *curva
+  aggregata dei post* del reale **non** è utilizzabile (gli snapshot hanno durata diversa: da un anno
+  a tre giorni) e copiarla concentrava le raffiche sugli stessi passi.
+- **Utenti reali**: nessun profilo né attributo oltre ai post. Il dataset reale non va modificato.
+  `exact_level_found` nel sintetico deriva da un progetto sulla tossicità e non si usa.
+- **Righe scartate**: 18 righe dei batch sintetici non hanno il numero di campi dell'intestazione.
+- **Tracciabilità**: ramo `levers/posts-as-edges`, `main` allineato, tag `consegna-progetto`.
 
-## 7. Convenzioni
+## 8. Convenzioni
 
-- File `.md` in italiano; ogni altro file (script, output, CSV, figure) **in inglese**.
-- `Esame Angelantonio Fedele Murolo/` e `tNodeEmbed/` sono **read-only** (le cartelle `generated_*` sono aggiunte nostre).
-- Seed fissi ovunque; ambiente `uv` (torch CUDA per la RTX 3060).
-
-## 8. Artefatti prodotti
-
-| artefatto | contenuto |
-|---|---|
-| `results/encoder_comparison.csv` | confronto degli encoder sul reale (val/test, entrambe le modalità di negativi, e il numero di archi che soddisfano la restrizione del paper) |
-| `Esame Angelantonio Fedele Murolo/generated_snapshots_v2/`, `generated_snapshots_growth_v2/` | le due partizioni **definitive** del sintetico (attività dal reale): `snapshot_t/posts_current_snapshot.tsv`, `snapshot_t/posts_incremental.tsv`, `snapshot_t/social_network.edg` (rete generata), `users_by_birth.csv`, `tnodeembed_embeddings.npz`. Le `generated_snapshots*` senza suffisso `_v2` sono il controllo storico ad attività uniforme |
-| `results/transfer_report.csv` | per partizione: AUC del modello sul reale, nodi/archi/densità/reciprocità della rete generata, sovrapposizione di vocabolario reale↔sintetico |
-| `results/structure_*.csv`, `structure_heavy_*.csv` | metriche strutturali per snapshot (e metriche pesanti sull'ultimo) per reale e partizioni |
-| `results/temporal_*.csv` | delta per snapshot, persistenza degli archi (Jaccard), stabilità delle comunità (NMI) |
-| `results/content_*.csv`, `content_attributes_*.csv` | omofilia del contenuto e, dove esistono i profili (sintetico), omofilia per attributo: nove label (schieramento, professione, interessi, stato di origine, età, genere, etnia, religione, nazionalità), con *lift* e ARI/NMI contro le comunità |
-| `<cartella generata>/tnodeembed_embeddings.npz` | embedding LSTM del sintetico per ogni passo, scritti da entrambi i generatori (V8 e V9): servono alle analisi dei profili per le righe con gli embedding tNodeEmbed |
-| `results/homophily_control.csv` | scomposizione dell'omofilia del reale: sei controlli (casuale, grado, grado esatto ±10%, arrivo+grado, volume di testo, grado+volume), rapporto e AUC archi-contro-controllo, più la somiglianza per decile di grado (`src/analyze_homophily.py`) |
-| `results/accretion_*.csv` | per ogni transizione, gli archi nuovi classificati per estremi (nuovo/già presente) e il grado dell'estremo già presente (`src/check_real_accretion.py`) |
-| `results/profiles_*.csv` | classificazione dei profili dagli embedding tNodeEmbed e dal contenuto |
-| `results/figures/*.png` | figure prodotte dagli script di analisi e dal confronto (`compare_*.png`) |
+- File `.md` in italiano; script, output, CSV e figure **in inglese**.
+- `Esame Angelantonio Fedele Murolo/` e `tNodeEmbed/` sono read-only (le `generated_*` sono nostre).
+- Seed fissi; ambiente `uv`.
