@@ -119,7 +119,7 @@ La pipeline finale è **una sola**: il generatore per **eventi di arrivo** (V9).
 
 Le due reti sono **equivalenti** sulla distanza relativa dal reale (`|valore − reale| / |reale|` sommata su sette metriche): **3,84** l'ufficiale, **3,89** il controllo. Il costo della partizione progressiva sta in due numeri: grado massimo **274 contro 328** e quota di archi fra utenti arrivati nello stesso passo **17,0% contro 12,4%** (reale 8,1%).
 
-Delle tre modalità di contenuto si consegna solo quella con **testo autentico**: sei cartelle in tutto (i due dataset originali, le due partizioni, la rete ufficiale e il controllo). Le reti con testo permutato e contenuto azzerato sono il **controllo A/B/C**, non un risultato: i loro numeri restano nei CSV e si rigenerano con un comando.
+Delle tre modalità di contenuto si consegna solo quella con **testo autentico**: quattro cartelle (i due dataset originali, la partizione e la rete ufficiali; il controllo e' in `archive/dataset/`). Le reti con testo permutato e contenuto azzerato sono il **controllo A/B/C**, non un risultato: i loro numeri restano nei CSV e si rigenerano con un comando.
 
 Le sezioni che seguono (§6.3-§6.8) raccontano le prove fatte **prima** della pulizia del repository, su reti e partizioni che oggi stanno in `archive/`: si leggono come storia del lavoro, non come risultato corrente. I numeri correnti stanno qui sopra, in `FINAL.md` e in `paper.md`.
 

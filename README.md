@@ -83,16 +83,23 @@ pandoc docs/relazione.md -o docs/relazione.pdf --pdf-engine=xelatex -V geometry:
 
 ## Cosa si consegna
 
-`Esame Angelantonio Fedele Murolo/` con **sei cartelle**: `real_snapshots/`, `synthetic_snapshots/`, le
-due partizioni (`synthetic_control`, `synthetic`), la rete **ufficiale**
-(`synthetic_network`) e il **controllo** (`synthetic_control_network`). Le reti del
-controllo A/B/C con testo permutato e contenuto azzerato **non si consegnano**: i loro numeri sono nei
-CSV (`results/*_v9_permuted.csv`, `*_v9_off.csv`) e si rigenerano con `--content permuted` e `--content off`.
-Ogni rete consegnata ha i 9 file `.edg` (uno per passo) e i 4 file nella forma dei batch nativi.
-I numeri sono in `results/*.csv`, le figure in `results/figures/` e `docs/riferimenti/`.
+`Esame Angelantonio Fedele Murolo/` con **quattro cartelle**: i due dataset originali
+(`real_snapshots/`, `synthetic_snapshots/`), la **partizione** ufficiale (`synthetic/`) e la **rete**
+ufficiale (`synthetic_network/`), che contiene i 9 file `.edg` (uno per passo), i 4 file nella forma dei
+batch nativi e gli embedding dei nodi. I numeri sono in `results/*.csv`, le figure in
+`results/figures/` e `docs/riferimenti/`.
+
+Non si consegnano, e sono documentati nei CSV o nelle tabelle: la **partizione e la rete di controllo**
+(archiviate in `archive/dataset/`, numeri in `results/*_synthetic_control*.csv`) e le reti del
+**controllo A/B/C** con testo permutato e contenuto azzerato (numeri nella tabella del controllo in
+`FINAL.md` e nel paper; si rigenerano con `--variant network_permuted --content permuted` e
+`--variant network_off --content off`).
 
 Il riferimento stabile della consegna è il tag **`consegna-progetto`**. I tentativi precedenti sono in
-`archive/` (descrizione in `archive/storico.md`, CSV e script originali).
+`archive/` (descrizione in `archive/storico.md`, CSV e script originali). Anche la **partizione di
+controllo** e la **rete di controllo** stanno in `archive/dataset/` (fuori dal versionamento, sono
+centinaia di MB): i loro numeri restano in `results/*_synthetic_control*.csv` e si citano da lì; le reti
+si rigenerano con i due comandi del punto 2.
 
 ## Tre cose da sapere sui numeri
 

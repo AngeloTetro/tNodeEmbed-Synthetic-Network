@@ -110,6 +110,8 @@ def main():
 
     figure, ax = plt.subplots(figsize=(7, 4.5))
     for folder in FOLDERS:
+        if not os.path.isdir(os.path.join(BASE, folder)):
+            continue
         directories, names = snapshots_folder(os.path.join(BASE, folder))
         edges = load_edges(os.path.join(directories[-1], 'social_network.edg'))
         if not edges:

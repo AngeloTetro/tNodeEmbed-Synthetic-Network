@@ -116,6 +116,8 @@ def main():
 
     rows = []
     for folder, label in FOLDERS:
+        if not os.path.isdir(os.path.join(BASE, folder)):
+            continue
         name, edges, nodes = load_network(os.path.join(BASE, folder))[-1]
         row = snapshot_row(name, edges, nodes)
         expected = float(np.exp(intercept + slope * np.log(row['nodes'])))

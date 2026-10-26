@@ -81,7 +81,11 @@ def folder_metrics(folder):
         row[key] = heavy[-1][key] if heavy else ''
     row['homophily_ratio'] = content[-1]['homophily_ratio'] if content else ''
 
-    snapshots = load_network(os.path.join(BASE, folder))
+    try:
+        snapshots = load_network(os.path.join(BASE, folder))
+    except (FileNotFoundError, IndexError, NotADirectoryError):
+        row['tail_slope'], row['tail_gamma'], row['tail_from'], row['tail_points'] = '', '', '', ''
+        return row
     degrees = {}
     for source, _ in snapshots[-1][1]:
         degrees[source] = degrees.get(source, 0) + 1

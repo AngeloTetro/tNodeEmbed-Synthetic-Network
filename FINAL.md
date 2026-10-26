@@ -78,8 +78,8 @@ contenuto (`results/homophily_control_synthetic_network.csv`).
 
 ## Cosa viene consegnato
 
-`Esame Angelantonio Fedele Murolo/` con **sei cartelle**: la rete reale, il dataset sintetico, le due
-partizioni, la rete **ufficiale** e il **controllo**. Ogni rete ha i 9 file `.edg` (uno per passo) e i 4
+`Esame Angelantonio Fedele Murolo/` con **quattro cartelle**: i due dataset originali, la partizione ufficiale
+e la rete ufficiale. Controllo e modalita' A/B/C sono in `archive/dataset/` e nei CSV. Ogni rete ha i 9 file `.edg` (uno per passo) e i 4
 file nella forma dei batch nativi — il quarto è vuoto per costruzione, perché `batch_3` ha due righe
 (`results/native_batches.csv`). Le reti del controllo A/B/C (testo permutato, contenuto azzerato) **non
 si consegnano**: i loro numeri sono in `results/*_v9_permuted.csv` e `*_v9_off.csv`, e si rigenerano con

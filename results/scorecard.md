@@ -10,7 +10,7 @@
 | transitivity | 0,0337 | 0,0212 | 0,0209 | ufficiale |
 | clustering | 0,0804 | 0,0420 | 0,0435 | controllo |
 | omofilia | 2,13 | 1,00 | 1,00 | nessuna: tutte vicine a 1,00 |
-| pendenza di coda (CCDF, ultimo decile) | -2,349 | -3,980 | -3,332 | - |
+| pendenza di coda (CCDF, ultimo decile) | -2,349 | -3,980 | - | - |
 
 Distanza relativa dal reale, `|v - reale| / |reale|`, sommata sulle sette metriche confrontabili (densita, grado medio, grado massimo, reciprocita, modularita, transitivity, clustering):
 

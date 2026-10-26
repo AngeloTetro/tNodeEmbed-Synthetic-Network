@@ -106,8 +106,8 @@ distanza relativa dal reale (3,84 contro 3,89 su sette metriche, definizione in
 `src/scorecard.py`), e invertendo la normalizzazione l'ordine si inverte: non è un criterio.
 
 **Cosa si consegna, e cosa no.** Delle tre modalità di contenuto si consegna solo quella con **testo
-autentico**, per la rete ufficiale e per il controllo: sei cartelle in tutto con le due partizioni e i
-dataset originali. Le reti con testo permutato e contenuto azzerato sono un **controllo**, non un
+autentico**, per la rete ufficiale e per il controllo: quattro cartelle (i due dataset originali, la partizione e la rete ufficiali); il controllo e' in
+`archive/dataset/`. Le reti con testo permutato e contenuto azzerato sono un **controllo**, non un
 risultato: i loro numeri restano nei CSV (`results/*_v9_permuted.csv`, `*_v9_off.csv`) e si rigenerano
 in pochi minuti con `--content permuted` e `--content off`.
 

@@ -25,3 +25,6 @@ Esame Angelantonio Fedele Murolo/
 
 # materiale di lavoro non prodotto dal progetto
 LLM/
+
+# reti di controllo archiviate (grandi, ricostruibili: i numeri restano nei CSV)
+archive/dataset/
