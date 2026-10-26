@@ -110,7 +110,7 @@ Dai punteggi del modello temporale non nasce automaticamente una rete: servono d
 
 **Il generatore.** Si stimano sul reale tre cose e si generano **arrivo per arrivo**: quanti archi porta un arrivo (`k`, campionato da una tabella fittata sul reale e riscalato sulla popolazione); la direzione di ciascun arco (quota uscente del passo); il bersaglio, con una regressione logistica su sette variabili — punteggio di contenuto della testa di coppia, `log(1+grado)`, percentile di grado, "la controparte è nuova", "la controparte ha scritto nel periodo", direzione, co-occorrenza con i partner già scelti nell'evento. Le coppie ricambiate si pescano fra gli uscenti già scelti, con una tabella reale per direzione e classe di grado. Lo stato della rete (gradi, percentili, novità, attività, vicinato) si ricalcola **a ogni passo**; nessuna soglia e nessun conteggio è imposto.
 
-*Origine: le quantità dell'arrivo sono in `results/arrival_events.csv`; i coefficienti in `results/coefficients_generated_snapshots_growth_v2_v9.csv`; i conteggi finali in `results/v9_report.csv`.*
+*Origine: le quantità dell'arrivo sono in `results/arrival_events.csv`; i coefficienti in `results/coefficients_synthetic_network.csv`; i conteggi finali in `results/network_report.csv`.*
 
 **La partizione consegnata.** Tutte le cifre di questo articolo si riferiscono alla rete generata sulla partizione a **ingresso progressivo**. La stessa pipeline eseguita sulla partizione "tutti presenti" è il **controllo** e viene riportata accanto, perché la scelta fra le due non è metrica ma concettuale (§5.2).
 
@@ -137,7 +137,7 @@ Una **rete generata non si valuta con un AUC**: nel dataset sintetico non esisto
 | **ufficiale** (progressiva) | 271.646 | 9.897 | 0,00277 | 27,45 | 274 | 0,3224 | 0,1074 | 0,0212 | 0,0420 | 6 | 1,0009 |
 | controllo (tutti presenti) | 280.298 | 9.901 | 0,00286 | 28,31 | 328 | 0,3035 | 0,1030 | 0,0209 | 0,0435 | 6 | 0,9993 |
 
-*Origine: `results/structure_*.csv`, `results/structure_heavy_*.csv`, `results/content_*.csv`; distanze in `results/variant_scorecard.csv`.*
+*Origine: `results/structure_*.csv`, `results/structure_heavy_*.csv`, `results/content_*.csv`; distanze in `results/scorecard.csv`.*
 
 La rete ufficiale porta **nell'ordine giusto** reciprocità (0,3224 contro 0,4177), scala dei gradi (27,45 contro 32,05), transitività (0,0212 contro 0,0337), clustering (0,042 contro 0,080) e diametro (6 contro 6). Il controllo fa leggermente meglio su grado medio, grado massimo e clustering, e leggermente peggio su densità, reciprocità, modularità e transitività: sulle sette metriche confrontabili vince 4 a 3, e la distanza relativa dal reale, definita come `|valore − reale| / |reale|` e sommata sulle sette, è **3,84** per l'ufficiale e **3,89** per il controllo. Cambiando normalizzazione l'ordine si inverte: le due partizioni sono **equivalenti** su questo piano.
 
@@ -172,7 +172,7 @@ Nel reale il **41,8%** degli utenti finali è già collegato al primo snapshot e
 | pendenza di coda (ultimo decile) | −2,349 | −3,980 | −3,332 | controllo |
 | archi fra utenti arrivati nello stesso passo | 8,1% | 17,0% | 12,4% | controllo |
 
-*Origine: `results/variant_scorecard.csv`, `results/tail_scaling_summary.csv`, `results/accretion_*.csv`.*
+*Origine: `results/scorecard.csv`, `results/tail_scaling_summary.csv`, `results/accretion_*.csv`.*
 
 Il costo più visibile è su due righe: gli archi fra co-arrivati salgono dal 12,4% al **17,0%** (reale 8,1%), perché con l'ingresso progressivo ci sono più entranti disponibili a ogni passo e il peso positivo su "la controparte è nuova" spende più archi fra coetanei; e il grado massimo scende a **274**, l'**81%** di quanto la legge di scala del reale prevede a 10.000 utenti, contro il 97% del controllo. Il primo passo è inoltre più vuoto del reale (15,7% dei nodi collegati contro 41,8%), perché `k` si riscala sulla popolazione presente e al primo passo è solo quella entrata.
 
@@ -196,13 +196,13 @@ Il contenuto è l'unica informazione che distingue fra loro i 10.000 utenti del 
 | B — testo permutato | 261.680 | 0,002668 | 26,42 | 248 | 0,3229 | 0,1102 | 0,0207 | 0,0392 | 0,9995 |
 | C — contenuto azzerato | 271.640 | 0,002777 | 27,47 | 275 | 0,3227 | 0,1066 | 0,0213 | 0,0421 | 1,0010 |
 
-*Origine: `results/structure_generated_snapshots_growth_v2_v9{,_permuted,_off}.csv` e i rispettivi `structure_heavy_*` e `content_*`. Le due reti di controllo non fanno parte della consegna: i loro numeri sono in quei CSV e si rigenerano con `--content permuted` e `--content off`.*
+*Origine: `results/structure_synthetic_network{,_permuted,_off}.csv` e i rispettivi `structure_heavy_*` e `content_*`. Le due reti di controllo non fanno parte della consegna: i loro numeri sono in quei CSV e si rigenerano con `--content permuted` e `--content off`.*
 
 Le tre reti sono **indistinguibili** nelle proprietà relazionali: il volume varia del 3,7% e **senza ordine** (la rete col testo permutato sta più vicino a quella azzerata che a quella col testo autentico), e reciprocità, transitività, clustering, modularità e diametro coincidono entro la rumorosità fra addestramenti. L'unico effetto visibile del testo è minimo: l'omofilia passa da 1,0010 (contenuto azzerato) a 1,0009 (testo autentico), contro il 2,13 del reale. **Il contenuto non sposta la rete.**
 
 Questo risultato è coerente con i pesi appresi, su variabili standardizzate: il punteggio di contenuto pesa **+0,05** contro **+1,22** della novità della controparte e **+1,02 / +0,91** di grado e percentile; "ha scritto nel periodo" pesa **−0,03** e la co-occorrenza **+0,19**. Il modello discrimina bene sulla transizione di validation (AUC 0,918), ma lo fa **con la struttura**: *chi entra* e *quanto è connesso*, non *cosa scrive*.
 
-*Origine: `results/coefficients_generated_snapshots_growth_v2_v9*.csv`, `results/v9_report.csv`.*
+*Origine: `results/coefficients_synthetic_network*.csv`, `results/network_report.csv`.*
 
 ### 5.4 Scomposizione dell'omofilia
 
@@ -223,7 +223,7 @@ Il numero che sembrava contraddire §5.3 è l'omofilia del contenuto della rete 
 
 Più della metà del divario sparisce appena si confrontano utenti comparabili: **il 2,13 è in gran parte posizione nella rete**, non scelta di somiglianza. Sulla rete ufficiale lo stesso protocollo dà **1,001 / 1,000 / 0,980 / 1,001 / 1,014**: nessuna omofilia di contenuto. Resta un **residuo lessicale piccolo** nel reale (rapporto 1,29; AUC 0,58), che vive nei profili lessicali usati per questa misura e non nel canale del generatore (per-post, dove il segnale è nullo): il 2,13 del reale e l'1,00 delle reti generate **non misurano la stessa cosa**.
 
-*Origine: `results/homophily_control_generated_snapshots_growth_v2_v9.csv`.*
+*Origine: `results/homophily_control_synthetic_network.csv`.*
 
 ### 5.5 I profili
 
@@ -237,7 +237,7 @@ Nel dataset sintetico gli attributi dell'utente sono etichette note, quindi poss
 | professione (41) | **0,867** | 0,865 | 0,587 | 0,577 |
 | fascia d'età (8) | **0,690** | 0,683 | 0,514 | 0,505 |
 
-*Origine: `results/profiles_generated_snapshots_growth_v2_v9.csv`.*
+*Origine: `results/profiles_synthetic_network.csv`.*
 
 Il **contenuto conosce l'utente**, e aggiungere la rete non cambia nulla; gli embedding temporali, addestrati a prevedere i *legami*, perdono il profilo. È **l'immagine speculare di §5.3**: *chi è* un utente sta nel testo, *con chi si collega* sta nella struttura. Il legame, infatti, dipende da variabili di stato — l'ingresso dell'utente e il suo grado — che il testo non contiene. Il task esiste solo sul sintetico: il reale non ha attributi.
 

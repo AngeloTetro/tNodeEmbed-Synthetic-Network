@@ -28,11 +28,11 @@ Content modes (`--content`), solo sul lato sintetico; il modello e' sempre fitta
     off       canale testuale azzerato.
 
 Usage:
-    uv run python src/generate_arrival.py --partition generated_snapshots_v2 --content real
-    uv run python src/generate_arrival.py --partition generated_snapshots_v2 --content permuted
-    uv run python src/generate_arrival.py --partition generated_snapshots_v2 --content off
-Output: <partition>_<variant>/, results/v9_report.csv, results/v9_coefficients.csv,
-        results/_v9_run.txt
+    uv run python src/generate_arrival.py --partition synthetic_control --content real
+    uv run python src/generate_arrival.py --partition synthetic_control --content permuted
+    uv run python src/generate_arrival.py --partition synthetic_control --content off
+Output: <partition>_<variant>/, results/network_report.csv, results/v9_coefficients.csv,
+        results/_run.txt
 """
 
 import argparse
@@ -54,8 +54,8 @@ from transfer_to_synthetic import (BASE, DEVICE, N_SNAPSHOTS, SEED, node_embeddi
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 RESULTS = os.path.join(ROOT, 'results')
-REPORT = os.path.join(RESULTS, 'v9_report.csv')
-LOG = os.path.join(RESULTS, '_v9_run.txt')
+REPORT = os.path.join(RESULTS, 'network_report.csv')
+LOG = os.path.join(RESULTS, '_run.txt')
 
 
 def coefficients_path(partition, variant):
@@ -458,9 +458,9 @@ def generate(model, embeddings, users, masks, present_masks, scaler, classifier,
 
 def run():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--partition', default='generated_snapshots_v2')
+    parser.add_argument('--partition', default='synthetic')
     parser.add_argument('--pooling', default='mean_of_posts')
-    parser.add_argument('--variant', default='v9')
+    parser.add_argument('--variant', default='network')
     parser.add_argument('--content', choices=('real', 'permuted', 'off'), default='real')
     parser.add_argument('--exponent', type=float, default=1.0,
                         help='esponente della riscalatura di k sulla popolazione: 1 = lineare, '

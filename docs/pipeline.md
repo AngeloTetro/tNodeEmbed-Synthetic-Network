@@ -103,7 +103,7 @@ avere arrivi. Il prezzo è dichiarato: grado medio 27,45 contro 28,31, massimo 2
 fra utenti arrivati nello stesso passo **17,0%** contro 12,4% (reale 8,1%), e primo passo con il
 **15,7%** dei nodi collegati contro il 41,8% del reale. Le due reti restano equivalenti sulla
 distanza relativa dal reale (3,84 contro 3,89 su sette metriche, definizione in
-`src/variant_scorecard.py`), e invertendo la normalizzazione l'ordine si inverte: non è un criterio.
+`src/scorecard.py`), e invertendo la normalizzazione l'ordine si inverte: non è un criterio.
 
 **Cosa si consegna, e cosa no.** Delle tre modalità di contenuto si consegna solo quella con **testo
 autentico**, per la rete ufficiale e per il controllo: sei cartelle in tutto con le due partizioni e i
@@ -117,15 +117,15 @@ in pochi minuti con `--content permuted` e `--content off`.
 |---|---|---|
 | `src/content_encoders.py` | interfaccia unica per gli encoder | — |
 | `src/tnodeembed_real.py` | pipeline tNodeEmbed sul reale, un giro per encoder | `results/encoder_comparison.csv` |
-| `src/build_synthetic_snapshots.py` | partizione del sintetico in 9 passi (tutti presenti / arrivo progressivo) | `generated_snapshots_v2/`, `generated_snapshots_growth_v2/` |
-| `src/generate_arrival.py` | **V9**: fit sul reale e generazione per eventi di arrivo (`--content {real,permuted,off}`, `--exponent`, `--closure`, `--negatives`) | `results/v9_report.csv`, `results/coefficients_<cartella>.csv`, `tnodeembed_embeddings.npz` |
+| `src/build_synthetic_snapshots.py` | partizione del sintetico in 9 passi (tutti presenti / arrivo progressivo) | `synthetic_control/`, `synthetic/` |
+| `src/generate_arrival.py` | **V9**: fit sul reale e generazione per eventi di arrivo (`--content {real,permuted,off}`, `--exponent`, `--closure`, `--negatives`) | `results/network_report.csv`, `results/coefficients_<cartella>.csv`, `tnodeembed_embeddings.npz` |
 | `src/analyze_structure.py <cartella>` | nodi, archi, densità, gradi, k-core, reciprocità, transitività, clustering, componenti, diametro, modularità | `results/structure_*.csv`, `structure_heavy_*.csv` + figure |
 | `src/analyze_temporal.py <cartella>` | delta per passo, crescita, densificazione, arrivi, persistenza (Jaccard), stabilità delle comunità (NMI) | `results/temporal_*.csv` + figure |
 | `src/analyze_content.py <cartella>` | omofilia del contenuto, similarità dentro/fuori le comunità, comunità vs attributi | `results/content_*.csv`, `content_attributes_*.csv` + figure |
 | `src/analyze_homophily.py [cartella]` | scompone l'omofilia: casuale, grado, grado ±10%, arrivo+grado, volume di testo, grado+volume | `results/homophily_control_<cartella>.csv` |
 | `src/analyze_profiles.py <cartella>` | profili (solo sintetico): `political_leaning`, `profession`, `age_interval` da contenuto, da embedding e da contenuto+rete | `results/profiles_*.csv` + figure |
 | `src/check_real_accretion.py <cartella>` | archi nuovi per estremi (nuovo/presente) e grado dell'estremo già presente | `results/accretion_*.csv` |
-| `src/variant_scorecard.py` | reale contro ufficiale e controllo, con distanza relativa dichiarata e pendenza di coda | `results/variant_scorecard.csv`, `.md` |
+| `src/scorecard.py` | reale contro ufficiale e controllo, con distanza relativa dichiarata e pendenza di coda | `results/scorecard.csv`, `.md` |
 | `src/tail_scaling.py` | legge di scala del reale (grado massimo contro utenti) e confronto a pari dimensione | `results/tail_scaling_real.csv`, `tail_scaling_summary.csv` |
 | `src/measure_arrivals.py` | misura degli eventi di arrivo del reale: archi per evento, quota uscente, ricambiati | `results/arrival_events.csv` |
 | `src/consolidate_native.py <cartella>` | consegna nei 4 file nella forma dei batch nativi | `results/native_batches.csv`, `<cartella>/native_4_batch_<i>.edg` |
@@ -156,7 +156,7 @@ Le famiglie abbandonate (regole a mano, v6, v7, V8) hanno gli script in `archive
   **1,290**; per volume di testo 1,554; per grado+volume 1,367. Gli estremi degli archi hanno grado
   medio 403,6 contro 61,7 e 1.297 caratteri contro una mediana di 323. Sulla rete ufficiale lo
   stesso protocollo dà **1,001 / 1,000 / 0,980 / 1,001 / 1,014**
-  (`results/homophily_control_generated_snapshots_growth_v2_v9.csv`): nessuna omofilia di contenuto.
+  (`results/homophily_control_synthetic_network.csv`): nessuna omofilia di contenuto.
 - **Legge di scala**: il reale prevede ~339 di grado massimo a 10.000 utenti (esponente 1,445,
   R² 0,986). La rete ufficiale sta a **274 (81%)**, il controllo a **328 (97%)**. È il costo più
   visibile della partizione progressiva.

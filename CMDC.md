@@ -14,19 +14,19 @@ results/             CSV delle reti conservate + scorecard + figure
 docs/                pipeline.md, relazione.md, riferimenti/ (figure e note)
 archive/             storico.md, results/ (CSV dismessi), src/ (script dismessi), docs/
 Esame .../           dataset (gitignored): real_snapshots, synthetic_snapshots,
-                     generated_snapshots_v2, generated_snapshots_growth_v2,
-                     generated_snapshots_growth_v2_v9, generated_snapshots_v2_v9_real
+                     synthetic_control, synthetic,
+                     synthetic_network, synthetic_control_network
                      (le reti permuted/off sono un controllo: CSV in results, si rigenerano)
 ```
 
 ## Comandi che contano
 
 ```bash
-uv run python src/generate_arrival.py --partition generated_snapshots_growth_v2 --variant v9_real --content real
-uv run python src/analyze_structure.py generated_snapshots_growth_v2_v9
-uv run python src/analyze_homophily.py generated_snapshots_growth_v2_v9
-uv run python src/variant_scorecard.py
-uv run python src/consolidate_native.py generated_snapshots_growth_v2_v9
+uv run python src/generate_arrival.py --partition synthetic --variant network --content real
+uv run python src/analyze_structure.py synthetic_network
+uv run python src/analyze_homophily.py synthetic_network
+uv run python src/scorecard.py
+uv run python src/consolidate_native.py synthetic_network
 ```
 
 ## Trappole (imparate a spese nostre)
@@ -35,7 +35,7 @@ uv run python src/consolidate_native.py generated_snapshots_growth_v2_v9
   `results/v9_coefficients.csv`, quindi ogni run sovrascriveva la precedente. Ora scrive
   `results/coefficients_<cartella>.csv`. Il file della rete ufficiale viene da una ripetizione
   indipendente: dirlo, non spacciarlo per la run consegnata.
-- **`v9_report.csv`**: era append-only e conteneva ~25 righe, comprese le run difettose precedenti
+- **`network_report.csv`**: era append-only e conteneva ~25 righe, comprese le run difettose precedenti
   alla correzione dei negativi. Ora ha sette righe con etichette esplicite (`ufficiale_*`,
   `controllo_*`). Un nuovo run aggiunge il proprio `variant`: non confonderlo con quelle righe.
 - **Omofilia**: `analyze_homophily.py` scriveva su un nome fisso e l'ultima cartella analizzata
@@ -47,9 +47,9 @@ uv run python src/consolidate_native.py generated_snapshots_growth_v2_v9
   Gli script per rigenerarla stanno in `archive/src/`, i numeri in `archive/storico.md`.
 - **Determinismo**: il generatore è deterministico, l'addestramento no (pesi al terzo decimale,
   ~10 archi su 271.646 fra processi). Non promettere numeri riproducibili al bit.
-- **Distanza dal reale**: una sola definizione, in `variant_scorecard.py`, `|v−r|/|r|` su sette
+- **Distanza dal reale**: una sola definizione, in `scorecard.py`, `|v−r|/|r|` su sette
   metriche. Il vecchio "3,79 contro 4,39" non era riproducibile: non usarlo.
-- **Log**: `results/_v9_run.txt` viene sovrascritto a ogni run (contiene l'ultima, non quella
+- **Log**: `results/_run.txt` viene sovrascritto a ogni run (contiene l'ultima, non quella
   consegnata).
 
 ## Convenzioni

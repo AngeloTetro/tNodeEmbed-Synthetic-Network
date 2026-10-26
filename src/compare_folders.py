@@ -8,8 +8,8 @@ Produces figures under results/figures:
   compare_profiles.png      profile classification AUC by feature set (generated folders)
 
 Usage: uv run python src/compare_folders.py [--prefix NAME] [folder ...]
-       (default folders: real_snapshots, generated_snapshots_growth_v2_v9,
-        generated_snapshots_v2_v9_real; with --prefix the figures are named
+       (default folders: real_snapshots, synthetic_network,
+        synthetic_control_network; with --prefix the figures are named
         <NAME>_growth.png etc., so they do not overwrite the ones used by the internal report)
 """
 
@@ -28,11 +28,11 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BASE = os.path.join(ROOT, 'Esame Angelantonio Fedele Murolo')
 RESULTS = os.path.join(ROOT, 'results')
 FIGURES = os.path.join(RESULTS, 'figures')
-DEFAULT_FOLDERS = ('real_snapshots', 'generated_snapshots_growth_v2_v9',
-                   'generated_snapshots_v2_v9_real')
+DEFAULT_FOLDERS = ('real_snapshots', 'synthetic_network',
+                   'synthetic_control_network')
 LABELS = {'real_snapshots': 'real',
-          'generated_snapshots_growth_v2_v9': 'official',
-          'generated_snapshots_v2_v9_real': 'control'}
+          'synthetic_network': 'official',
+          'synthetic_control_network': 'control'}
 ARGUMENTS = list(sys.argv[1:])
 PREFIX = 'compare'
 if ARGUMENTS and ARGUMENTS[0] == '--prefix':

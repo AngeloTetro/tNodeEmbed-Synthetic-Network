@@ -9,13 +9,13 @@ Due reti consegnate, stessa pipeline:
 
 | rete | partizione del sintetico | ruolo |
 |---|---|---|
-| `generated_snapshots_growth_v2_v9` | ingresso progressivo, con la curva di arrivo del reale | **ufficiale** |
-| `generated_snapshots_v2_v9_real` | tutti gli utenti presenti dal primo passo | **controllo** |
+| `synthetic_network` | ingresso progressivo, con la curva di arrivo del reale | **ufficiale** |
+| `synthetic_control_network` | tutti gli utenti presenti dal primo passo | **controllo** |
 
 La scelta della progressiva è **concettuale**, non metrica: nel reale il 58% degli utenti finali entra
 durante il periodo osservato, e una rete che nasce deve avere arrivi. Sulle metriche le due sono
 equivalenti (distanza relativa dal reale 3,84 contro 3,89 su sette metriche); la progressiva paga su
-grado medio (27,45 contro 28,30), grado massimo (274 contro 324) e quota di archi fra utenti
+grado medio (27,45 contro 28,30), grado massimo (274 contro 328) e quota di archi fra utenti
 arrivati nello stesso passo (17,0% contro 12,4%, reale 8,1%).
 
 ## I tre compiti
@@ -52,28 +52,25 @@ arrivati nello stesso passo (17,0% contro 12,4%, reale 8,1%).
 # 1. le due partizioni del sintetico (attività e curva di arrivo dal reale)
 uv run python src/build_synthetic_snapshots.py --activity from-real
 
-# 2. la rete ufficiale e il suo controllo, ciascuno nelle tre modalità di contenuto
-uv run python src/generate_arrival.py --partition generated_snapshots_growth_v2 --variant v9_real     --content real
-uv run python src/generate_arrival.py --partition generated_snapshots_growth_v2 --variant v9_permuted --content permuted
-uv run python src/generate_arrival.py --partition generated_snapshots_growth_v2 --variant v9_off      --content off
-uv run python src/generate_arrival.py --partition generated_snapshots_v2        --variant v9_real     --content real
-uv run python src/generate_arrival.py --partition generated_snapshots_v2        --variant v9_permuted --content permuted
-uv run python src/generate_arrival.py --partition generated_snapshots_v2        --variant v9_off      --content off
+# 2. la rete ufficiale e il suo controllo (solo testo autentico: le altre modalità sono un controllo,
+#    si rigenerano con --variant network_permuted --content permuted, e --variant network_off --content off)
+uv run python src/generate_arrival.py --partition synthetic         --variant network --content real
+uv run python src/generate_arrival.py --partition synthetic_control --variant network --content real
 
 # 3. le analisi di una rete, per ogni cartella che interessa
-uv run python src/analyze_structure.py generated_snapshots_growth_v2_v9
-uv run python src/analyze_temporal.py  generated_snapshots_growth_v2_v9
-uv run python src/analyze_content.py   generated_snapshots_growth_v2_v9
-uv run python src/analyze_homophily.py generated_snapshots_growth_v2_v9
-uv run python src/analyze_profiles.py  generated_snapshots_growth_v2_v9
-uv run python src/check_real_accretion.py generated_snapshots_growth_v2_v9
+uv run python src/analyze_structure.py synthetic_network
+uv run python src/analyze_temporal.py  synthetic_network
+uv run python src/analyze_content.py   synthetic_network
+uv run python src/analyze_homophily.py synthetic_network
+uv run python src/analyze_profiles.py  synthetic_network
+uv run python src/check_real_accretion.py synthetic_network
 
 # 4. tabelle, figure e consegna
-uv run python src/variant_scorecard.py      # reale contro ufficiale e controllo
+uv run python src/scorecard.py      # reale contro ufficiale e controllo
 uv run python src/tail_scaling.py           # legge di scala del reale
 uv run python src/compare_folders.py --prefix compare   # figure di confronto
 uv run python src/plot_pipeline.py                      # schema della pipeline
-uv run python src/consolidate_native.py generated_snapshots_growth_v2_v9
+uv run python src/consolidate_native.py synthetic_network
 ```
 
 I PDF (`paper.pdf`, `paper_en.pdf`, `docs/relazione.pdf`) si rigenerano dai rispettivi markdown:
@@ -87,8 +84,8 @@ pandoc docs/relazione.md -o docs/relazione.pdf --pdf-engine=xelatex -V geometry:
 ## Cosa si consegna
 
 `Esame Angelantonio Fedele Murolo/` con **sei cartelle**: `real_snapshots/`, `synthetic_snapshots/`, le
-due partizioni (`generated_snapshots_v2`, `generated_snapshots_growth_v2`), la rete **ufficiale**
-(`generated_snapshots_growth_v2_v9`) e il **controllo** (`generated_snapshots_v2_v9_real`). Le reti del
+due partizioni (`synthetic_control`, `synthetic`), la rete **ufficiale**
+(`synthetic_network`) e il **controllo** (`synthetic_control_network`). Le reti del
 controllo A/B/C con testo permutato e contenuto azzerato **non si consegnano**: i loro numeri sono nei
 CSV (`results/*_v9_permuted.csv`, `*_v9_off.csv`) e si rigenerano con `--content permuted` e `--content off`.
 Ogni rete consegnata ha i 9 file `.edg` (uno per passo) e i 4 file nella forma dei batch nativi.
@@ -103,10 +100,10 @@ Il riferimento stabile della consegna è il tag **`consegna-progetto`**. I tenta
   evento), ma i pesi della rete addestrata variano al terzo decimale fra processi. Una ripetizione
   della configurazione ufficiale dà **271.655** archi invece di 271.646 (9 archi, 0,003%).
 - **Coefficienti**: un file per run in `results/coefficients_<cartella>.csv`. Quelli di
-  `coefficients_generated_snapshots_growth_v2_v9.csv` vengono da una ripetizione indipendente della
+  `coefficients_synthetic_network.csv` vengono da una ripetizione indipendente della
   stessa configurazione, perché la run che ha generato la rete consegnata scriveva su un file unico
   sovrascritto (corretto in `src/generate_arrival.py`).
-- **Distanza dal reale**: definita una volta in `src/variant_scorecard.py` come
+- **Distanza dal reale**: definita una volta in `src/scorecard.py` come
   `|valore − reale| / |reale|`, sommata sulle sette metriche confrontabili (densità, grado medio,
   grado massimo, reciprocità, modularità, transitività, clustering). Archi e nodi sono esclusi perché
   dipendono dalla scala, l'omofilia perché tutte le reti generate stanno a 1,00.

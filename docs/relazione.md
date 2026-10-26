@@ -64,7 +64,7 @@ Lettura e scrittura dei file sono centralizzate in `src/graph_io.py`, così ogni
 
 Quello che è **nostro, e dichiarato**: l'ordine di arrivo (dedotto dagli `id`, assumendo che riflettano l'ordine di generazione), l'ordine dentro ogni passo (sempre per `id`) e la variante di controllo "tutti presenti". Quello che **non** copiamo di proposito: la curva aggregata dei post per snapshot del reale, perché i suoi snapshot hanno durata diversa (un anno, tre mesi, venti giorni, tre giorni) e quei conteggi misurano "attività × lunghezza della finestra": copiarla concentrerebbe tutte le raffiche sugli stessi passi.
 
-Le due partizioni definitive sono `generated_snapshots_v2` (**tutti presenti dal primo passo**) e `generated_snapshots_growth_v2` (**arrivo progressivo** con la curva sopra); le vecchie `generated_snapshots*` (attività uniforme: i post di ogni utente divisi in blocchi uguali e contigui) restano come **controllo storico**. Di ogni passo si scrivono i post del passo, quelli cumulativi e `users_by_birth.csv`.
+Le due partizioni definitive sono `synthetic_control` (**tutti presenti dal primo passo**) e `synthetic` (**arrivo progressivo** con la curva sopra); le vecchie partizioni ad attività uniforme (post di ogni utente divisi in blocchi uguali e contigui) sono state eliminate: restano in `archive/`. Di ogni passo si scrivono i post del passo, quelli cumulativi e `users_by_birth.csv`.
 
 **b) L'encoder si sceglie con i numeri.** Il contenuto è l'unica informazione che abbiamo, quindi la sua rappresentazione conta. Abbiamo confrontato 6 encoder (tf-idf+SVD, MiniLM, BGE-small/base, GTE-small/base) addestrando **tutta la pipeline** sul reale e guardando validation e test. La colonna della decisione è quella con i **negativi appaiati** (spiegati al punto c), e vince **MiniLM** con la media di 0,534 (gte-base 0,532, bge-base 0,530: il campo è stretto).
 
@@ -195,7 +195,7 @@ Lettura: nel **reale** i nuovi utenti **si collegano agli utenti degli snapshot 
 
 ### 6.8 Le famiglie a confronto con il reale (la partizione storica; la rete più avanzata è V9, §6.15)
 
-Valori dell'ultimo snapshot (`results/variant_summary.csv`):
+Valori dell'ultimo snapshot (archivio: `archive/results/variant_summary.csv`):
 
 | rete | nodi | archi | densità | reciprocità | modularità | transitivity | omofilia |
 |---|---|---|---|---|---|---|---|
@@ -328,7 +328,7 @@ Il numero che per tutto il progetto è sembrato "il fallimento del contenuto" è
 - hanno **1.297 caratteri** di testo cumulativo contro una mediana di **323**;
 - e la somiglianza fra due profili lessicali **cresce con il grado**: dentro il decile più basso è 0,079, dentro il più alto 0,291.
 
-In altre parole: nel reale vengono collegati gli utenti **più connessi e più attivi**, e i profili di chi scrive molto si somigliano fra loro anche senza alcuna scelta di somiglianza. Se il confronto si fa con **non collegati della stessa posizione**, il 2,13 cambia volto (`src/analyze_homophily.py`, `results/homophily_control.csv`):
+In altre parole: nel reale vengono collegati gli utenti **più connessi e più attivi**, e i profili di chi scrive molto si somigliano fra loro anche senza alcuna scelta di somiglianza. Se il confronto si fa con **non collegati della stessa posizione**, il 2,13 cambia volto (`src/analyze_homophily.py`, `results/homophily_control_real_snapshots.csv`):
 
 | contro… | rapporto |
 |---|---|
@@ -367,7 +367,7 @@ V9 avvicina tutto: la reciprocità passa da 0,003 a **0,3224** (il reale è 0,41
 
 ### 6.16 Le verifiche fatte alla fine (e cosa ho scoperto controllando)
 
-**Il confronto con le altre famiglie, senza riguardi.** Finora avevo messo V9 accanto quasi solo a V8, e il confronto era comodo. Mettendola anche accanto a v2, v6a, v6b e v7c, su **sette metriche** V9 è la più vicina al reale **solo sul grado medio**: la densità migliore è di V8 (che però sbaglia tutto il resto), transitivity e clustering di v6b, la reciprocità di v6a/v6b (0,420 esatta, ma **imposta**, non imparata), grado massimo e modularità di v2. Quello che V9 ha e le altre no è prendere **contemporaneamente** scala dei gradi, coesione e verso della coda **senza imporre statistiche**: è una ragione vera, ed è giusto che stia scritta invece di restare implicita. La misura che mancava è la **pendenza della coda** dei gradi, e va letta **a pari dimensione**: il reale al primo snapshot (10.755 utenti) sta a **−1,69**, il controllo a **−3,33** e la rete ufficiale a **−3,98** → la coda generata è **più ripida** (hub relativamente meno estremi), mentre v2 (−2,25) e v6b (−2,09) la tagliano troppo poco. E il massimo, che sembrava il difetto principale, **non lo è**: la legge di scala del reale prevede ~339 a 10.000 utenti, il controllo arriva a **328 (97%)** e la rete ufficiale a **274 (81%)**, mentre v2 sta a 2,9 volte e v6b a 5,6. La riscalatura del volume, infine, è una **scelta di bersaglio**: con `--exponent 1` il sintetico porta la densità matura del reale (2,3× quella che il reale aveva a 10.000 utenti) e l'alternativa dettata dalla legge del reale (`--exponent 1,79`) fa coincidere la densità ma dimezza la transitività (0,00998), con il grado massimo a 0,48 del previsto → **scambio, non miglioramento**. Artefatti: `src/tail_scaling.py`, `results/tail_scaling_summary.csv`, `generated_snapshots_v2_v9_slope/`. E il volume non è un difetto: gli archi sono grado medio per utenti, quindi i 280.298 di V9 su 9.904 utenti equivalgono a circa 317.000 alla scala del reale, e a quella scala V9 è la più vicina (0,88; V8 sta a 0,40).
+**Il confronto con le altre famiglie, senza riguardi.** Finora avevo messo V9 accanto quasi solo a V8, e il confronto era comodo. Mettendola anche accanto a v2, v6a, v6b e v7c, su **sette metriche** V9 è la più vicina al reale **solo sul grado medio**: la densità migliore è di V8 (che però sbaglia tutto il resto), transitivity e clustering di v6b, la reciprocità di v6a/v6b (0,420 esatta, ma **imposta**, non imparata), grado massimo e modularità di v2. Quello che V9 ha e le altre no è prendere **contemporaneamente** scala dei gradi, coesione e verso della coda **senza imporre statistiche**: è una ragione vera, ed è giusto che stia scritta invece di restare implicita. La misura che mancava è la **pendenza della coda** dei gradi, e va letta **a pari dimensione**: il reale al primo snapshot (10.755 utenti) sta a **−1,69**, il controllo a **−3,33** e la rete ufficiale a **−3,98** → la coda generata è **più ripida** (hub relativamente meno estremi), mentre v2 (−2,25) e v6b (−2,09) la tagliano troppo poco. E il massimo, che sembrava il difetto principale, **non lo è**: la legge di scala del reale prevede ~339 a 10.000 utenti, il controllo arriva a **328 (97%)** e la rete ufficiale a **274 (81%)**, mentre v2 sta a 2,9 volte e v6b a 5,6. La riscalatura del volume, infine, è una **scelta di bersaglio**: con `--exponent 1` il sintetico porta la densità matura del reale (2,3× quella che il reale aveva a 10.000 utenti) e l'alternativa dettata dalla legge del reale (`--exponent 1,79`) fa coincidere la densità ma dimezza la transitività (0,00998), con il grado massimo a 0,48 del previsto → **scambio, non miglioramento**. Artefatti: `src/tail_scaling.py`, `results/tail_scaling_summary.csv`, `la variante con l'esponente 1,79, non consegnata`. E il volume non è un difetto: gli archi sono grado medio per utenti, quindi i 280.298 di V9 su 9.904 utenti equivalgono a circa 317.000 alla scala del reale, e a quella scala V9 è la più vicina (0,88; V8 sta a 0,40).
 
 **Le due partizioni, provate entrambe.** La partizione "tutti presenti" era la prima; quella con l'**ingresso progressivo**, con la curva di arrivo del reale, è stata aggiunta dopo. Sono **quasi equivalenti** (3,84 contro 3,89 di distanza relativa dal reale, `|valore − reale| / |reale|` sommata su sette metriche). La progressiva vince densità, reciprocità, modularità e transitività; la "tutti presenti" vince grado medio, grado massimo, clustering e coda. La ragione si legge nel modello: con più entranti disponibili a ogni passo, il peso su "la controparte è nuova" (+1,22) spinge più archi fra co-arrivati (17,0% contro 12,4%, reale 8,1%). **La partizione ufficiale è la progressiva**, scelta perché nel reale il 58% degli utenti entra durante il periodo osservato; la "tutti presenti" resta come **controllo**. Il costo dichiarato: grado massimo 274 contro 328 e archi fra co-arrivati 17,0% contro 12,4%.
 
@@ -428,8 +428,6 @@ uv run python src/tnodeembed_real.py --encoders tfidf,minilm,bge-small,gte-small
 uv run python src/build_synthetic_snapshots.py
 
 # 3) transfer: addestra sul reale e genera la rete sintetica (riferimento, solo contenuto)
-uv run python src/transfer_to_synthetic.py generated_snapshots minilm matched
-uv run python src/transfer_to_synthetic.py generated_snapshots_growth minilm matched
 
 # 4) le varianti a confronto: regole a mano (v1-v5), calibrate (v6), per inferenza (v7)
 uv run python src/apply_edge_rules.py                       # v1-v5
@@ -447,22 +445,21 @@ uv run python src/analyze_structure.py real_snapshots
 uv run python src/analyze_temporal.py  real_snapshots
 uv run python src/analyze_content.py   real_snapshots
 uv run python src/check_real_accretion.py real_snapshots
-uv run python src/analyze_profiles.py  generated_snapshots
-uv run python src/analyze_profiles.py  generated_snapshots_growth
+uv run python src/analyze_profiles.py  synthetic_network
+uv run python src/analyze_profiles.py  synthetic_control_network
 
 # 6) tabelle e figure di confronto fra tutte le reti (reale + varianti)
-uv run python src/variant_summary.py
 uv run python src/compare_folders.py
 
 # 7) controllo del contenuto A/B/C sulla rete ufficiale (stesso modello, stesso scenario)
-uv run python src/generate_structural.py --partition generated_snapshots_v2 --content real     --variant v8_real
-uv run python src/generate_structural.py --partition generated_snapshots_v2 --content permuted --variant v8_permuted
-uv run python src/generate_structural.py --partition generated_snapshots_v2 --content off      --variant v8_off
+uv run python src/generate_structural.py --partition synthetic_control --content real     --variant v8_real
+uv run python src/generate_structural.py --partition synthetic_control --content permuted --variant v8_permuted
+uv run python src/generate_structural.py --partition synthetic_control --content off      --variant v8_off
 
 # 8) scomposizione dell'omofilia del reale: quanto è struttura (grado, volume, arrivo), quanta è scelta
 uv run python src/analyze_homophily.py real_snapshots       # -> results/homophily_control.csv
 ```
 
-I numeri finiscono in `results/*.csv` (in particolare `v7_report.csv`, `v7_coefficients.csv` per i coefficienti del modello e `variant_summary.csv` per il confronto unico), le figure in `results/figures/`, le reti generate (post + `social_network.edg`) nelle cartelle `Esame Angelantonio Fedele Murolo/generated_snapshots*/`.
+I numeri finiscono in `results/*.csv` (in particolare i CSV citati, e in archivio `v7_report.csv`, `v7_coefficients.csv`, `variant_summary.csv` per il confronto unico), le figure in `results/figures/`, le reti generate (post + `social_network.edg`) nelle cartelle `Esame Angelantonio Fedele Murolo/generated_snapshots*/`.
 
 Nota pratica: sulla RTX 3060 da 6 GB il fine-tuning di `bge-base` va lanciato con `--batch 8` (con batch 32 va in esaurimento di memoria); MiniLM regge `--batch 32`.

@@ -1,3 +1,3 @@
 network,nodes,max_out_degree,expected_max,ratio_to_expected,tail_slope,tail_gamma,existing_endpoint_degree,real_existing_endpoint_degree
 ufficiale,9897,274,339,0.808,-3.98,4.98,153.3,436.9
-controllo,9901,328,339,0.967,-3.332,4.33,169.4,436.9
+controllo,9901,328,339,0.967,-3.332,4.33,169.1,436.9

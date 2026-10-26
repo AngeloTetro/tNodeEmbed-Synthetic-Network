@@ -36,8 +36,8 @@ BASE = os.path.join(ROOT, 'Esame Angelantonio Fedele Murolo')
 RESULTS = os.path.join(ROOT, 'results')
 
 FOLDERS = [
-    ('generated_snapshots_growth_v2_v9', 'ufficiale'),
-    ('generated_snapshots_v2_v9_real', 'controllo'),
+    ('synthetic_network', 'ufficiale'),
+    ('synthetic_control_network', 'controllo'),
 ]
 QUANTILE = 0.90
 

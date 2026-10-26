@@ -110,7 +110,7 @@ A network does not automatically emerge from the temporal model's scores: decisi
 
 **The generator.** Three things are estimated on the real data and generation proceeds **arrival by arrival**: how many edges an arrival carries (`k`, sampled from a table fitted on the real data and rescaled on the population); the direction of each edge (the outgoing share of the step); the target, with a logistic regression on seven variables — the content score of the pairwise head, `log(1+degree)`, degree percentile, "the counterpart is new", "the counterpart wrote in the period", direction, co-occurrence with the partners already chosen in the event. Reciprocated pairs are drawn among the outgoing edges already chosen, with a real table by direction and degree class. The state of the network (degrees, percentiles, novelty, activity, neighbourhood) is recomputed **at every step**; no threshold and no count is imposed.
 
-*Source: the arrival quantities are in `results/arrival_events.csv`; the coefficients in `results/coefficients_generated_snapshots_growth_v2_v9.csv`; the final counts in `results/v9_report.csv`.*
+*Source: the arrival quantities are in `results/arrival_events.csv`; the coefficients in `results/coefficients_synthetic_network.csv`; the final counts in `results/network_report.csv`.*
 
 **The delivered partition.** Every figure in this article refers to the network generated on the **progressive-arrival** partition. The same pipeline run on the "all present" partition is the **control** and is reported alongside, because the choice between the two is conceptual rather than metric (§5.2).
 
@@ -137,7 +137,7 @@ A **generated network is not evaluated with an AUC**: in the synthetic dataset t
 | **official** (progressive) | 271,646 | 9,897 | 0.00277 | 27.45 | 274 | 0.3224 | 0.1074 | 0.0212 | 0.0420 | 6 | 1.0009 |
 | control (all present) | 280,298 | 9,901 | 0.00286 | 28.31 | 328 | 0.3035 | 0.1030 | 0.0209 | 0.0435 | 6 | 0.9993 |
 
-*Source: `results/structure_*.csv`, `results/structure_heavy_*.csv`, `results/content_*.csv`; distances in `results/variant_scorecard.csv`.*
+*Source: `results/structure_*.csv`, `results/structure_heavy_*.csv`, `results/content_*.csv`; distances in `results/scorecard.csv`.*
 
 The official network brings **within the right order of magnitude** reciprocity (0.3224 vs 0.4177), the degree scale (27.45 vs 32.05), transitivity (0.0212 vs 0.0337), clustering (0.042 vs 0.080) and diameter (6 vs 6). The control does slightly better on mean degree, maximum degree and clustering, and slightly worse on density, reciprocity, modularity and transitivity: over the seven comparable metrics it wins 4 to 3, and the relative distance from the real network, defined as `|value − real| / |real|` summed over the seven, is **3.84** for the official network and **3.89** for the control. Changing the normalisation reverses the order: the two partitions are **equivalent** on this plane.
 
@@ -172,7 +172,7 @@ In the real data **41.8%** of the final users are already linked at the first sn
 | tail slope (top decile) | −2.349 | −3.980 | −3.332 | control |
 | edges between users arriving in the same step | 8.1% | 17.0% | 12.4% | control |
 
-*Source: `results/variant_scorecard.csv`, `results/tail_scaling_summary.csv`, `results/accretion_*.csv`.*
+*Source: `results/scorecard.csv`, `results/tail_scaling_summary.csv`, `results/accretion_*.csv`.*
 
 The most visible cost is on two rows: edges between co-arriving users rise from 12.4% to **17.0%** (real 8.1%), because with progressive entry there are more entering users available at each step and the positive weight on "the counterpart is new" spends more edges among peers; and the maximum degree drops to **274**, **81%** of what the real scaling law predicts at 10,000 users, against the control's 97%. The first step is also emptier than the real one (15.7% of nodes linked against 41.8%), because `k` is rescaled on the population present and at the first step that is only the entering cohort.
 
@@ -196,13 +196,13 @@ Content is the only information that distinguishes the 10,000 synthetic users fr
 | B — permuted text | 261,680 | 0.002668 | 26.42 | 248 | 0.3229 | 0.1102 | 0.0207 | 0.0392 | 0.9995 |
 | C — zeroed content | 271,640 | 0.002777 | 27.47 | 275 | 0.3227 | 0.1066 | 0.0213 | 0.0421 | 1.0010 |
 
-*Source: `results/structure_generated_snapshots_growth_v2_v9{,_permuted,_off}.csv` and the corresponding `structure_heavy_*` and `content_*`. The two control networks are not part of the delivery: their figures live in those CSVs and are regenerated with `--content permuted` and `--content off`.*
+*Source: `results/structure_synthetic_network{,_permuted,_off}.csv` and the corresponding `structure_heavy_*` and `content_*`. The two control networks are not part of the delivery: their figures live in those CSVs and are regenerated with `--content permuted` and `--content off`.*
 
 The three networks are **indistinguishable** in their relational properties: volume varies by 3.7% and **without order** (the network with permuted text is closer to the zeroed one than to the one with authentic text), and reciprocity, transitivity, clustering, modularity and diameter coincide within the noise between trainings. The only visible effect of text is minimal: homophily goes from 1.0010 (zeroed content) to 1.0009 (authentic text), against the real 2.13. **Content does not move the network.**
 
 This is consistent with the learned weights, on standardised variables: the content score weighs **+0.05** against **+1.22** for the novelty of the counterpart and **+1.02 / +0.91** for degree and percentile; "wrote in the period" weighs **−0.03** and co-occurrence **+0.19**. The model discriminates well on the validation transition (AUC 0.918), but it does so **with structure**: *who enters* and *how connected they are*, not *what they write*.
 
-*Source: `results/coefficients_generated_snapshots_growth_v2_v9*.csv`, `results/v9_report.csv`.*
+*Source: `results/coefficients_synthetic_network*.csv`, `results/network_report.csv`.*
 
 ### 5.4 Decomposing homophily
 
@@ -223,7 +223,7 @@ The number that seemed to contradict §5.3 is the content homophily of the real 
 
 More than half of the gap disappears as soon as comparable users are compared: **the 2.13 is largely network position**, not a choice of similarity. On the official network the same protocol yields **1.001 / 1.000 / 0.980 / 1.001 / 1.014**: no content homophily at all. A **small lexical residual** remains in the real data (ratio 1.29; AUC 0.58), which lives in the lexical profiles used for this measure and not in the generator's channel (per-post, where the signal is null): the real 2.13 and the 1.00 of the generated networks **do not measure the same thing**.
 
-*Source: `results/homophily_control_generated_snapshots_growth_v2_v9.csv`.*
+*Source: `results/homophily_control_synthetic_network.csv`.*
 
 ### 5.5 Profiles
 
@@ -237,7 +237,7 @@ In the synthetic dataset the user attributes are known labels, so we can ask whe
 | profession (41) | **0.867** | 0.865 | 0.587 | 0.577 |
 | age band (8) | **0.690** | 0.683 | 0.514 | 0.505 |
 
-*Source: `results/profiles_generated_snapshots_growth_v2_v9.csv`.*
+*Source: `results/profiles_synthetic_network.csv`.*
 
 **Content knows the user**, and adding the network changes nothing; the temporal embeddings, trained to predict *links*, lose the profile. This is **the mirror image of §5.3**: *who* a user is lies in the text, *whom they connect to* lies in the structure. The link, in fact, depends on state variables — the user's entry and their degree — which text does not contain. The task exists only on the synthetic data: the real dataset has no attributes.
 

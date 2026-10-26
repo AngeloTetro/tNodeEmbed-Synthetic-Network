@@ -11,7 +11,7 @@ pipeline **V9**, su due partizioni temporali diverse.
 |---|---|---|---|---|---|---|---|---|---|---|
 | reale | — | riferimento | 824.045 | 32,05 | 1.290 | 0,4177 | 0,0337 | 0,0804 | 0,2751 | 6 |
 | **ufficiale** | ingresso progressivo | consegnata | 271.646 | 27,45 | 274 | 0,3224 | 0,0212 | 0,0420 | 0,1074 | 6 |
-| controllo | tutti presenti | confronto | 280.298 | 28,30 | 324 | 0,3035 | 0,0209 | 0,0433 | 0,1058 | 6 |
+| controllo | tutti presenti | confronto | 280.298 | 28,31 | 328 | 0,3035 | 0,0209 | 0,0435 | 0,1030 | 6 |
 
 ## Perché la progressiva
 
@@ -21,7 +21,7 @@ ingresso progressivo è la più realistica; la versione "tutti presenti" resta c
 
 Il costo è dichiarato e misurato:
 
-- grado medio 27,45 contro 28,30, massimo 274 contro 324;
+- grado medio 27,45 contro 28,31, massimo 274 contro 328;
 - archi fra utenti arrivati nello stesso passo **17,0%** contro 12,4% (reale 8,1%);
 - grado massimo all'**81%** di quanto la legge di scala del reale prevede a 10.000 utenti (il
   controllo è al 97%);
@@ -29,7 +29,7 @@ Il costo è dichiarato e misurato:
   popolazione presente e al primo passo è solo quella entrata.
 
 Le due reti sono comunque equivalenti sulla distanza relativa dal reale (**3,84** contro **3,89** su
-sette metriche, formula in `src/variant_scorecard.py`): la scelta è concettuale, non metrica, e
+sette metriche, formula in `src/scorecard.py`): la scelta è concettuale, non metrica, e
 invertendo la normalizzazione l'ordine si inverte.
 
 ## I tre compiti
@@ -63,7 +63,7 @@ contenuto pesa **+0,05** contro **+1,22** della "controparte nuova" e +1,02 del 
 L'omofilia 2,13 del reale non contraddice questa lettura: scomposta, scende a **1,51** contro non-archi
 appaiati per grado e a **1,29** con grado uguale entro il 10% — è in gran parte struttura. Sulla rete
 ufficiale la stessa scomposizione dà **1,001 / 1,000 / 0,980 / 1,001 / 1,014**: nessuna omofilia di
-contenuto (`results/homophily_control_generated_snapshots_growth_v2_v9.csv`).
+contenuto (`results/homophily_control_synthetic_network.csv`).
 
 ## Cosa resta aperto
 
@@ -97,6 +97,6 @@ precedenti e loro metriche in `archive/storico.md`.
    sono esclusi perché dipendono dalla scala, l'omofilia perché tutte le reti generate stanno a 1,00.
    Cambiando normalizzazione l'ordine fra le due partizioni si inverte: non è un criterio di scelta.
 3. I **coefficienti** della rete ufficiale vengono da una ripetizione indipendente della stessa
-   configurazione (`results/coefficients_generated_snapshots_growth_v2_v9.csv`), perché la run che ha
+   configurazione (`results/coefficients_synthetic_network.csv`), perché la run che ha
    generato la rete scriveva su un file unico poi sovrascritto; il difetto è corretto in
    `src/generate_arrival.py`.
