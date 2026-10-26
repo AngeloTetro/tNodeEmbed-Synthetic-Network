@@ -78,11 +78,13 @@ contenuto (`results/homophily_control_generated_snapshots_growth_v2_v9.csv`).
 
 ## Cosa viene consegnato
 
-`Esame Angelantonio Fedele Murolo/` con dieci cartelle: la rete reale, il dataset sintetico, le due
-partizioni e le sei reti V9 (tre modalità di contenuto × ufficiale e controllo). Ogni rete ha i 9 file
-`.edg` (uno per passo) e i 4 file nella forma dei batch nativi — il quarto è vuoto per costruzione,
-perché `batch_3` ha due righe (`results/native_batches.csv`). I numeri stanno in `results/*.csv`, le
-figure in `results/figures/` e `docs/riferimenti/`.
+`Esame Angelantonio Fedele Murolo/` con **sei cartelle**: la rete reale, il dataset sintetico, le due
+partizioni, la rete **ufficiale** e il **controllo**. Ogni rete ha i 9 file `.edg` (uno per passo) e i 4
+file nella forma dei batch nativi — il quarto è vuoto per costruzione, perché `batch_3` ha due righe
+(`results/native_batches.csv`). Le reti del controllo A/B/C (testo permutato, contenuto azzerato) **non
+si consegnano**: i loro numeri sono in `results/*_v9_permuted.csv` e `*_v9_off.csv`, e si rigenerano con
+`--content permuted` e `--content off`. I numeri stanno in `results/*.csv`, le figure in
+`results/figures/` e `docs/riferimenti/`.
 
 Riproduzione completa in `README.md`; dettaglio tecnico e limiti in `docs/pipeline.md`; tentativi
 precedenti e loro metriche in `archive/storico.md`.

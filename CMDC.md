@@ -15,8 +15,8 @@ docs/                pipeline.md, relazione.md, riferimenti/ (figure e note)
 archive/             storico.md, results/ (CSV dismessi), src/ (script dismessi), docs/
 Esame .../           dataset (gitignored): real_snapshots, synthetic_snapshots,
                      generated_snapshots_v2, generated_snapshots_growth_v2,
-                     generated_snapshots_growth_v2_v9{,_permuted,_off},
-                     generated_snapshots_v2_v9_{real,permuted,off}
+                     generated_snapshots_growth_v2_v9, generated_snapshots_v2_v9_real
+                     (le reti permuted/off sono un controllo: CSV in results, si rigenerano)
 ```
 
 ## Comandi che contano

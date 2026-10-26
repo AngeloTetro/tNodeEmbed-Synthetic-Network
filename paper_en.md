@@ -196,7 +196,7 @@ Content is the only information that distinguishes the 10,000 synthetic users fr
 | B — permuted text | 261,680 | 0.002668 | 26.42 | 248 | 0.3229 | 0.1102 | 0.0207 | 0.0392 | 0.9995 |
 | C — zeroed content | 271,640 | 0.002777 | 27.47 | 275 | 0.3227 | 0.1066 | 0.0213 | 0.0421 | 1.0010 |
 
-*Source: `results/structure_generated_snapshots_growth_v2_v9{,_permuted,_off}.csv` and the corresponding `structure_heavy_*` and `content_*`.*
+*Source: `results/structure_generated_snapshots_growth_v2_v9{,_permuted,_off}.csv` and the corresponding `structure_heavy_*` and `content_*`. The two control networks are not part of the delivery: their figures live in those CSVs and are regenerated with `--content permuted` and `--content off`.*
 
 The three networks are **indistinguishable** in their relational properties: volume varies by 3.7% and **without order** (the network with permuted text is closer to the zeroed one than to the one with authentic text), and reciprocity, transitivity, clustering, modularity and diameter coincide within the noise between trainings. The only visible effect of text is minimal: homophily goes from 1.0010 (zeroed content) to 1.0009 (authentic text), against the real 2.13. **Content does not move the network.**
 

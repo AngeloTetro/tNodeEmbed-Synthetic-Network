@@ -196,7 +196,7 @@ Il contenuto è l'unica informazione che distingue fra loro i 10.000 utenti del 
 | B — testo permutato | 261.680 | 0,002668 | 26,42 | 248 | 0,3229 | 0,1102 | 0,0207 | 0,0392 | 0,9995 |
 | C — contenuto azzerato | 271.640 | 0,002777 | 27,47 | 275 | 0,3227 | 0,1066 | 0,0213 | 0,0421 | 1,0010 |
 
-*Origine: `results/structure_generated_snapshots_growth_v2_v9{,_permuted,_off}.csv` e i rispettivi `structure_heavy_*` e `content_*`.*
+*Origine: `results/structure_generated_snapshots_growth_v2_v9{,_permuted,_off}.csv` e i rispettivi `structure_heavy_*` e `content_*`. Le due reti di controllo non fanno parte della consegna: i loro numeri sono in quei CSV e si rigenerano con `--content permuted` e `--content off`.*
 
 Le tre reti sono **indistinguibili** nelle proprietà relazionali: il volume varia del 3,7% e **senza ordine** (la rete col testo permutato sta più vicino a quella azzerata che a quella col testo autentico), e reciprocità, transitività, clustering, modularità e diametro coincidono entro la rumorosità fra addestramenti. L'unico effetto visibile del testo è minimo: l'omofilia passa da 1,0010 (contenuto azzerato) a 1,0009 (testo autentico), contro il 2,13 del reale. **Il contenuto non sposta la rete.**
 

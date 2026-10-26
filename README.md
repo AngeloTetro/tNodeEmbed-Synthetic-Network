@@ -86,10 +86,12 @@ pandoc docs/relazione.md -o docs/relazione.pdf --pdf-engine=xelatex -V geometry:
 
 ## Cosa si consegna
 
-`Esame Angelantonio Fedele Murolo/` con dieci cartelle: `real_snapshots/`, `synthetic_snapshots/`, le
-due partizioni (`generated_snapshots_v2`, `generated_snapshots_growth_v2`) e le sei reti V9
-(`generated_snapshots_growth_v2_v9{,_permuted,_off}`, `generated_snapshots_v2_v9_{real,permuted,off}`).
-Ogni rete ufficiale ha i 9 file `.edg` (uno per passo) e i 4 file nella forma dei batch nativi.
+`Esame Angelantonio Fedele Murolo/` con **sei cartelle**: `real_snapshots/`, `synthetic_snapshots/`, le
+due partizioni (`generated_snapshots_v2`, `generated_snapshots_growth_v2`), la rete **ufficiale**
+(`generated_snapshots_growth_v2_v9`) e il **controllo** (`generated_snapshots_v2_v9_real`). Le reti del
+controllo A/B/C con testo permutato e contenuto azzerato **non si consegnano**: i loro numeri sono nei
+CSV (`results/*_v9_permuted.csv`, `*_v9_off.csv`) e si rigenerano con `--content permuted` e `--content off`.
+Ogni rete consegnata ha i 9 file `.edg` (uno per passo) e i 4 file nella forma dei batch nativi.
 I numeri sono in `results/*.csv`, le figure in `results/figures/` e `docs/riferimenti/`.
 
 Il riferimento stabile della consegna è il tag **`consegna-progetto`**. I tentativi precedenti sono in

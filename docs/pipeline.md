@@ -93,17 +93,23 @@ archi, densità 0,002774, grado medio **27,45** (reale 32,05), mediano 10 (4), m
 (1.290), reciprocità **0,3224** (0,4177), transitività **0,0212** (0,0337), clustering 0,0420
 (0,0804), modularità 0,1074 (0,2751), omofilia del contenuto 1,00 (2,13), diametro 6.
 
-**Controllo "tutti presenti"**: 9.904 nodi, 280.298 archi, grado medio 28,30, massimo 324,
-reciprocità 0,3035, transitività 0,0209, clustering 0,0433, modularità 0,1058, omofilia 0,999,
+**Controllo "tutti presenti"**: 9.901 nodi, 280.298 archi, grado medio 28,31, massimo 328,
+reciprocità 0,3035, transitività 0,0209, clustering 0,0435, modularità 0,1030, omofilia 0,999,
 diametro 6.
 
 **Perché la progressiva è ufficiale**, e cosa costa: nel reale il 41,8% degli utenti finali è già
 collegato al primo snapshot e il restante 58% entra durante il periodo, quindi una rete che nasce deve
-avere arrivi. Il prezzo è dichiarato: grado medio 27,45 contro 28,30, massimo 274 contro 324, archi
+avere arrivi. Il prezzo è dichiarato: grado medio 27,45 contro 28,31, massimo 274 contro 328, archi
 fra utenti arrivati nello stesso passo **17,0%** contro 12,4% (reale 8,1%), e primo passo con il
 **15,7%** dei nodi collegati contro il 41,8% del reale. Le due reti restano equivalenti sulla
 distanza relativa dal reale (3,84 contro 3,89 su sette metriche, definizione in
 `src/variant_scorecard.py`), e invertendo la normalizzazione l'ordine si inverte: non è un criterio.
+
+**Cosa si consegna, e cosa no.** Delle tre modalità di contenuto si consegna solo quella con **testo
+autentico**, per la rete ufficiale e per il controllo: sei cartelle in tutto con le due partizioni e i
+dataset originali. Le reti con testo permutato e contenuto azzerato sono un **controllo**, non un
+risultato: i loro numeri restano nei CSV (`results/*_v9_permuted.csv`, `*_v9_off.csv`) e si rigenerano
+in pochi minuti con `--content permuted` e `--content off`.
 
 ## 6. Cosa gira, e cosa produce
 
