@@ -38,12 +38,14 @@ arrivati nello stesso passo (17,0% contro 12,4%, reale 8,1%).
 
 | documento | contenuto |
 |---|---|
+| **`document.pdf`** (sorgente `document.tex`) | **il documento finale, in inglese**, su schema CRISP-DM: business understanding, dati, preparazione, modellazione, valutazione, conclusioni |
 | `FINAL.md` | sintesi di consegna: cosa c'è, cosa dicono i numeri, cosa resta aperto |
 | `docs/pipeline.md` | dettaglio tecnico: script, dati, scelte, limiti |
-| `docs/relazione.md` (+ PDF) | relazione divulgativa |
+| `docs/relazione.md` (+ PDF) | relazione divulgativa (versione italiana, impianto precedente) |
 | `paper.md` / `paper_en.md` (+ PDF) | articolo in italiano e in inglese |
 | `CMDC.md` | memoria di lavoro: stato, comandi, trappole |
 | `archive/storico.md` | tutti i tentativi precedenti, con meccanismo e metriche |
+| `prompt_images.md` | i prompt delle figure da far disegnare (pipeline, partizioni, famiglie) |
 | `docs/riferimenti/` | figure e note di consultazione |
 
 ## Come si rigenera tutto
