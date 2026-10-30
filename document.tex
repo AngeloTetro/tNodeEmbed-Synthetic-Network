@@ -47,6 +47,9 @@ links to whom: the content term weighs $+0.05$ in the edge-formation model again
 counterpart is new'', and the 2.13 content homophily of the real network is largely degree structure.
 \end{abstract}
 
+\tableofcontents
+\newpage
+
 \section{Business understanding}
 
 \subsection{Business goals}
@@ -169,7 +172,22 @@ is kept. Both contain the same population and the same text.
 
 \section{Modeling}
 
-\subsubsection*{Architecture: tNodeEmbed without node2vec}
+\subsection{Evaluation protocol and metric hierarchy}
+A generated network is not evaluated with an AUC: in the synthetic dataset there are no true edges to
+predict, so a ranking measure has no object. The hierarchy we adopt is explicit.
+\begin{itemize}
+  \item \emph{Primary} --- per-snapshot network statistics and distributions, compared with the real
+        network on the final snapshot: degree distribution (mean, maximum, CCDF), reciprocity,
+        transitivity and mean clustering, modularity, diameter, composition of accretion.
+  \item \emph{Secondary} --- the nature of the link: content homophily with structural controls, and the
+        share of edges between users arriving in the same step.
+  \item \emph{Diagnostic, on the real data only} --- AUC and average precision with matched and random
+        negatives, used to select the encoder and to fit the model. The AUC ablation on the real data is
+        saturated (0.9818 to 0.9816) and does not measure the contribution of text.
+  \item \emph{Not valid} --- AUC as a quality measure of a generated network.
+\end{itemize}
+
+\subsection{Architecture: tNodeEmbed without node2vec}
 For each snapshot we hold a users~$\times$~dimension matrix from content. A \textbf{chain of orthogonal
 Procrustes alignments} between consecutive snapshots brings the representations into a common coordinate
 system; an \textbf{LSTM} (128 units) reads the sequence of the nine steps of each user; a \textbf{pairwise
@@ -185,13 +203,13 @@ general and empty here --- so evaluation uses the whole transition with two kind
 give AUC around 0.99 in validation and 0.95--0.97 in test; matched negatives give 0.51--0.57. The matched
 column is the one we report.
 
-\subsubsection*{Training}
+\subsection{Training}
 Five transitions, twenty thousand positives and twenty thousand matched negatives per transition, eight
 epochs, Adam at $10^{-3}$. The trained model (encoder, Procrustes, LSTM, head) is then frozen and applied
 to the synthetic users: the encoder is the same, so the representation space is shared and no new
 alignment is needed.
 
-\subsubsection*{The generator: arrival events}
+\subsection{The generator: arrival events}
 The generator is fitted on the real transitions and estimates four things: how many edges an arrival
 carries ($k$, from a table normalised on the population and rescaled at generation time), the direction
 of each edge, the share of immediately reciprocated pairs (by direction and degree class), and the choice
@@ -218,7 +236,7 @@ is chosen with the fitted logistic on the \emph{current} state (degrees, percent
 neighbourhood), plus Gumbel noise to sample rather than take the argmax. No threshold and no count is
 imposed: volume, degrees and hubs emerge.
 
-\subsubsection*{Model assessment}
+\subsection{Model assessment}
 The real network is not modified. Structurally, the generator reproduces the shape of accretion --- no
 edge between two pre-existing users, as in the real data --- while slightly overestimating edges between
 co-arriving users (17.0\% against 8.1\%). The residual gaps are all of the same sign: the generated
@@ -259,6 +277,35 @@ not to a missing hub (Section~\ref{sec:eval}).
   \centering
   \includegraphics[width=\textwidth]{results/figures/compare_structure.png}
   \caption{Density, reciprocity and modularity per snapshot: real network, delivered network, control.}
+\end{figure}
+
+How the new edges are composed says more than the totals. In the real network no edge joins two
+pre-existing users; the delivered network reproduces that shape and slightly overestimates edges between
+co-arriving users.
+
+\begin{table}[h]
+  \centering
+  \small
+  \caption{Composition of the new edges, pooled over the transitions, last snapshot.}
+  \begin{tabular}{@{}lrr@{}}
+    \toprule
+    & Real & Delivered \\
+    \midrule
+    New to pre-existing            & 48.9\% & 45.2\% \\
+    Pre-existing to new            & 43.0\% & 37.7\% \\
+    New to new                     &  8.1\% & 17.0\% \\
+    Pre-existing to pre-existing   &  0.0\% &  0.0\% \\
+    Mean prior degree, existing end & 436.9 & 153.3 \\
+    Mean prior degree, all nodes    &  64.4 &  51.5 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.78\textwidth]{results/figures/compare_degree_ccdf.png}
+  \caption{Out-degree distribution (CCDF) at the last snapshot. At matched size the generated tail is
+  steeper than the real one: the hubs are relatively less extreme.}
 \end{figure}
 
 \subsection{Why the progressive partition, and what it costs}
@@ -317,11 +364,51 @@ mean degree 403.6 against 61.7 and 1,297 cumulative characters against a median 
 similarity grows with degree (0.079 in the lowest decile, 0.291 in the highest). The 2.13 is therefore
 largely \textbf{network position}, with a small lexical residual whose AUC is about 0.58.
 
+\begin{table}[h]
+  \centering
+  \small
+  \caption{Content homophily of the real network against structural controls, last snapshot.
+  The tightest control (degree within 10\%) destabilises the sample, so 1.29 is a lower bound.}
+  \begin{tabular}{@{}lrr@{}}
+    \toprule
+    Comparison & Ratio & AUC edges vs control \\
+    \midrule
+    Random pairs (standard measure)              & 2.133 & 0.702 \\
+    Non-edges, same degree class                & 1.511 & 0.610 \\
+    Non-edges, degree within 10\%                & 1.290 & 0.575 \\
+    Non-edges, same text volume                 & 1.554 & 0.648 \\
+    Non-edges, similar degree and text volume   & 1.367 & 0.585 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
 The text nevertheless knows the user: from a TF-IDF representation of the user's posts, a logistic
 regression with an 80/20 split by user predicts political leaning with AUC 0.827, profession with 0.867
 and age band with 0.690. Adding the graph changes nothing (0.826, 0.865, 0.683); the temporal
 embeddings, trained to predict links, lose the profile (0.619, 0.587, 0.514). The task exists only on the
 synthetic side, because the real dataset has no attributes.
+
+\begin{table}[h]
+  \centering
+  \small
+  \caption{Profile prediction from synthetic users: macro one-vs-rest AUC, 80/20 split by user,
+  last snapshot, delivered network.}
+  \begin{tabular}{@{}lrrrr@{}}
+    \toprule
+    Label (classes) & Content & Content + graph & Temporal embedding & Embedding + graph \\
+    \midrule
+    Political leaning (7)  & \textbf{0.827} & 0.826 & 0.619 & 0.626 \\
+    Profession (41)        & \textbf{0.867} & 0.865 & 0.587 & 0.577 \\
+    Age band (8)           & \textbf{0.690} & 0.683 & 0.514 & 0.505 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.8\textwidth]{results/figures/compare_homophily.png}
+  \caption{Content homophily per snapshot: real network, delivered network, control.}
+\end{figure}
 
 \subsection{What did not work}
 \begin{itemize}

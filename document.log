@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.141592653-2.6-0.999998 (MiKTeX 26.1) (preloaded format=xelatex 2026.7.30)  30 OCT 2026 15:42
+This is XeTeX, Version 3.141592653-2.6-0.999998 (MiKTeX 26.1) (preloaded format=xelatex 2026.7.30)  30 OCT 2026 15:53
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -502,48 +502,71 @@ LaTeX Font Info:    External font `lmex10' loaded for size
 (Font)              <7> on input line 46.
 LaTeX Font Info:    External font `lmex10' loaded for size
 (Font)              <5> on input line 46.
+
+(document.toc
+LaTeX Font Info:    External font `lmex10' loaded for size
+(Font)              <10.95> on input line 2.
  [1
 
-]
-LaTeX Font Info:    Trying to load font information for T1+lmtt on input line 9
-8.
+])
+\tf@toc=\write4
+\openout4 = `document.toc'.
+
+ [2]
+LaTeX Font Info:    Trying to load font information for T1+lmtt on input line 1
+01.
 
 (C:\Users\angel\AppData\Local\Programs\MiKTeX\tex/latex/lm\t1lmtt.fd
 File: t1lmtt.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
-)
-LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <10.95> on input line 104.
-
-
-LaTeX Warning: `h' float specifier changed to `ht'.
-
-[2] [3]
+) [3]
+[4] [5]
 File: results/figures/compare_structure.png Graphic file (type bmp)
 <results/figures/compare_structure.png>
 
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
-[4]
-Overfull \hbox (22.03839pt too wide) in paragraph at lines 289--304
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+File: results/figures/compare_degree_ccdf.png Graphic file (type bmp)
+<results/figures/compare_degree_ccdf.png>
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+[6]
+Overfull \hbox (22.03839pt too wide) in paragraph at lines 336--351
  [][] 
  []
 
-[5] [6] [7] (document.aux)
+[7]
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+File: results/figures/compare_homophily.png Graphic file (type bmp)
+<results/figures/compare_homophily.png>
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+[8] [9] [10] [11] (document.aux)
  ***********
 LaTeX2e <2025-11-01>
 L3 programming layer <2026-01-19>
  ***********
+
+
+LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
+
 Package rerunfilecheck Info: File `document.out' has not changed.
-(rerunfilecheck)             Checksum: 23E08ABA519005FBEA1E3EF79145EA6D;3334.
+(rerunfilecheck)             Checksum: 6A7BE1BB45C4AD762872FB221942F83C;4327.
  ) 
 Here is how much of TeX's memory you used:
- 12095 strings out of 402982
- 186653 string characters out of 5448473
- 618706 words of memory out of 5000000
- 40678 multiletter control sequences out of 15000+600000
+ 12121 strings out of 402982
+ 187507 string characters out of 5448473
+ 619708 words of memory out of 5000000
+ 40699 multiletter control sequences out of 15000+600000
  692987 words of font info for 79 fonts, out of 8000000 for 9000
  1348 hyphenation exceptions out of 8191
- 72i,12n,79p,364b,449s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 72i,12n,79p,364b,481s stack positions out of 10000i,1000n,20000p,200000b,200000s
 
-Output written on document.pdf (7 pages).
+Output written on document.pdf (11 pages).
