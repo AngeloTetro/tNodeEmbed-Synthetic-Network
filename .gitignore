@@ -26,5 +26,12 @@ Esame Angelantonio Fedele Murolo/
 # materiale di lavoro non prodotto dal progetto
 LLM/
 
+# artefatti di compilazione LaTeX (rigenerabili con xelatex)
+document.aux
+document.log
+document.out
+document.toc
+*.synctex.gz
+
 # reti di controllo archiviate (grandi, ricostruibili: i numeri restano nei CSV)
 archive/dataset/
