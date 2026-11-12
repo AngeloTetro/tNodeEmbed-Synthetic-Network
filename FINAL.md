@@ -63,7 +63,7 @@ contenuto pesa **+0,05** contro **+1,22** della "controparte nuova" e +1,02 del 
 L'omofilia 2,13 del reale non contraddice questa lettura: scomposta, scende a **1,51** contro non-archi
 appaiati per grado e a **1,29** con grado uguale entro il 10% — è in gran parte struttura. Sulla rete
 ufficiale la stessa scomposizione dà **1,001 / 1,000 / 0,980 / 1,001 / 1,014**: nessuna omofilia di
-contenuto (`results/homophily_control_synthetic_network.csv`).
+contenuto (`results/homophily_control_synthetic_progressive.csv`).
 
 ## Cosa resta aperto
 
@@ -97,6 +97,6 @@ precedenti e loro metriche in `archive/storico.md`.
    sono esclusi perché dipendono dalla scala, l'omofilia perché tutte le reti generate stanno a 1,00.
    Cambiando normalizzazione l'ordine fra le due partizioni si inverte: non è un criterio di scelta.
 3. I **coefficienti** della rete ufficiale vengono da una ripetizione indipendente della stessa
-   configurazione (`results/coefficients_synthetic_network.csv`), perché la run che ha
+   configurazione (`results/coefficients_synthetic_progressive.csv`), perché la run che ha
    generato la rete scriveva su un file unico poi sovrascritto; il difetto è corretto in
    `src/generate_arrival.py`.

@@ -49,7 +49,8 @@ SEED = 0
 GROWTH_SHARE = (0.418, 0.142, 0.110, 0.072, 0.078, 0.051, 0.010, 0.077, 0.042)
 FOLDERS = {
     'uniform': {'all': 'generated_snapshots', 'growth': 'generated_snapshots_growth'},
-    'from-real': {'all': 'synthetic_control', 'growth': 'synthetic'},
+    'from-real': {'all': 'synthetic_all_present_posts',
+                  'growth': 'synthetic_progressive_posts'},
 }
 
 

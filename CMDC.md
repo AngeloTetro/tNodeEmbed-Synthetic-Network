@@ -14,19 +14,19 @@ results/             CSV delle reti conservate + scorecard + figure
 docs/                pipeline.md, relazione.md, riferimenti/ (figure e note)
 archive/             storico.md, results/ (CSV dismessi), src/ (script dismessi), docs/
 Esame .../           dataset (gitignored): real_snapshots, synthetic_snapshots,
-                     synthetic_control, synthetic,
-                     synthetic_network, synthetic_control_network
+                     synthetic_all_present_posts, synthetic_progressive_posts,
+                     synthetic_progressive, synthetic_all_present
                      (le reti permuted/off sono un controllo: CSV in results, si rigenerano)
 ```
 
 ## Comandi che contano
 
 ```bash
-uv run python src/generate_arrival.py --partition synthetic --variant network --content real
-uv run python src/analyze_structure.py synthetic_network
-uv run python src/analyze_homophily.py synthetic_network
+uv run python src/generate_arrival.py --partition synthetic_progressive_posts --variant network --content real
+uv run python src/analyze_structure.py synthetic_progressive
+uv run python src/analyze_homophily.py synthetic_progressive
 uv run python src/scorecard.py
-uv run python src/consolidate_native.py synthetic_network
+uv run python src/consolidate_native.py synthetic_progressive
 ```
 
 ## Trappole (imparate a spese nostre)

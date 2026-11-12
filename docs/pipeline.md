@@ -117,7 +117,7 @@ in pochi minuti con `--content permuted` e `--content off`.
 |---|---|---|
 | `src/content_encoders.py` | interfaccia unica per gli encoder | — |
 | `src/tnodeembed_real.py` | pipeline tNodeEmbed sul reale, un giro per encoder | `results/encoder_comparison.csv` |
-| `src/build_synthetic_snapshots.py` | partizione del sintetico in 9 passi (tutti presenti / arrivo progressivo) | `synthetic_control/`, `synthetic/` |
+| `src/build_synthetic_snapshots.py` | partizione del sintetico in 9 passi (tutti presenti / arrivo progressivo) | `synthetic_all_present_posts/`, `synthetic/` |
 | `src/generate_arrival.py` | **V9**: fit sul reale e generazione per eventi di arrivo (`--content {real,permuted,off}`, `--exponent`, `--closure`, `--negatives`) | `results/network_report.csv`, `results/coefficients_<cartella>.csv`, `tnodeembed_embeddings.npz` |
 | `src/analyze_structure.py <cartella>` | nodi, archi, densità, gradi, k-core, reciprocità, transitività, clustering, componenti, diametro, modularità | `results/structure_*.csv`, `structure_heavy_*.csv` + figure |
 | `src/analyze_temporal.py <cartella>` | delta per passo, crescita, densificazione, arrivi, persistenza (Jaccard), stabilità delle comunità (NMI) | `results/temporal_*.csv` + figure |
@@ -156,7 +156,7 @@ Le famiglie abbandonate (regole a mano, v6, v7, V8) hanno gli script in `archive
   **1,290**; per volume di testo 1,554; per grado+volume 1,367. Gli estremi degli archi hanno grado
   medio 403,6 contro 61,7 e 1.297 caratteri contro una mediana di 323. Sulla rete ufficiale lo
   stesso protocollo dà **1,001 / 1,000 / 0,980 / 1,001 / 1,014**
-  (`results/homophily_control_synthetic_network.csv`): nessuna omofilia di contenuto.
+  (`results/homophily_control_synthetic_progressive.csv`): nessuna omofilia di contenuto.
 - **Legge di scala**: il reale prevede ~339 di grado massimo a 10.000 utenti (esponente 1,445,
   R² 0,986). La rete ufficiale sta a **274 (81%)**, il controllo a **328 (97%)**. È il costo più
   visibile della partizione progressiva.

@@ -28,11 +28,12 @@ Content modes (`--content`), solo sul lato sintetico; il modello e' sempre fitta
     off       canale testuale azzerato.
 
 Usage:
-    uv run python src/generate_arrival.py --partition synthetic_control --content real
-    uv run python src/generate_arrival.py --partition synthetic_control --content permuted
-    uv run python src/generate_arrival.py --partition synthetic_control --content off
-Output: <partition>_<variant>/, results/network_report.csv, results/v9_coefficients.csv,
-        results/_run.txt
+    uv run python src/generate_arrival.py --partition synthetic_progressive_posts \
+        --output synthetic_progressive
+    uv run python src/generate_arrival.py --partition synthetic_all_present_posts \
+        --output synthetic_all_present
+Output: <output or partition_variant>/, results/network_report.csv,
+        results/coefficients_<output>.csv, results/_run.txt
 """
 
 import argparse
@@ -58,9 +59,9 @@ REPORT = os.path.join(RESULTS, 'network_report.csv')
 LOG = os.path.join(RESULTS, '_run.txt')
 
 
-def coefficients_path(partition, variant):
+def coefficients_path(name):
     """One coefficient file per run, named after the generated folder."""
-    return os.path.join(RESULTS, f'coefficients_{partition}_{variant}.csv')
+    return os.path.join(RESULTS, f'coefficients_{name}.csv')
 
 
 TRAIN_STEPS = (1, 2, 3, 4, 5)
@@ -458,9 +459,12 @@ def generate(model, embeddings, users, masks, present_masks, scaler, classifier,
 
 def run():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--partition', default='synthetic')
+    parser.add_argument('--partition', default='synthetic_progressive_posts')
     parser.add_argument('--pooling', default='mean_of_posts')
     parser.add_argument('--variant', default='network')
+    parser.add_argument('--output', default=None,
+                        help='nome della cartella di destinazione (default: '
+                             '<partition>_<variant>)')
     parser.add_argument('--content', choices=('real', 'permuted', 'off'), default='real')
     parser.add_argument('--exponent', type=float, default=1.0,
                         help='esponente della riscalatura di k sulla popolazione: 1 = lineare, '
@@ -524,12 +528,13 @@ def run():
     log(f'validation transition {VAL_STEP}: AUC {auc:.4f} (diagnostica del fit; la qualita\' della '
         f'rete si giudica sulle sue statistiche, non qui)')
 
+    name = args.output or f'{args.partition}_{args.variant}'
     os.makedirs(RESULTS, exist_ok=True)
-    with open(coefficients_path(args.partition, args.variant), 'w', encoding='utf-8',
+    with open(coefficients_path(name), 'w', encoding='utf-8',
               newline='') as f:
         f.write('feature,coefficient\n')
-        for name, weight in zip(FEATURES, classifier.coef_[0]):
-            f.write(f'{name},{weight:.6f}\n')
+        for feature, weight in zip(FEATURES, classifier.coef_[0]):
+            f.write(f'{feature},{weight:.6f}\n')
         f.write(f'val_auc,{auc:.6f}\n')
 
     synthetic_users, _, synthetic_matrices, synthetic_masks, synthetic_present, _ = \
@@ -539,7 +544,7 @@ def run():
         synthetic_matrices = [matrix[order] for matrix in synthetic_matrices]
         log('  content permuted: same profiles, different owner, one permutation for all the steps')
     synthetic_embeddings = node_embeddings(model, synthetic_matrices)
-    folder = os.path.join(BASE, f'{args.partition}_{args.variant}')
+    folder = os.path.join(BASE, name)
     os.makedirs(folder, exist_ok=True)
     np.savez_compressed(os.path.join(folder, 'tnodeembed_embeddings.npz'),
                         users=np.array(synthetic_users),

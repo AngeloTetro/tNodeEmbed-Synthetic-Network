@@ -32,22 +32,22 @@ BASE = os.path.join(ROOT, 'Esame Angelantonio Fedele Murolo')
 RESULTS = os.path.join(ROOT, 'results')
 
 FOLDERS = [
-    ('real_snapshots', 'reale'),
-    ('synthetic_network', 'ufficiale'),
-    ('synthetic_control_network', 'controllo'),
+    ('real_snapshots', 'real'),
+    ('synthetic_progressive', 'progressive'),
+    ('synthetic_all_present', 'all-present'),
 ]
 
 METRICS = [
-    ('edges', 'archi'),
-    ('nodes', 'nodi'),
-    ('density', 'densita'),
-    ('out_degree_mean', 'grado medio'),
-    ('out_degree_max', 'grado massimo'),
-    ('reciprocity', 'reciprocita'),
-    ('modularity', 'modularita'),
+    ('edges', 'edges'),
+    ('nodes', 'nodes'),
+    ('density', 'density'),
+    ('out_degree_mean', 'mean out-degree'),
+    ('out_degree_max', 'max out-degree'),
+    ('reciprocity', 'reciprocity'),
+    ('modularity', 'modularity'),
     ('transitivity', 'transitivity'),
     ('avg_clustering', 'clustering'),
-    ('homophily_ratio', 'omofilia'),
+    ('homophily_ratio', 'homophily'),
 ]
 
 DECIMALS = {'edges': 0, 'nodes': 0, 'out_degree_max': 0, 'density': 6, 'out_degree_mean': 2,
@@ -113,7 +113,7 @@ def distance(value, reference):
 
 def main():
     table = {label: folder_metrics(folder) for folder, label in FOLDERS}
-    reference = table['reale']
+    reference = table['real']
     labels = [label for _, label in FOLDERS]
 
     rows = []
@@ -122,7 +122,7 @@ def main():
         row.update(table[label])
         comparable = []
         for key, _ in METRICS:
-            if label == 'reale':
+            if label == 'real':
                 row[f'dist_{key}'] = ''
                 continue
             value = distance(table[label].get(key), reference.get(key))
@@ -142,7 +142,7 @@ def main():
         writer.writeheader()
         writer.writerows(rows)
 
-    lines = ['| metrica | ' + ' | '.join(labels) + ' | piu\' vicino |',
+    lines = ['| metric | ' + ' | '.join(labels) + ' | closest |',
              '|---' * (len(labels) + 2) + '|']
     for key, name in METRICS:
         cells = []
@@ -150,28 +150,28 @@ def main():
             value = table[label].get(key)
             cells.append('-' if value in ('', None) else format_number(value, key))
         values = {label: distance(table[label].get(key), reference.get(key))
-                  for label in labels if label != 'reale'}
+                  for label in labels if label != 'real'}
         usable = {label: value for label, value in values.items() if not np.isnan(value)}
         best = min(usable.values()) if usable else float('nan')
         winners = [label for label, value in usable.items() if value == best]
         if key in SCALE_DEPENDENT:
-            note = 'non confrontabile (scala)'
+            note = 'not comparable (scale)'
         elif key in NO_DISCRIMINATION:
-            note = 'nessuna: tutte vicine a 1,00'
+            note = 'none: all close to 1.00'
         else:
-            note = ', '.join(winners) if len(winners) < len(usable) else 'pari'
+            note = ', '.join(winners) if len(winners) < len(usable) else 'tie'
         lines.append('| ' + name + ' | ' + ' | '.join(cells) + ' | ' + note + ' |')
     tail_cells = [format_number(table[label].get('tail_slope'), 'tail_slope') for label in labels]
-    lines.append('| pendenza di coda (CCDF, ultimo decile) | ' + ' | '.join(tail_cells) + ' | - |')
+    lines.append('| tail slope (CCDF, last decile) | ' + ' | '.join(tail_cells) + ' | - |')
     lines.append('')
-    lines.append('Distanza relativa dal reale, `|v - reale| / |reale|`, sommata sulle sette '
-                 'metriche confrontabili (densita, grado medio, grado massimo, reciprocita, '
-                 'modularita, transitivity, clustering):')
+    lines.append('Relative distance from the real network, `|v - real| / |real|`, summed over the '
+                 'seven comparable metrics (density, mean out-degree, max out-degree, reciprocity, '
+                 'modularity, transitivity, clustering):')
     lines.append('')
     lines.append('| network | sum | mean |')
     lines.append('|---|---:|---:|')
     for row in rows:
-        if row['network'] == 'reale':
+        if row['network'] == 'real':
             continue
         lines.append(f"| {row['network']} | {row['dist_total']:.2f} | {row['dist_mean']:.3f} |")
     with open(os.path.join(RESULTS, 'scorecard.md'), 'w', encoding='utf-8') as f:
@@ -180,15 +180,15 @@ def main():
     print('\n'.join(lines))
     print()
     real_mean = float(reference['out_degree_mean'])
-    print(f'volume alla scala del reale: grado medio reale {real_mean:.2f} x nodi della rete')
+    print(f'volume at the real scale: real mean out-degree {real_mean:.2f} x network nodes')
     for label in labels:
         row = table[label]
         if row.get('edges') in ('', None):
             continue
         edges, nodes = float(row['edges']), float(row['nodes'])
         expected = real_mean * nodes
-        print(f'{label:>10}: archi {edges:>9.0f} | nodi {nodes:>6.0f} | attesi {expected:>9.0f} '
-              f'| rapporto {edges / expected:.2f}')
+        print(f'{label:>12}: edges {edges:>9.0f} | nodes {nodes:>6.0f} | expected {expected:>9.0f} '
+              f'| ratio {edges / expected:.2f}')
     print('written results/scorecard.csv and results/scorecard.md')
 
 

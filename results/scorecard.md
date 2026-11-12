@@ -1,20 +1,20 @@
-| metrica | reale | ufficiale | controllo | piu' vicino |
+| metric | real | progressive | all-present | closest |
 |---|---|---|---|---|
-| archi | 824045 | 271646 | 280298 | non confrontabile (scala) |
-| nodi | 25714 | 9897 | 9901 | non confrontabile (scala) |
-| densita | 0,001246 | 0,002774 | 0,002860 | ufficiale |
-| grado medio | 32,05 | 27,45 | 28,31 | controllo |
-| grado massimo | 1290 | 274 | 328 | controllo |
-| reciprocita | 0,4177 | 0,3224 | 0,3035 | ufficiale |
-| modularita | 0,275 | 0,107 | 0,103 | ufficiale |
-| transitivity | 0,0337 | 0,0212 | 0,0209 | ufficiale |
-| clustering | 0,0804 | 0,0420 | 0,0435 | controllo |
-| omofilia | 2,13 | 1,00 | 1,00 | nessuna: tutte vicine a 1,00 |
-| pendenza di coda (CCDF, ultimo decile) | -2,349 | -3,980 | - | - |
+| edges | 824045 | 271646 | 280298 | not comparable (scale) |
+| nodes | 25714 | 9897 | 9901 | not comparable (scale) |
+| density | 0,001246 | 0,002774 | 0,002860 | progressive |
+| mean out-degree | 32,05 | 27,45 | 28,31 | all-present |
+| max out-degree | 1290 | 274 | 328 | all-present |
+| reciprocity | 0,4177 | 0,3224 | 0,3035 | progressive |
+| modularity | 0,275 | 0,107 | 0,103 | progressive |
+| transitivity | 0,0337 | 0,0212 | 0,0209 | progressive |
+| clustering | 0,0804 | 0,0420 | 0,0435 | all-present |
+| homophily | 2,13 | 1,00 | 1,00 | none: all close to 1.00 |
+| tail slope (CCDF, last decile) | -2,349 | -3,980 | -3,332 | - |
 
-Distanza relativa dal reale, `|v - reale| / |reale|`, sommata sulle sette metriche confrontabili (densita, grado medio, grado massimo, reciprocita, modularita, transitivity, clustering):
+Relative distance from the real network, `|v - real| / |real|`, summed over the seven comparable metrics (density, mean out-degree, max out-degree, reciprocity, modularity, transitivity, clustering):
 
 | network | sum | mean |
 |---|---:|---:|
-| ufficiale | 3.84 | 0.549 |
-| controllo | 3.90 | 0.556 |
+| progressive | 3.84 | 0.549 |
+| all-present | 3.90 | 0.556 |

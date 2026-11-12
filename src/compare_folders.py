@@ -28,11 +28,11 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BASE = os.path.join(ROOT, 'Esame Angelantonio Fedele Murolo')
 RESULTS = os.path.join(ROOT, 'results')
 FIGURES = os.path.join(RESULTS, 'figures')
-DEFAULT_FOLDERS = ('real_snapshots', 'synthetic_network',
-                   'synthetic_control_network')
+DEFAULT_FOLDERS = ('real_snapshots', 'synthetic_progressive',
+                   'synthetic_all_present')
 LABELS = {'real_snapshots': 'real',
-          'synthetic_network': 'official',
-          'synthetic_control_network': 'control'}
+          'synthetic_progressive': 'progressive',
+          'synthetic_all_present': 'all-present'}
 ARGUMENTS = list(sys.argv[1:])
 PREFIX = 'compare'
 if ARGUMENTS and ARGUMENTS[0] == '--prefix':
