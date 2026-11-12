@@ -9,8 +9,8 @@ Steps
      rotation needed) over the 9 time steps of the chosen partition;
   4. node embeddings from the LSTM.
 
-This module is a library: the generation lives in `generate_arrival.py` (V9). The old
-command line of this file (k ~ Poisson(1.2), the rule of v1) has been removed.
+This module is a library: the generation lives in `generate_arrival.py`. The old
+command line of this file (k ~ Poisson(1.2)) has been removed.
 """
 
 import os

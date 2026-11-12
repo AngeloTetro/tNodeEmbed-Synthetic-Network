@@ -64,7 +64,7 @@ bge-base 0,530 → 0,540, tf-idf 0,505 → 0,524.
 contro 0,534), feature dei nodi addestrabili (0,512 contro 0,534), `Q_t` completo del paper (~70M
 parametri, non entra in 6 GB), "post come arco" (AUC 0,515-0,517).
 
-## 5. La generazione: V9, eventi di arrivo
+## 5. La generazione: eventi di arrivo
 
 L'unità non è la coppia ma **l'utente che entra**. Nasce da un fatto misurato: nel reale **nessun
 arco nuovo collega due utenti già presenti** (`results/accretion_real_snapshots.csv`, quota
@@ -102,13 +102,14 @@ collegato al primo snapshot e il restante 58% entra durante il periodo, quindi u
 avere arrivi. Il prezzo è dichiarato: grado medio 27,45 contro 28,31, massimo 274 contro 328, archi
 fra utenti arrivati nello stesso passo **17,0%** contro 12,4% (reale 8,1%), e primo passo con il
 **15,7%** dei nodi collegati contro il 41,8% del reale. Le due reti restano equivalenti sulla
-distanza relativa dal reale (3,84 contro 3,89 su sette metriche, definizione in
+distanza relativa dal reale (3,84 contro 3,90 su sette metriche, definizione in
 `src/scorecard.py`), e invertendo la normalizzazione l'ordine si inverte: non è un criterio.
 
 **Cosa si consegna, e cosa no.** Delle tre modalità di contenuto si consegna solo quella con **testo
-autentico**, per la rete ufficiale e per il controllo: quattro cartelle (i due dataset originali, la partizione e la rete ufficiali); il controllo e' in
-`archive/dataset/`. Le reti con testo permutato e contenuto azzerato sono un **controllo**, non un
-risultato: i loro numeri restano nei CSV (`results/*_v9_permuted.csv`, `*_v9_off.csv`) e si rigenerano
+autentico**, per la rete progressiva e per quella con tutti presenti: sei cartelle (i due dataset
+originali, le due partizioni e le due reti generate). Le reti con testo permutato e contenuto azzerato
+sono un **controllo**, non un risultato: i loro numeri restano nelle righe `progressive_permuted` e
+`progressive_off` di `results/network_report.csv` e si rigenerano
 in pochi minuti con `--content permuted` e `--content off`.
 
 ## 6. Cosa gira, e cosa produce
@@ -117,8 +118,8 @@ in pochi minuti con `--content permuted` e `--content off`.
 |---|---|---|
 | `src/content_encoders.py` | interfaccia unica per gli encoder | — |
 | `src/tnodeembed_real.py` | pipeline tNodeEmbed sul reale, un giro per encoder | `results/encoder_comparison.csv` |
-| `src/build_synthetic_snapshots.py` | partizione del sintetico in 9 passi (tutti presenti / arrivo progressivo) | `synthetic_all_present_posts/`, `synthetic/` |
-| `src/generate_arrival.py` | **V9**: fit sul reale e generazione per eventi di arrivo (`--content {real,permuted,off}`, `--exponent`, `--closure`, `--negatives`) | `results/network_report.csv`, `results/coefficients_<cartella>.csv`, `tnodeembed_embeddings.npz` |
+| `src/build_synthetic_snapshots.py` | partizione del sintetico in 9 passi (tutti presenti / arrivo progressivo) | `synthetic_all_present_posts/`, `synthetic_progressive_posts/` |
+| `src/generate_arrival.py` | **il generatore**: fit sul reale e generazione per eventi di arrivo (`--content {real,permuted,off}`, `--output`, `--exponent`, `--closure`, `--negatives`) | `results/network_report.csv`, `results/coefficients_<cartella>.csv`, `tnodeembed_embeddings.npz` |
 | `src/analyze_structure.py <cartella>` | nodi, archi, densità, gradi, k-core, reciprocità, transitività, clustering, componenti, diametro, modularità | `results/structure_*.csv`, `structure_heavy_*.csv` + figure |
 | `src/analyze_temporal.py <cartella>` | delta per passo, crescita, densificazione, arrivi, persistenza (Jaccard), stabilità delle comunità (NMI) | `results/temporal_*.csv` + figure |
 | `src/analyze_content.py <cartella>` | omofilia del contenuto, similarità dentro/fuori le comunità, comunità vs attributi | `results/content_*.csv`, `content_attributes_*.csv` + figure |

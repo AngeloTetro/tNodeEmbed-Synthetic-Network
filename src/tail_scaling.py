@@ -16,7 +16,8 @@ synthetic network to have a ground truth:
    users) against the generated one: same top-decile CCDF slope means the same relative shape.
 
 3. THE HUB RATIO AGAINST THE POPULATION RATIO. The mean degree of the already-present endpoint is
-   169 in V9 and 437 in the real: 169/437 = 0.39. The population ratio is 10.000/25.714 = 0.39.
+   169 in the progressive network and 437 in the real: 169/437 = 0.39. The population ratio is
+   10.000/25.714 = 0.39.
    If the two coincide, the "underestimation" is the population factor itself, i.e. the model
    transfers the relative position faithfully and there is nothing to fix.
 

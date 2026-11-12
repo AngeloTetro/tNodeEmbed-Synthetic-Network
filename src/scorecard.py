@@ -1,7 +1,7 @@
-﻿"""Scorecard of the delivered network and of its control against the real one, last snapshot.
+﻿"""Scorecard of the progressive and all-present networks against the real one, last snapshot.
 
-Two networks are compared: the official one (V9 on the progressive-arrival partition) and the
-control (V9 with every user present from the first step). For every metric the file reports the
+Two networks are compared: the progressive one (users entering over time) and the all-present one
+(the whole population from the first step). For every metric the file reports the
 value and the relative distance from the real network, defined once and for all as
 
     distance = |value - real| / |real|

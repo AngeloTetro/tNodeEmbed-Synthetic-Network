@@ -1,13 +1,13 @@
-"""V9 -- il meccanismo di arrivo: l'unita' di formazione degli archi e' l'evento, non la coppia.
+"""Arrival events -- il meccanismo di arrivo: l'unita' di formazione degli archi e' l'evento, non la coppia.
 
-Diagnosi (FINAL.md sezione 10, docs/pipeline.md): V8 riproduce densita' e volume ma sbaglia le
-proprieta' relazionali -- reciprocita' 0,004 contro 0,418, transitivita' 0,003 contro 0,034, grado
+Diagnosi (FINAL.md sezione 10, docs/pipeline.md): l'approccio a coppie riproduce densita' e volume ma
+sbaglia le proprieta' relazionali -- reciprocita' 0,004 contro 0,418, transitivita' 0,003 contro 0,034, grado
 massimo 102 contro 1.290 -- perche' decide ogni coppia in modo indipendente e addestra su negativi
 uniformi. Nel reale quei tre gap sono un solo fenomeno: l'arrivo di un utente nuovo. Ogni arco nuovo
 tocca un entrante, il 40-44% arriva con il proprio inverso nella stessa transizione, e la coda dei
 gradi nasce perche' gli arrivi scelgono i pochi nodi gia' molto connessi.
 
-V9 stima sul reale, per ogni evento di arrivo (un nodo che entra nella rete in quella transizione):
+Il generatore stima sul reale, per ogni evento di arrivo (un nodo che entra nella rete in quella transizione):
     1. quanti archi nuovi porta, con la direzione. Il conteggio si fitta **riscalato alla
        popolazione** (k * popolazione_di_riferimento / popolazione_della_transizione), perche' k
        cresce con la dimensione della rete: e' lo stesso accorgimento dei percentili di grado.

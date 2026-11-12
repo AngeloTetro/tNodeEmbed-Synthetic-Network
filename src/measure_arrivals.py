@@ -1,5 +1,5 @@
 """Misura gli eventi di arrivo sul reale: quanti archi porta ciascun evento, la direzione e la quota
-di coppie ricambiate, per transizione. E' la misura da cui V9 prende la sua unita' di generazione, e
+di coppie ricambiate, per transizione. E' la misura da cui il generatore prende la sua unita' di generazione, e
 serve a rendere citabili i numeri che il paper riporta.
 
 Usage: uv run python src/measure_arrivals.py

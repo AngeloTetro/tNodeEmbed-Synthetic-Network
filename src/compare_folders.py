@@ -8,8 +8,8 @@ Produces figures under results/figures:
   compare_profiles.png      profile classification AUC by feature set (generated folders)
 
 Usage: uv run python src/compare_folders.py [--prefix NAME] [folder ...]
-       (default folders: real_snapshots, synthetic_network,
-        synthetic_control_network; with --prefix the figures are named
+       (default folders: real_snapshots, synthetic_progressive,
+        synthetic_all_present; with --prefix the figures are named
         <NAME>_growth.png etc., so they do not overwrite the ones used by the internal report)
 """
 
