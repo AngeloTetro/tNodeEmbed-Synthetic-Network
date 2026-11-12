@@ -35,3 +35,7 @@ document.toc
 
 # reti di controllo archiviate (grandi, ricostruibili: i numeri restano nei CSV)
 archive/dataset/
+
+# materiale di lavoro degli strumenti
+.archify/
+.scratch/

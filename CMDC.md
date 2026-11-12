@@ -22,7 +22,7 @@ Esame .../           dataset (gitignored): real_snapshots, synthetic_snapshots,
 ## Comandi che contano
 
 ```bash
-uv run python src/generate_arrival.py --partition synthetic_progressive_posts --variant network --content real
+uv run python src/generate_arrival.py --partition synthetic_progressive_posts --output synthetic_progressive --content real
 uv run python src/analyze_structure.py synthetic_progressive
 uv run python src/analyze_homophily.py synthetic_progressive
 uv run python src/scorecard.py

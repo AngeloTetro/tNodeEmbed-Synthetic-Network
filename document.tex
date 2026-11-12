@@ -205,6 +205,15 @@ is kept. Both contain the same population and the same text.
 
 \section{Modeling}
 
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=\textwidth]{results/figures/pipeline_diagram.png}
+  \caption{The pipeline. Post text is encoded per post, the nine snapshots are aligned and read by the
+  LSTM, the pair head scores a candidate partner, and the generator samples arrival events on the
+  synthetic population. Quantities in the boxes are those of the progressive network.}
+  \label{fig:pipeline}
+\end{figure}
+
 \subsection{Evaluation protocol and metric hierarchy}
 A generated network is not evaluated with an AUC: in the synthetic dataset there are no true edges to
 predict, so a ranking measure has no object. The hierarchy we adopt is explicit.
