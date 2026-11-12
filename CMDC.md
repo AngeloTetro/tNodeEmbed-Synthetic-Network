@@ -2,7 +2,8 @@
 
 ## Stato
 
-Consegna finale: **V9 su partizione progressiva** (ufficiale) e **V9 su "tutti presenti"** (controllo),
+Consegna finale: **il generatore per eventi di arrivo sulla partizione progressiva** (la rete presentata) e
+**la stessa pipeline su "tutti presenti"** (confronto),
 ciascuna nelle tre modalità di contenuto. Il resto dei tentativi è in `archive/`. Ultimo tag:
 `consegna-progetto`. Ramo di lavoro `levers/posts-as-edges`, `main` allineato.
 
@@ -31,13 +32,14 @@ uv run python src/consolidate_native.py synthetic_progressive
 
 ## Trappole (imparate a spese nostre)
 
-- **Coefficienti**: fino alla pulizia `generate_arrival.py` scriveva sempre su
-  `results/v9_coefficients.csv`, quindi ogni run sovrascriveva la precedente. Ora scrive
-  `results/coefficients_<cartella>.csv`. Il file della rete ufficiale viene da una ripetizione
+- **Coefficienti**: fino alla pulizia `generate_arrival.py` scriveva sempre sullo stesso file, quindi
+  ogni run sovrascriveva la precedente. Ora scrive
+  `results/coefficients_<cartella>.csv`. Il file della rete presentata viene da una ripetizione
   indipendente: dirlo, non spacciarlo per la run consegnata.
 - **`network_report.csv`**: era append-only e conteneva ~25 righe, comprese le run difettose precedenti
-  alla correzione dei negativi. Ora ha sette righe con etichette esplicite (`ufficiale_*`,
-  `controllo_*`). Un nuovo run aggiunge il proprio `variant`: non confonderlo con quelle righe.
+  alla correzione dei negativi. Ora ha cinque righe con etichette esplicite (`progressive_real`,
+  `progressive_permuted`, `progressive_off`, `progressive_repeat`, `all_present_real`). Un nuovo run
+  aggiunge la propria riga: non confonderla con il `repeat`, che serve solo a misurare la variabilità.
 - **Omofilia**: `analyze_homophily.py` scriveva su un nome fisso e l'ultima cartella analizzata
   sovrascriveva la decomposizione del reale. Ora scrive `homophily_control_<cartella>.csv`.
 - **`snapshots_folder`** legge ogni sottocartella come snapshot: nella cartella di consegna i file

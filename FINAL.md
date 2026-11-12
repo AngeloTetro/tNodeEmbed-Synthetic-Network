@@ -5,7 +5,7 @@
 Si impara da una rete sociale reale (25.714 utenti, 824.045 archi, 9 snapshot) **come nascono i
 legami**, e si applica il meccanismo a un dataset sintetico di 10.000 utenti di cui si conosce solo
 il testo dei post, senza archi e senza date. Il risultato sono due reti sintetiche con la stessa
-pipeline **V9**, su due partizioni temporali diverse.
+pipeline **finale (eventi di arrivo)**, su due partizioni temporali diverse.
 
 | rete | partizione | ruolo | archi | grado medio | max | reciprocità | transitività | clustering | modularità | diametro |
 |---|---|---|---|---|---|---|---|---|---|---|
@@ -41,7 +41,7 @@ di media val+test), la codifica per post porta a **0,549**. Con i negativi casua
 validation e 0,95-0,96 nei test; con gli appaiati **0,51-0,57**, cioè vicino al caso: il contenuto da
 solo non predice il legame.
 
-**2. Generazione (V9, eventi di arrivo).** Nel reale nessun arco nuovo collega due utenti già presenti
+**2. Generazione (eventi di arrivo).** Nel reale nessun arco nuovo collega due utenti già presenti
 (quota "vecchio→vecchio" 0,0000% in tutte le transizioni): si genera quindi per **evento di arrivo**,
 con k archi per entrante presi dalla distribuzione reale (media 35-111 per transizione, massimo
 1.202) e partner scelti da una logistica a sette variabili. Volumi, gradi e hub **emergono**, non si
@@ -78,13 +78,13 @@ contenuto (`results/homophily_control_synthetic_progressive.csv`).
 
 ## Cosa viene consegnato
 
-`Esame Angelantonio Fedele Murolo/` con **quattro cartelle**: i due dataset originali, la partizione ufficiale
-e la rete ufficiale. Controllo e modalita' A/B/C sono in `archive/dataset/` e nei CSV. Ogni rete ha i 9 file `.edg` (uno per passo) e i 4
-file nella forma dei batch nativi — il quarto è vuoto per costruzione, perché `batch_3` ha due righe
-(`results/native_batches.csv`). Le reti del controllo A/B/C (testo permutato, contenuto azzerato) **non
-si consegnano**: i loro numeri sono in `results/*_v9_permuted.csv` e `*_v9_off.csv`, e si rigenerano con
-`--content permuted` e `--content off`. I numeri stanno in `results/*.csv`, le figure in
-`results/figures/` e `docs/riferimenti/`.
+`Esame Angelantonio Fedele Murolo/` con **sei cartelle**: i due dataset originali, le due partizioni del
+sintetico (progressiva e tutti presenti) e le due reti generate. Ogni rete ha i 9 file `.edg` (uno per
+passo) e i 4 file nella forma dei batch nativi — il quarto è vuoto per costruzione, perché `batch_3` ha due
+righe (`results/native_batches.csv`). Le reti con testo permutato e con contenuto azzerato **non si
+consegnano**: i loro numeri sono nelle righe `progressive_permuted` e `progressive_off` di
+`results/network_report.csv`, e si rigenerano con `--content permuted` e `--content off`. I numeri stanno
+in `results/*.csv`, le figure in `results/figures/` e `docs/riferimenti/`.
 
 Riproduzione completa in `README.md`; dettaglio tecnico e limiti in `docs/pipeline.md`; tentativi
 precedenti e loro metriche in `archive/storico.md`.

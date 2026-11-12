@@ -24,7 +24,7 @@ arrivati nello stesso passo (17,0% contro 12,4%, reale 8,1%).
    dei post), Procrustes a catena, LSTM, testa di coppia `[h_u, h_v, h_u⊙h_v]`. Serve a scegliere
    l'encoder (6 confrontati, negativi appaiati) e a misurare quanto il contenuto separi un arco da un
    non-arco. Esito: il contenuto da solo sta sul caso (AUC 0,51-0,57).
-2. **Generazione**: V9, il modello per **eventi di arrivo**. L'unità non è la coppia ma l'utente che
+2. **Generazione**: il modello per **eventi di arrivo**. L'unità non è la coppia ma l'utente che
    entra, che si porta dietro k archi (`results/arrival_events.csv`: media 35-111 per transizione,
    massimo 1.202). k viene da una tabella fittata sul reale e riscalata sulla popolazione; i partner si
    scelgono con una logistica a sette variabili (grado, percentile, novità, attività, direzione,
