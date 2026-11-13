@@ -29,7 +29,7 @@ Il costo è dichiarato e misurato:
   popolazione presente e al primo passo è solo quella entrata.
 
 Le due reti sono comunque equivalenti sulla distanza relativa dal reale (**3,84** contro **3,89** su
-sette metriche, formula in `src/scorecard.py`): la scelta è concettuale, non metrica, e
+sette metriche, formula in `src/analysis/scorecard.py`): la scelta è concettuale, non metrica, e
 invertendo la normalizzazione l'ordine si inverte.
 
 ## I tre compiti
@@ -63,7 +63,7 @@ contenuto pesa **+0,05** contro **+1,22** della "controparte nuova" e +1,02 del 
 L'omofilia 2,13 del reale non contraddice questa lettura: scomposta, scende a **1,51** contro non-archi
 appaiati per grado e a **1,29** con grado uguale entro il 10% — è in gran parte struttura. Sulla rete
 ufficiale la stessa scomposizione dà **1,001 / 1,000 / 0,980 / 1,001 / 1,014**: nessuna omofilia di
-contenuto (`results/homophily_control_synthetic_progressive.csv`).
+contenuto (`results/tables/homophily_control_synthetic_progressive.csv`).
 
 ## Cosa resta aperto
 
@@ -78,13 +78,13 @@ contenuto (`results/homophily_control_synthetic_progressive.csv`).
 
 ## Cosa viene consegnato
 
-`Esame Angelantonio Fedele Murolo/` con **sei cartelle**: i due dataset originali, le due partizioni del
+`dataset/` con **sei cartelle**: i due dataset originali, le due partizioni del
 sintetico (progressiva e tutti presenti) e le due reti generate. Ogni rete ha i 9 file `.edg` (uno per
 passo) e i 4 file nella forma dei batch nativi — il quarto è vuoto per costruzione, perché `batch_3` ha due
-righe (`results/native_batches.csv`). Le reti con testo permutato e con contenuto azzerato **non si
+righe (`results/tables/native_batches.csv`). Le reti con testo permutato e con contenuto azzerato **non si
 consegnano**: i loro numeri sono nelle righe `progressive_permuted` e `progressive_off` di
-`results/network_report.csv`, e si rigenerano con `--content permuted` e `--content off`. I numeri stanno
-in `results/*.csv`, le figure in `results/figures/` e `docs/riferimenti/`.
+`results/tables/network_report.csv`, e si rigenerano con `--content permuted` e `--content off`. I numeri stanno
+in `results/tables/*.csv`, le figure in `results/figures/` e `docs/riferimenti/`.
 
 Riproduzione completa in `README.md`; dettaglio tecnico e limiti in `docs/pipeline.md`; tentativi
 precedenti e loro metriche in `archive/storico.md`.
@@ -97,6 +97,6 @@ precedenti e loro metriche in `archive/storico.md`.
    sono esclusi perché dipendono dalla scala, l'omofilia perché tutte le reti generate stanno a 1,00.
    Cambiando normalizzazione l'ordine fra le due partizioni si inverte: non è un criterio di scelta.
 3. I **coefficienti** della rete ufficiale vengono da una ripetizione indipendente della stessa
-   configurazione (`results/coefficients_synthetic_progressive.csv`), perché la run che ha
+   configurazione (`results/tables/coefficients_synthetic_progressive.csv`), perché la run che ha
    generato la rete scriveva su un file unico poi sovrascritto; il difetto è corretto in
-   `src/generate_arrival.py`.
+   `src/pipeline/generate_arrival.py`.

@@ -25,7 +25,7 @@ arrivati nello stesso passo (17,0% contro 12,4%, reale 8,1%).
    l'encoder (6 confrontati, negativi appaiati) e a misurare quanto il contenuto separi un arco da un
    non-arco. Esito: il contenuto da solo sta sul caso (AUC 0,51-0,57).
 2. **Generazione**: il modello per **eventi di arrivo**. L'unità non è la coppia ma l'utente che
-   entra, che si porta dietro k archi (`results/arrival_events.csv`: media 35-111 per transizione,
+   entra, che si porta dietro k archi (`results/tables/arrival_events.csv`: media 35-111 per transizione,
    massimo 1.202). k viene da una tabella fittata sul reale e riscalata sulla popolazione; i partner si
    scelgono con una logistica a sette variabili (grado, percentile, novità, attività, direzione,
    co-occorrenza, punteggio di contenuto).
@@ -50,27 +50,27 @@ arrivati nello stesso passo (17,0% contro 12,4%, reale 8,1%).
 
 ```bash
 # 1. le due partizioni del sintetico (attività e curva di arrivo dal reale)
-uv run python src/build_synthetic_snapshots.py --activity from-real
+uv run python -m src.pipeline.build_synthetic_snapshots --activity from-real
 
 # 2. la rete progressiva e quella con tutti presenti (solo testo autentico; le modalità con testo
 #    permutato o azzerato sono un controllo, si rigenerano con --content permuted / --content off)
-uv run python src/generate_arrival.py --partition synthetic_progressive_posts --output synthetic_progressive
-uv run python src/generate_arrival.py --partition synthetic_all_present_posts --output synthetic_all_present
+uv run python -m src.pipeline.generate_arrival --partition synthetic_progressive_posts --output synthetic_progressive
+uv run python -m src.pipeline.generate_arrival --partition synthetic_all_present_posts --output synthetic_all_present
 
 # 3. le analisi di una rete, per ogni cartella che interessa
-uv run python src/analyze_structure.py synthetic_progressive
-uv run python src/analyze_temporal.py  synthetic_progressive
-uv run python src/analyze_content.py   synthetic_progressive
-uv run python src/analyze_homophily.py synthetic_progressive
-uv run python src/analyze_profiles.py  synthetic_progressive
-uv run python src/check_real_accretion.py synthetic_progressive
+uv run python -m src.analysis.analyze_structure synthetic_progressive
+uv run python -m src.analysis.analyze_temporal  synthetic_progressive
+uv run python -m src.analysis.analyze_content   synthetic_progressive
+uv run python -m src.analysis.analyze_homophily synthetic_progressive
+uv run python -m src.analysis.analyze_profiles  synthetic_progressive
+uv run python -m src.analysis.check_real_accretion synthetic_progressive
 
 # 4. tabelle, figure e consegna
-uv run python src/scorecard.py      # reale, progressiva, tutti presenti
-uv run python src/tail_scaling.py           # legge di scala del reale
-uv run python src/compare_folders.py --prefix compare   # figure di confronto
-uv run python src/plot_pipeline.py                      # schema della pipeline
-uv run python src/consolidate_native.py synthetic_progressive
+uv run python -m src.analysis.scorecard      # reale, progressiva, tutti presenti
+uv run python -m src.analysis.tail_scaling           # legge di scala del reale
+uv run python -m src.figures.compare_folders --prefix compare   # figure di confronto
+uv run python -m src.figures.plot_pipeline                      # schema della pipeline
+uv run python -m src.pipeline.consolidate_native synthetic_progressive
 ```
 
 Il documento si compila con LaTeX (due passate, per l'indice), la guida in italiano con pandoc:
@@ -82,11 +82,11 @@ pandoc docs/relazione.md -o docs/relazione.pdf --pdf-engine=xelatex -V geometry:
 
 ## Cosa si consegna
 
-`Esame Angelantonio Fedele Murolo/` con **sei cartelle**: i due dataset originali
+`dataset/` con **sei cartelle**: i due dataset originali
 (`real_snapshots/`, `synthetic_snapshots/`), le due **partizioni** del sintetico
 (`synthetic_progressive_posts/`, `synthetic_all_present_posts/`) e le due **reti** generate
 (`synthetic_progressive/`, `synthetic_all_present/`), ognuna con i 9 file `.edg` (uno per passo), i 4
-file nella forma dei batch nativi e gli embedding dei nodi. I numeri sono in `results/*.csv`, le figure
+file nella forma dei batch nativi e gli embedding dei nodi. I numeri sono in `results/tables/*.csv`, le figure
 in `results/figures/` e `docs/riferimenti/`.
 
 Non si consegnano, e sono documentati nei CSV: le reti generate con testo permutato e con il contenuto
@@ -100,11 +100,11 @@ Il riferimento stabile della consegna è il tag **`consegna-progetto`**.
 - **Non riproducibilità al bit**: il generatore è deterministico (stessi eventi, stessi archi per
   evento), ma i pesi della rete addestrata variano al terzo decimale fra processi. Una ripetizione
   della configurazione progressiva dà **271.655** archi invece di 271.646 (9 archi, 0,003%).
-- **Coefficienti**: un file per run in `results/coefficients_<cartella>.csv`. Quelli di
+- **Coefficienti**: un file per run in `results/tables/coefficients_<cartella>.csv`. Quelli di
   `coefficients_synthetic_progressive.csv` vengono da una ripetizione indipendente della
   stessa configurazione, perché la run che ha generato la rete presentata scriveva su un file unico
-  sovrascritto (corretto in `src/generate_arrival.py`).
-- **Distanza dal reale**: definita una volta in `src/scorecard.py` come
+  sovrascritto (corretto in `src/pipeline/generate_arrival.py`).
+- **Distanza dal reale**: definita una volta in `src/analysis/scorecard.py` come
   `|valore − reale| / |reale|`, sommata sulle sette metriche confrontabili (densità, grado medio,
   grado massimo, reciprocità, modularità, transitività, clustering). Archi e nodi sono esclusi perché
   dipendono dalla scala, l'omofilia perché tutte le reti generate stanno a 1,00.

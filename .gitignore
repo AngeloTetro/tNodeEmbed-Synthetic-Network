@@ -9,7 +9,7 @@ __pycache__/
 
 # dataset: input originali (read-only, mai modificati) e cartelle generate
 # (ricostruibili con gli script e i seed fissi). Sono congelati nel file zip di consegna.
-Esame Angelantonio Fedele Murolo/
+dataset/
 
 # encoder fine-tuned alla radice del progetto (binari, ricostruibili con archive/src/finetune_encoder.py)
 # NB: senza lo slash iniziale questa regola ignorava anche src/models/, che è codice nostro.
@@ -41,3 +41,5 @@ archive/third_party/
 # materiale di lavoro degli strumenti
 .archify/
 .scratch/
+document.fdb_latexmk
+document.fls

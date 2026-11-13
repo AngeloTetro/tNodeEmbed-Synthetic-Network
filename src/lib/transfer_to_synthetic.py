@@ -19,12 +19,12 @@ import random
 import numpy as np
 import torch
 
-from content_encoders import encode_grouped, get_encoder
-from tnodeembed_real import (BASE, TRAIN_STEPS, TNodeEmbed, load_docs, load_edges,
+from src.paths import ROOT, TABLES, BASE
+
+from src.lib.content_encoders import encode_grouped, get_encoder
+from src.lib.tnodeembed_real import (TRAIN_STEPS, TNodeEmbed, load_docs, load_edges,
                              make_pair_builder, norm, procrustes_chain)
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-RESULTS = os.path.join(ROOT, 'results')
 N_SNAPSHOTS = 9
 HIDDEN = 128
 EPOCHS = 8
