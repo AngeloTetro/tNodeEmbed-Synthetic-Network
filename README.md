@@ -42,9 +42,9 @@ arrivati nello stesso passo (17,0% contro 12,4%, reale 8,1%).
 | `FINAL.md` | sintesi di consegna: cosa c'è, cosa dicono i numeri, cosa resta aperto |
 | `docs/pipeline.md` | dettaglio tecnico: script, dati, scelte, limiti |
 | `CMDC.md` | memoria di lavoro: stato, comandi, trappole |
-| `prompt_images.md` | i prompt delle figure da far disegnare (pipeline, partizioni, famiglie) |
+| `docs/relazione.md` (+ PDF) | la guida in italiano: cosa c'è nel documento, perché delle scelte, glossario delle metriche |
 | `archive/storico.md` | tutti i tentativi precedenti, con meccanismo e metriche |
-| `archive/docs/` | i documenti superati: articolo (it/en) e relazione divulgativa precedente |
+| `archive/docs/` | i documenti superati: articolo (it/en), relazione precedente, prompt delle figure |
 | `docs/riferimenti/` | figure e note di consultazione |
 
 ## Come si rigenera tutto
