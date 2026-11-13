@@ -76,7 +76,25 @@ Translated into measurable goals:
 \end{itemize}
 The deliverable is a reproducible pipeline plus the generated network, not a single number.
 
+\subsection{Positioning within the literature}
+Temporal graph embedding learns a vector per node that changes with the graph. tNodeEmbed \cite{tne} is
+the closest reference: it initialises every snapshot from a structural embedding and reads the sequence
+with a recurrent network, which is the architecture we keep. Its initialisation component, node2vec
+\cite{n2v}, observes links, so it cannot represent a user appearing for the first time; on this dataset
+every new edge touches such a user (Section~\ref{sec:data}), which is why we replace that component with
+content representations from sentence encoders \cite{sbert,mteb,bge} and align consecutive snapshots with
+Procrustes \cite{procrustes}. The temporal reading uses an LSTM \cite{lstm}. The survey of Kazemi et al.
+\cite{dyngraph} covers the dynamic alternatives we did not use.
+
+The evaluation follows the conventions of this literature: a temporal split instead of a random one,
+matched negatives, and network statistics for the generated graph. Densification \cite{dens} is the
+reason we compare growth curves rather than single snapshots. Modularity is computed with Louvain
+communities \cite{louvain}, and content homophily is always measured against structural controls, because
+the standard ratio is confounded by degree \cite{homo}. Reciprocity and transitivity are reported
+separately from degree because the ties they capture are not interchangeable \cite{weak}.
+
 \section{Data understanding}
+\label{sec:data}
 
 \subsection{Data collection}
 Two datasets were provided for the project. The \emph{real} dataset contains users, their posts and the
@@ -444,6 +462,7 @@ largely \textbf{network position}, with a small lexical residual whose AUC is ab
   \small
   \caption{Content homophily of the real network against structural controls, last snapshot.
   The tightest control (degree within 10\%) destabilises the sample, so 1.29 is a lower bound.}
+  \label{tab:homo}
   \begin{tabular}{@{}lrr@{}}
     \toprule
     Comparison & Ratio & AUC edges vs control \\
@@ -456,6 +475,15 @@ largely \textbf{network position}, with a small lexical residual whose AUC is ab
     \bottomrule
   \end{tabular}
 \end{table}
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.86\textwidth]{results/figures/homophily_controls.png}
+  \caption{The decomposition of Table~\ref{tab:homo} as a picture: the same edges, six control sets.
+  The dashed line is no homophily; the red bar is the measure usually reported. The ratio falls as the
+  control set becomes structurally closer, which is why the 2.13 is read as network position.}
+  \label{fig:homo}
+\end{figure}
 
 The text nevertheless knows the user: from a TF-IDF representation of the user's posts, a logistic
 regression with an 80/20 split by user predicts political leaning with AUC 0.827, profession with 0.867

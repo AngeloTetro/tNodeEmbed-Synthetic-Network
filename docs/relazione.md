@@ -41,6 +41,11 @@ cosa sola: poter dire alla fine «questo l'ho centrato, questo no». G3, per ese
 *quantificare quanto contribuisce il testo*, ed è quello che poi diventa la parte più
 interessante dei risultati.
 
+Subito dopo c'è **Positioning within the literature**: dove sta il nostro lavoro rispetto a
+tNodeEmbed, a node2vec e agli altri. Non è decorazione: è la sezione che giustifica perché abbiamo
+tolto node2vec (non sa rappresentare un utente che entra) e che collega ogni nostra scelta a una
+citazione. Prima non c'era, e la bibliografia finale aveva dodici voci che nessuno citava.
+
 ### 2. Data understanding
 Cosa c'è nei dati. Qui c'è la tabella con i **due dataset a confronto** e la tabella con le
 **undici etichette** del sintetico (nazionalità, genere, etnia, religione, orientamento politico,
@@ -100,6 +105,11 @@ nuovi archi; la spiegazione del perché la partizione progressiva e quanto costa
 approcci provati prima di quello definitivo e perché sono stati scartati; il contenuto
 (omofilia e predizione degli attributi); i tentativi che non hanno funzionato; i limiti; la
 riproducibilità.
+
+L'omofilia ha una tabella e, sotto, un grafico a barre: le sei barre sono gli stessi archi
+confrontati con sei gruppi di controllo sempre più simili strutturalmente. La barra rossa è la
+misura che si legge di solito (2,13), quella in fondo è il controllo più severo (1,29). Il
+grafico serve a far vedere a occhio che il numero scende quando il confronto diventa onesto.
 
 ### 6. Conclusions
 Cosa si è imparato, in tre paragrafi: il meccanismo è relazionale e sequenziale; il testo
