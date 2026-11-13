@@ -12,8 +12,7 @@ __pycache__/
 Esame Angelantonio Fedele Murolo/
 
 # encoder fine-tuned alla radice del progetto (binari, ricostruibili con archive/src/finetune_encoder.py)
-# NB: senza lo slash iniziale questa regola ignorava anche tNodeEmbed/src/models/, che è codice
-# di riferimento e deve restare versionato.
+# NB: senza lo slash iniziale questa regola ignorava anche src/models/, che è codice nostro.
 /models/
 
 # log di lavoro degli script (sovrascritti a ogni giro), ovunque si trovino
@@ -24,7 +23,7 @@ Esame Angelantonio Fedele Murolo/
 *.zip
 
 # materiale di lavoro non prodotto dal progetto
-LLM/
+archive/docs/llm_notes/
 
 # artefatti di compilazione LaTeX (rigenerabili con xelatex)
 document.aux
@@ -35,6 +34,9 @@ document.toc
 
 # reti di controllo archiviate (grandi, ricostruibili: i numeri restano nei CSV)
 archive/dataset/
+
+# codice di terzi tenuto solo come provenienza (10 MB, non importato da nessuno script)
+archive/third_party/
 
 # materiale di lavoro degli strumenti
 .archify/

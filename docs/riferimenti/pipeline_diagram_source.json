@@ -1,0 +1,63 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Pipeline: from the real network to the generated one",
+    "animation": "trace",
+    "visual_preset": "signal-flow",
+    "quality_profile": "showcase",
+    "output": "results/figures/pipeline_archify.html"
+  },
+  "lanes": [
+    { "id": "data", "label": "Data" },
+    { "id": "text", "label": "Content representation" },
+    { "id": "model", "label": "Temporal model" },
+    { "id": "gen", "label": "Arrival-event generator" },
+    { "id": "eval", "label": "Evaluation", "variant": "exception" }
+  ],
+  "phases": [
+    { "id": "fit", "label": "Fit on the real", "fromCol": 0, "toCol": 3 },
+    { "id": "generate", "label": "Generate on the synthetic", "fromCol": 4, "toCol": 4, "variant": "emphasis" },
+    { "id": "assess", "label": "Assess", "fromCol": 5, "toCol": 5, "variant": "dashed" }
+  ],
+  "mainPath": ["real", "posts", "encoder", "procrustes", "lstm", "head", "arrivals", "synth", "metrics"],
+  "nodes": [
+    { "id": "real", "lane": "data", "col": 0, "type": "database", "label": "Real network", "sublabel": "25,714 users, 824,045 edges", "width": 150 },
+    { "id": "posts", "lane": "data", "col": 1, "type": "database", "label": "Post text", "sublabel": "173,475 cumulative", "width": 145 },
+    { "id": "encoder", "lane": "text", "col": 1, "type": "backend", "label": "Encoder", "sublabel": "MiniLM, one vector per post", "tag": "6 compared", "width": 150 },
+    { "id": "procrustes", "lane": "model", "col": 1, "type": "backend", "label": "Procrustes chain", "sublabel": "9 snapshots aligned", "width": 145 },
+    { "id": "lstm", "lane": "model", "col": 2, "type": "backend", "label": "LSTM", "sublabel": "128 units per user", "width": 140 },
+    { "id": "head", "lane": "model", "col": 3, "type": "backend", "label": "Pair head", "sublabel": "h_u, h_v, h_u x h_v", "tag": "link score", "width": 140 },
+    { "id": "arrivals", "lane": "gen", "col": 4, "type": "messagebus", "label": "Arrival event", "sublabel": "k edges, partner logistic", "tag": "7,776 events", "width": 160 },
+    { "id": "synth", "lane": "gen", "col": 5, "type": "cloud", "label": "Generated network", "sublabel": "271,646 edges, 9,897 nodes", "width": 155 },
+    { "id": "metrics", "lane": "eval", "col": 5, "type": "security", "label": "Metric hierarchy", "sublabel": "structure first, AUC diagnostic", "width": 155 }
+  ],
+  "edges": [
+    { "id": "real-posts", "from": "real", "to": "posts", "variant": "default" },
+    { "id": "posts-encoder", "from": "posts", "to": "encoder", "label": "text only", "variant": "emphasis" },
+    { "id": "encoder-procrustes", "from": "encoder", "to": "procrustes", "variant": "default" },
+    { "id": "procrustes-lstm", "from": "procrustes", "to": "lstm", "variant": "default" },
+    { "id": "lstm-head", "from": "lstm", "to": "head", "variant": "default" },
+    { "id": "head-arrivals", "from": "head", "to": "arrivals", "label": "content score +0.05", "variant": "dashed" },
+    { "id": "arrivals-synth", "from": "arrivals", "to": "synth", "variant": "emphasis" },
+    { "id": "synth-metrics", "from": "synth", "to": "metrics", "variant": "emphasis" }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "What is learned, what is assumed",
+      "items": [
+        "Learned on the real: k per arrival, direction, reciprocation, partner choice",
+        "Assumed: the temporal partition of the synthetic data"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Two networks, one pipeline",
+      "items": [
+        "Progressive: users enter over time (presented)",
+        "All-present: everyone from step 1 (comparison)"
+      ]
+    }
+  ]
+}

@@ -190,5 +190,6 @@ gli script in `archive/src/` e i numeri in `archive/storico.md`.
 ## 8. Convenzioni
 
 - File `.md` in italiano; script, output, CSV e figure **in inglese**.
-- `Esame Angelantonio Fedele Murolo/` e `tNodeEmbed/` sono read-only (le `generated_*` sono nostre).
+- `Esame Angelantonio Fedele Murolo/` è read-only (le `generated_*` sono nostre); il codice originale di
+  tNodeEmbed non è importato da nessuno script e sta in `archive/third_party/tNodeEmbed/`.
 - Seed fissi; ambiente `uv`.
