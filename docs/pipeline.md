@@ -126,16 +126,18 @@ in pochi minuti con `--content permuted` e `--content off`.
 | `src/analyze_homophily.py [cartella]` | scompone l'omofilia: casuale, grado, grado ±10%, arrivo+grado, volume di testo, grado+volume | `results/homophily_control_<cartella>.csv` |
 | `src/analyze_profiles.py <cartella>` | profili (solo sintetico): `political_leaning`, `profession`, `age_interval` da contenuto, da embedding e da contenuto+rete | `results/profiles_*.csv` + figure |
 | `src/check_real_accretion.py <cartella>` | archi nuovi per estremi (nuovo/presente) e grado dell'estremo già presente | `results/accretion_*.csv` |
-| `src/scorecard.py` | reale contro ufficiale e controllo, con distanza relativa dichiarata e pendenza di coda | `results/scorecard.csv`, `.md` |
+| `src/scorecard.py` | reale, progressiva e tutti presenti, con distanza relativa dichiarata e pendenza di coda | `results/scorecard.csv`, `.md` |
 | `src/tail_scaling.py` | legge di scala del reale (grado massimo contro utenti) e confronto a pari dimensione | `results/tail_scaling_real.csv`, `tail_scaling_summary.csv` |
 | `src/measure_arrivals.py` | misura degli eventi di arrivo del reale: archi per evento, quota uscente, ricambiati | `results/arrival_events.csv` |
 | `src/consolidate_native.py <cartella>` | consegna nei 4 file nella forma dei batch nativi | `results/native_batches.csv`, `<cartella>/native_4_batch_<i>.edg` |
 | `src/compare_folders.py` | confronto grafico fra cartelle | `results/figures/compare_*.png` |
-| `src/plot_pipeline.py` | schema della pipeline | `results/figures/paper_pipeline.png` |
+| `src/plot_partitions.py` | le due partizioni dai `users_by_birth.csv`: quota di popolazione presente e ingressi per passo | `results/figures/partitions_timeline.png` |
+| `src/plot_pipeline.py` | schema della pipeline (alternativa a mano libera del diagramma usato nel documento) | `results/figures/paper_pipeline.png` |
+| `src/transfer_to_synthetic.py` | libreria condivisa: rappresentazioni del reale e del sintetico, Procrustes, tNodeEmbed, negativi | `synthetic_progressive/tnodeembed_embeddings.npz` |
 | `src/graph_io.py` | libreria di lettura (edge list, post, attributi) | — |
 
-Le famiglie abbandonate (regole a mano, v6, v7, V8) hanno gli script in `archive/src/` e i numeri in
-`archive/storico.md`.
+Le famiglie abbandonate (regole a mano, statistiche imposte, soglia sull'output, modello a coppie) hanno
+gli script in `archive/src/` e i numeri in `archive/storico.md`.
 
 ## 7. Note, vincoli e limiti noti
 
