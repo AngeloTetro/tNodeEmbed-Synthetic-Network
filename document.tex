@@ -33,20 +33,20 @@
 \begin{abstract}
 \noindent
 We reconstruct the link structure of a population for which only the text of its posts is observed: no
-edges, no dates. The edge-formation mechanism is learned on a real social network (25,714 users,
-824,045 directed edges, nine yearly-to-monthly snapshots) and applied by generation to a synthetic
-dataset of 10,000 users described only by their posts. The temporal model is tNodeEmbed without
-node2vec, initialised with content representations; the generator is fitted on the real transitions and
-samples the network step by step through arrival events, the unit being the entering user rather than
-the pair. Two synthetic networks are produced from the same pipeline and two temporal partitions, and we
-name them by the partition they come from: the \emph{progressive} network, in which users enter over time,
-is the one we present; the \emph{all-present} network, in which the whole population exists from the first
-step, is kept as a comparison. The progressive network reproduces reciprocity (0.3224 against 0.4177), mean
-degree (27.45 against 32.05), maximum degree (274 against 1,290), transitivity (0.0212 against 0.0337),
-clustering (0.042 against 0.080) and diameter (6 against 6) within the right order of magnitude. The
-content does not decide who links to whom: the content term weighs $+0.05$ in the edge-formation model
-against $+1.22$ for ``the counterpart is new'', and the 2.13 content homophily of the real network is
-largely degree structure.
+edges, no dates. The edge-formation mechanism is learned on a real social network of 25,714 users,
+824,045 directed edges and nine snapshots, and applied by generation to a synthetic dataset of 10,000
+users described only by their posts. The temporal model is tNodeEmbed without node2vec, initialised with
+content representations. The generator is fitted on the real transitions and samples the network step by
+step through arrival events, so the unit is the entering user rather than the pair. Two synthetic
+networks come from the same pipeline and two temporal partitions, named after the partition they come
+from. The \emph{progressive} network, in which users enter over time, is the one we present; the
+\emph{all-present} network, in which the whole population exists from the first step, is kept as a
+comparison. The progressive network reproduces reciprocity (0.3224 against 0.4177), mean degree (27.45
+against 32.05), maximum degree (274 against 1,290), transitivity (0.0212 against 0.0337), clustering
+(0.042 against 0.080) and diameter (6 against 6) within the right order of magnitude. The content does
+not decide who links to whom. The content term weighs $+0.05$ in the edge-formation model against
+$+1.22$ for ``the counterpart is new'', and the 2.13 content homophily of the real network is largely
+degree structure.
 \end{abstract}
 
 \tableofcontents
@@ -55,9 +55,9 @@ largely degree structure.
 \section{Business understanding}
 
 \subsection{Business goals}
-A social platform that holds only the text produced by its users --- no follow graph, no interaction
-log, no reliable time stamp --- cannot compute reach, communities or influence, because all of them need
-the network. Buying or scraping the graph is often impossible: the data are not public, the platform is
+A social platform that holds only the text produced by its users, with no follow graph, no interaction
+log and no reliable time stamp, cannot compute reach, communities or influence. All of these need the
+network. Buying or scraping the graph is often impossible: the data are not public, the platform is
 small, or the graph is precisely what the platform wants to hide. The business goal is therefore to
 \emph{reconstruct} the missing link structure from the only asset available, the text, and to do so
 without inventing statistics.
@@ -65,13 +65,13 @@ without inventing statistics.
 \subsection{Data mining goals}
 Translated into measurable goals:
 \begin{itemize}
-  \item \textbf{G1} --- learn, from a dataset that does have a network, the mechanism by which an edge is
+  \item \textbf{G1}: learn, from a dataset that does have a network, the mechanism by which an edge is
         formed, and express it as a model whose coefficients can be read and discussed;
-  \item \textbf{G2} --- apply that mechanism to a second population, of different size and with no
+  \item \textbf{G2}: apply that mechanism to a second population, of different size and with no
         edges, generating a network that is statistically comparable to the first;
-  \item \textbf{G3} --- quantify how much the text contributes, separating what comes from content from
+  \item \textbf{G3}: quantify how much the text contributes, separating what comes from content from
         what comes from structure;
-  \item \textbf{G4} --- declare and measure the assumptions that remain ours (the temporal scenario, the
+  \item \textbf{G4}: declare and measure the assumptions that remain ours (the temporal scenario, the
         transfer across populations of different size, the non-reproducibility of training).
 \end{itemize}
 The deliverable is a reproducible pipeline plus the generated network, not a single number.
@@ -188,7 +188,7 @@ tf-idf. \textbf{MiniLM with per-post encoding} is the representation used downst
 The margin between the first and the third encoder (0.002) is \emph{within} the variability between
 processes, which is about 0.005 because the iteration order of edge sets is not fixed in Python and
 changes negative sampling. The selection should therefore be read as a tie among MiniLM, GTE-base and
-BGE-base, all clearly above tf-idf --- a limitation we declare rather than hide.
+BGE-base, all clearly above tf-idf. We declare that limitation rather than hide it.
 
 \subsection{Integration: the temporal partition}
 The synthetic dataset is partitioned into nine steps, equal to the number of real snapshots, with two
@@ -218,15 +218,15 @@ is kept. Both contain the same population and the same text.
 A generated network is not evaluated with an AUC: in the synthetic dataset there are no true edges to
 predict, so a ranking measure has no object. The hierarchy we adopt is explicit.
 \begin{itemize}
-  \item \emph{Primary} --- per-snapshot network statistics and distributions, compared with the real
-        network on the final snapshot: degree distribution (mean, maximum, CCDF), reciprocity,
-        transitivity and mean clustering, modularity, diameter, composition of accretion.
-  \item \emph{Secondary} --- the nature of the link: content homophily with structural controls, and the
-        share of edges between users arriving in the same step.
-  \item \emph{Diagnostic, on the real data only} --- AUC and average precision with matched and random
-        negatives, used to select the encoder and to fit the model. The AUC ablation on the real data is
-        saturated (0.9818 to 0.9816) and does not measure the contribution of text.
-  \item \emph{Not valid} --- AUC as a quality measure of a generated network.
+  \item \emph{Primary}: per-snapshot network statistics and distributions, compared with the real
+        network on the final snapshot. These are the degree distribution (mean, maximum, CCDF),
+        reciprocity, transitivity and mean clustering, modularity, diameter, composition of accretion.
+  \item \emph{Secondary}: the nature of the link, that is content homophily with structural controls,
+        and the share of edges between users arriving in the same step.
+  \item \emph{Diagnostic, on the real data only}: AUC and average precision with matched and random
+        negatives, used to select the encoder and to fit the model. The AUC ablation on the real data
+        is saturated (0.9818 to 0.9816) and does not measure the contribution of text.
+  \item \emph{Not valid}: AUC as a quality measure of a generated network.
 \end{itemize}
 
 \subsection{Architecture: tNodeEmbed without node2vec}
@@ -239,8 +239,8 @@ training transitions only.
 Removing node2vec is a data-driven choice: node2vec initialises itself by observing links, so it cannot
 represent a user appearing for the first time, and on this dataset no new edge connects two already
 present users. Applying the original protocol restriction (test limited to pairs between already
-observed users) yields \emph{zero} test edges in every transition --- the restriction is correct in
-general and empty here --- so evaluation uses the whole transition with two kinds of negatives:
+observed users) yields \emph{zero} test edges in every transition. The restriction is correct in general
+and empty here, so evaluation uses the whole transition with two kinds of negatives:
 \emph{random} and \emph{matched} (same source, similar arrival snapshot and degree). Random negatives
 give AUC around 0.99 in validation and 0.95--0.97 in test; matched negatives give 0.51--0.57. The matched
 column is the one we report.
@@ -279,8 +279,8 @@ neighbourhood), plus Gumbel noise to sample rather than take the argmax. No thre
 imposed: volume, degrees and hubs emerge.
 
 \subsection{Model assessment}
-The real network is not modified. Structurally, the generator reproduces the shape of accretion --- no
-edge between two pre-existing users, as in the real data --- while slightly overestimating edges between
+The real network is not modified. Structurally, the generator reproduces the shape of accretion (no
+edge between two pre-existing users, as in the real data) while slightly overestimating edges between
 co-arriving users (17.0\% against 8.1\%). The residual gaps are all of the same sign: the generated
 network is somewhat flatter. The measurement attributes them to the shape of the tail and to cohesion,
 not to a missing hub (Section~\ref{sec:eval}).
@@ -477,7 +477,7 @@ Three kinds of negative result shaped the design, and none of them is visible in
 The first concerns the text. Networks generated with the content term zeroed and with the profiles of one
 user permuted onto another were indistinguishable from the one built with authentic text: same volume, same
 degrees, same cohesion. That is not a defect of the generator but the result the coefficients already
-predict --- content enters the partner choice with a weight of $+0.05$ against $+1.22$ for novelty and
+predict: content enters the partner choice with a weight of $+0.05$ against $+1.22$ for novelty and
 $+1.02$ for the logarithm of degree, so removing it cannot move a network that structure decides. The two
 ablations were therefore run once, archived with their measurements, and not kept in the delivery.
 
@@ -524,9 +524,9 @@ and are partly reciprocated immediately. A generator that samples arrival events
 degree scale, reciprocity and cohesion of the real network without imposing a single statistic, and the
 two temporal partitions give equivalent results, which is itself a robustness result.
 
-The text plays a precise and limited role. It identifies the user --- profile attributes are predictable
-from posts with AUC up to 0.867 --- but it does not decide the relation: the content term weighs an order
-of magnitude less than novelty and degree, and the homophily that seemed to contradict this reading is
+The text plays a precise and limited role. It identifies the user, since profile attributes are
+predictable from posts with AUC up to 0.867, but it does not decide the relation: the content term
+weighs an order of magnitude less than novelty and degree, and the homophily that seemed to contradict this reading is
 largely network position. What remains open is equally precise: the shape of the degree tail, which is
 steeper than the real one at matched size; the dependence among the targets chosen within the same
 arrival event, which would close the triadic part; and a representation of content that acts at the level
