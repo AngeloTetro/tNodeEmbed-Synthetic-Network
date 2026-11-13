@@ -81,7 +81,7 @@ The deliverable is a reproducible pipeline plus the generated network, not a sin
 \subsection{Data collection}
 Two datasets were provided for the project. The \emph{real} dataset contains users, their posts and the
 directed links between them over nine cumulative snapshots from January 2022 to July 2025. The
-\emph{synthetic} dataset contains 10,000 users with 100,456 usable posts, eleven profile attributes and
+\emph{synthetic} dataset contains 10,000 users with 100,456 usable posts, eleven profile labels and
 \emph{no} edges and \emph{no} dates. The real dataset carries only post-level fields: there is no profile
 attribute on the real side. The two datasets were never modified; every generated folder is a new
 artefact.
@@ -105,11 +105,11 @@ artefact.
   \end{tabular}
 \end{table}
 
-The eleven labels of the synthetic side are listed in Table~\ref{tab:labels}. Nine of them are finite
-classes; \code{username} and \code{user\_bio} are free text (and usernames are reused across users,
-671 distinct strings for 9,913 users), and \code{interests} is a short list rather than a single class.
-None of the eleven exists on the real side, so they are never used as inputs: they serve as prediction
-targets in Section~\ref{sec:content}.
+The eleven labels of the synthetic side are listed in Table~\ref{tab:labels}. Eight of them are finite
+classes; \code{interests} is a short list rather than a single class, and \code{username} and
+\code{user\_bio} are free text (usernames are even reused across users, 671 distinct strings for 9,913
+users). None of the eleven exists on the real side, so they are never used as inputs: they serve as
+prediction targets in Section~\ref{sec:content}.
 
 \begin{table}[h]
   \centering
@@ -163,8 +163,8 @@ compared with the full downstream protocol, using matched negatives as the decid
 \begin{table}[h]
   \centering
   \small
-  \caption{Encoder selection on the real network: AUC on validation / test1 / test2, mean over the three
-  windows, and random negatives on validation.}
+  \caption{Encoder selection on the real network: AUC on validation / test1 / test2 with matched
+  negatives, mean over the three windows, and random negatives on validation.}
   \label{tab:encoders}
   \begin{tabular}{@{}lccc@{}}
     \toprule
@@ -206,10 +206,9 @@ is kept. Both contain the same population and the same text.
 \begin{figure}[h]
   \centering
   \includegraphics[width=\textwidth]{results/figures/partitions_timeline.png}
-  \caption{The two partitions, counted from \code{users\_by\_birth.csv}. Left: share of the population
-  present at each step, flat at 100\% for the all-present partition and rising 41.8\% to 100\% for the
-  progressive one. Right: users entering at each step, the sequence that generates the curve on the
-  left.}
+  \caption{The two partitions. Left: share of the population present at each step, flat at 100\% for
+  the all-present partition and rising from 41.8\% to 100\% for the progressive one. Right: users
+  entering at each step, the sequence that generates the curve on the left.}
   \label{fig:partitions}
 \end{figure}
 
@@ -292,8 +291,8 @@ imposed: volume, degrees and hubs emerge.
 The real network is not modified. Structurally, the generator reproduces the shape of accretion (no
 edge between two pre-existing users, as in the real data) while slightly overestimating edges between
 co-arriving users (17.0\% against 8.1\%). The residual gaps are all of the same sign: the generated
-network is somewhat flatter. The measurement attributes them to the shape of the tail and to cohesion,
-not to a missing hub (Section~\ref{sec:eval}).
+network is somewhat flatter. They come from the shape of the tail and from cohesion, not from a missing
+hub (Section~\ref{sec:eval}).
 
 \section{Evaluation}
 \label{sec:eval}
