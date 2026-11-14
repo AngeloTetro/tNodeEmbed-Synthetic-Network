@@ -9,7 +9,7 @@ __pycache__/
 
 # dataset: input originali (read-only, mai modificati) e cartelle generate
 # (ricostruibili con gli script e i seed fissi). Sono congelati nel file zip di consegna.
-dataset/
+# dataset/ e ora versionato: e il contenuto principale del progetto
 
 # encoder fine-tuned alla radice del progetto (binari, ricostruibili con archive/src/finetune_encoder.py)
 # NB: senza lo slash iniziale questa regola ignorava anche src/models/, che è codice nostro.
