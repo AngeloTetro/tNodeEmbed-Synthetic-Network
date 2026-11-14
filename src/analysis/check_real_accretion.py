@@ -1,4 +1,4 @@
-﻿"""Do new users connect to users from previous snapshots? Same check on every dataset.
+"""Do new users connect to users from previous snapshots? Same check on every dataset.
 
 For every transition:
   - new edges, and how many have BOTH endpoints already present (old->old);

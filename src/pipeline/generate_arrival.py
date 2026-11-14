@@ -1,31 +1,32 @@
-﻿"""Arrival events -- il meccanismo di arrivo: l'unita' di formazione degli archi e' l'evento, non la coppia.
+"""Arrival events -- the unit of edge formation is the event, not the pair.
 
-Diagnosi (FINAL.md sezione 10, docs/pipeline.md): l'approccio a coppie riproduce densita' e volume ma
-sbaglia le proprieta' relazionali -- reciprocita' 0,004 contro 0,418, transitivita' 0,003 contro 0,034, grado
-massimo 102 contro 1.290 -- perche' decide ogni coppia in modo indipendente e addestra su negativi
-uniformi. Nel reale quei tre gap sono un solo fenomeno: l'arrivo di un utente nuovo. Ogni arco nuovo
-tocca un entrante, il 40-44% arriva con il proprio inverso nella stessa transizione, e la coda dei
-gradi nasce perche' gli arrivi scelgono i pochi nodi gia' molto connessi.
+Diagnosis: a pairwise approach reproduces density and volume but gets the relational properties wrong
+(reciprocity 0.004 against 0.418, transitivity 0.003 against 0.034, maximum degree 102 against 1,290)
+because it decides every pair independently and trains on uniform negatives. In the real data those
+three gaps are a single phenomenon: the arrival of a new user. Every new edge touches an entrant,
+40-44% arrive with their own inverse in the same transition, and the degree tail exists because
+arrivals choose the few nodes that are already well connected.
 
-Il generatore stima sul reale, per ogni evento di arrivo (un nodo che entra nella rete in quella transizione):
-    1. quanti archi nuovi porta, con la direzione. Il conteggio si fitta **riscalato alla
-       popolazione** (k * popolazione_di_riferimento / popolazione_della_transizione), perche' k
-       cresce con la dimensione della rete: e' lo stesso accorgimento dei percentili di grado.
-    2. dove vanno: un modello di scelta sui candidati -- grado, percentile, "e' nuovo", attivita',
-       punteggio di contenuto di tNodeEmbed, direzione, e **co-occorrenza** ("la controparte e' vicina
-       di un'altra controparte dello stesso evento", cioe' se gli archi dell'evento si ammassano o si
-       evitano). I pesi sono il risultato scientifico.
-    3. la bidirezionalita': con che probabilita' un arco entrante riprende un partner gia' scelto fra
-       gli uscenti. Nel reale i k archi dell'evento includono gia' le coppie ricambiate, quindi la
-       reciprocita' non si aggiunge dopo: si distribuisce dentro il conteggio.
+The generator estimates on the real data, for every arrival event (a node entering the network in that
+transition):
+    1. how many new edges it carries, with the direction. The count is fitted **rescaled to the
+       population** (k * reference_population / transition_population), because k grows with the size
+       of the network: it is the same device used for degree percentiles.
+    2. where those edges go: a choice model over the candidates -- degree, percentile, "is new",
+       activity, tNodeEmbed content score, direction, and **co-occurrence** ("the counterpart is close
+       to another counterpart of the same event", that is whether the event's edges cluster or avoid
+       each other). The weights are the scientific result.
+    3. reciprocation: with what probability an incoming edge picks back a partner already chosen among
+       the outgoing ones. In the real data the k edges of an event already include the reciprocated
+       pairs, so reciprocity is not added afterwards: it is distributed inside the count.
 
-La generazione non impone conteggi: si campionano gli archi dell'evento uno per uno sul punteggio di
-scelta (Gumbel), riscalando k sulla popolazione sintetica corrente, poi si aggiorna lo stato.
+Generation imposes no counts: the edges of the event are sampled one by one on the choice score
+(Gumbel), rescaling k to the current synthetic population, then the state is updated.
 
-Content modes (`--content`), solo sul lato sintetico; il modello e' sempre fittato sul reale:
-    real      profili testuali autentici;
-    permuted  gli stessi profili riassegnati ad altri utenti (una sola permutazione per tutti i passi);
-    off       canale testuale azzerato.
+Content modes (`--content`), synthetic side only; the model is always fitted on the real data:
+    real      authentic text profiles;
+    permuted  the same profiles reassigned to other users (one permutation for every step);
+    off       text channel zeroed.
 
 Usage:
     uv run python -m src.pipeline.generate_arrival --partition synthetic_progressive_posts \
@@ -101,12 +102,12 @@ def edges_to_files(adj, users, folder, t, source_partition):
 
 
 def arrivals(edge_sets, index, step):
-    """Eventi di arrivo della transizione `step`: ogni arco nuovo appartiene all'evento del suo
-    estremo nuovo (se sono nuovi entrambi, vince la sorgente), con la direzione rispetto a lui.
+    """Arrival events of transition `step`: every new edge belongs to the event of its new endpoint
+    (if both are new, the source wins), with the direction relative to that endpoint.
 
-    Gli archi si iterano in ordine deterministico (`sorted`): l'ordine di iterazione di un set di
-    stringhe dipende dall'hash del processo e cambierebbe la sequenza casuale a valle, rendendo le
-    ripetizioni diverse fra loro.
+    Edges are iterated in deterministic order (`sorted`): the iteration order of a set of strings
+    depends on the process hash and would change the random sequence downstream, making repetitions
+    differ from each other.
     """
     previous, current = edge_sets[step - 1], edge_sets[step]
     before = {u for edge in previous for u in edge}
@@ -127,11 +128,11 @@ def population(edge_sets, step):
 
 
 def fit_counts(edge_sets, index, steps, exponent):
-    """Tabella di k riscalato alla popolazione: k / P^beta, con beta e unita' fittati sul reale.
+    """Table of k rescaled to the population: k / P^beta, with beta and the unit fitted on the real.
 
-    k cresce con la popolazione della rete piu' che linearmente: l'esponente beta e' la pendenza
-    log-log di k medio contro popolazione. La tabella contiene il valore normalizzato, moltiplicato
-    per un'unita' che ne conserva la risoluzione (mediana a 1000); in generazione si riscala.
+    k grows with the population of the network faster than linearly: the exponent beta is the log-log
+    slope of mean k against population. The table holds the normalised value, multiplied by a unit that
+    preserves its resolution (median at 1000); generation rescales it back.
     """
     events_by_step = {step: arrivals(edge_sets, index, step) for step in steps}
     scales = {step: population(edge_sets, step - 1) ** exponent for step in steps}
@@ -166,7 +167,7 @@ def population_exponent(edge_sets, index, steps):
 
 
 def reciprocity_table(edge_sets, index, steps):
-    """P(arco inverso nella stessa transizione | arco nuovo), per direzione e classe di grado."""
+    """P(reverse edge in the same transition | new edge), by direction and degree class."""
     boxes = {}
     for step in steps:
         previous = edge_sets[step - 1]
@@ -190,7 +191,7 @@ def reciprocity_table(edge_sets, index, steps):
 
 
 def state_arrays(edge_sets, index, masks, users, step):
-    """Cio' che nel fit e' calcolato sullo stato al passo precedente."""
+    """What the fit computes from the state at the previous step."""
     previous = edge_sets[step - 1]
     before = {u for edge in previous for u in edge if u in index}
     degree = {}
@@ -238,9 +239,9 @@ def content_scores(model, embeddings, owners, targets, with_content):
 
 
 def neighbours_of(edge_sets, step, index):
-    """Vicinato (entrambe le direzioni) nella rete della transizione, indicizzato come `index`.
+    """Neighbourhood (both directions) in the network of the transition, indexed as `index`.
 
-    Anche qui l'iterazione e' ordinata, per lo stesso motivo di `arrivals`.
+    Iteration is ordered here too, for the same reason as in `arrivals`.
     """
     out = {}
     for a, b in sorted(edge_sets[step]):
@@ -253,7 +254,7 @@ def neighbours_of(edge_sets, step, index):
 
 
 def closure_value(partners, neighbours_of_candidate, mode):
-    """Chiusura triadica dentro l'evento: 'binary' (almeno una) o 'count' (la frazione)."""
+    """Triadic closure inside the event: 'binary' (at least one) or 'count' (the fraction)."""
     if not partners or not neighbours_of_candidate:
         return 0.0
     shared = len(partners & neighbours_of_candidate)
@@ -264,22 +265,21 @@ def closure_value(partners, neighbours_of_candidate, mode):
 
 def build_choice_dataset(model, embeddings, users, index, edge_sets, masks, rng, with_content,
                          steps, stratified=False, closure='binary'):
-    """Positivi = archi reali degli eventi; negativi = candidati dello stesso evento.
+    """Positives = the real edges of the events; negatives = candidates of the same event.
 
-    La co-occorrenza vale 1 se la controparte e' vicina di un'altra controparte dello stesso evento:
-    e' il termine che dice se gli archi dell'evento si ammassano sugli stessi intorni o li evitano.
+    Co-occurrence is 1 if the counterpart is close to another counterpart of the same event: it is the
+    term that says whether the edges of an event cluster around the same neighbourhoods or avoid them.
 
-    Con `stratified=True` i negativi diventano misti (proposta di Gemini): 30% inversioni
-    asimmetriche, cioe' la coppia al contrario di un positivo ma solo se quell'arco inverso non
-    esiste davvero, 30% difficili sul grado (candidati del decile piu' connesso del pool) e 40%
-    uniformi come nella configurazione documentata. La parte semantica dei negativi difficili non
-    c'e': scegliere la controparte piu' simile nel testo costerebbe una valutazione del modello per
-    candidato e il canale testuale non porta il legame (controllo A/B/C).
+    With `stratified=True` the negatives become a mixture: 30% asymmetric inversions, that is the pair
+    reversed from a positive but only if that reverse edge does not really exist, 30% hard on degree
+    (candidates from the most connected decile of the pool) and 40% uniform as in the documented
+    configuration. The semantic part of hard negatives is absent: choosing the counterpart most similar
+    in text would cost one model evaluation per candidate and the text channel does not carry the tie.
 
-    `closure` dice come si misura la chiusura triadica dentro l'evento: 'binary' (la variabile
-    documentata, il candidato e' vicino ad almeno un'altra controparte dell'evento) o 'count' (la
-    frazione delle altre controparti a cui il candidato e' vicino). La stessa funzione deve valere
-    in fit e in generazione: cambiarla da un lato solo renderebbe il coefficiente privo di senso.
+    `closure` says how triadic closure inside the event is measured: 'binary' (the documented variable,
+    the candidate is close to at least one other counterpart of the event) or 'count' (the fraction of
+    the other counterparts the candidate is close to). The same function must hold in fitting and in
+    generation: changing it on one side only would make the coefficient meaningless.
     """
     features, labels = [], []
     for step in steps:
@@ -324,8 +324,8 @@ def build_choice_dataset(model, embeddings, users, index, edge_sets, masks, rng,
                 others = partner_set - {index[partner]}
                 adjacent.append(closure_value(others, neighbours.get(index[partner], set()), closure))
             for _ in range(NEG_PER_POS * len(partners)):
-                # Il percorso uniforme non estrae numeri in piu': con `--negatives uniform` la
-                # sequenza casuale (e quindi la rete generata) resta quella documentata.
+                # The uniform path draws no extra numbers: with `--negatives uniform` the random
+                # sequence (and therefore the generated network) stays the documented one.
                 if stratified and inversions and rng.random() < 0.30:
                     candidate, direction = inversions[int(rng.integers(0, len(inversions)))]
                 elif stratified and rng.random() < 3.0 / 7.0:
@@ -348,12 +348,12 @@ def build_choice_dataset(model, embeddings, users, index, edge_sets, masks, rng,
                                         np.asarray(targets), np.asarray(directions, dtype=np.float32),
                                         np.asarray(adjacent, dtype=np.float32)))
         labels.append(np.asarray(tags, dtype=np.float32))
-        log(f'    passo {step}: {len(owners)} righe ({int(np.sum(tags))} positivi)')
+        log(f'    step {step}: {len(owners)} rows ({int(np.sum(tags))} positives)')
     return np.vstack(features), np.concatenate(labels)
 
 
 def sample_counts(table, share, population_now, exponent, unit, rng):
-    """k normalizzato campionato, riscalato sulla popolazione corrente, poi la quota uscente."""
+    """Normalised k sampled, rescaled to the current population, then the outgoing share."""
     probability = table / table.sum()
     scaled = int(rng.choice(table.size, p=probability))
     total = int(round(scaled / unit * population_now ** exponent))
@@ -373,7 +373,7 @@ def head_scores(model, hidden, owner, candidates):
 def generate(model, embeddings, users, masks, present_masks, scaler, classifier, tables, shares,
              reverse_rate, exponent, unit, with_content, folder, partition_name, rng,
              closure='binary'):
-    """Genera per eventi di arrivo, con lo stato ricalcolato a ogni passo."""
+    """Generates by arrival events, with the state recomputed at every step."""
     n = len(users)
     adj = torch.zeros((n, n), dtype=torch.bool, device=DEVICE)
     previous_present = np.zeros(n, dtype=bool)
@@ -452,8 +452,8 @@ def generate(model, embeddings, users, masks, present_masks, scaler, classifier,
                 events_total += 1
         edges_to_files(adj, users, folder, step, partition_name)
         previous_present = present
-        log(f'    passo {step + 1}: nuovi {int(newcomers.size)} | popolazione {population_now} '
-            f'| archi finora {int(adj.sum().item())}')
+        log(f'    step {step + 1}: new {int(newcomers.size)} | population {population_now} '
+            f'| edges so far {int(adj.sum().item())}')
     return events_total, edges_total, reversed_total
 
 
@@ -463,17 +463,16 @@ def run():
     parser.add_argument('--pooling', default='mean_of_posts')
     parser.add_argument('--variant', default='network')
     parser.add_argument('--output', default=None,
-                        help='nome della cartella di destinazione (default: '
-                             '<partition>_<variant>)')
+                        help='name of the destination folder (default: <partition>_<variant>)')
     parser.add_argument('--content', choices=('real', 'permuted', 'off'), default='real')
     parser.add_argument('--exponent', type=float, default=1.0,
-                        help='esponente della riscalatura di k sulla popolazione: 1 = lineare, '
-                             'il valore che porta il grado medio generato su quello reale')
+                        help='exponent of the rescaling of k on the population: 1 = linear, '
+                             'the value that brings the generated mean degree onto the real one')
     parser.add_argument('--negatives', choices=('uniform', 'stratified'), default='uniform',
-                        help='uniform: la configurazione documentata; stratified: misti 30/30/40')
+                        help='uniform: the documented configuration; stratified: 30/30/40 mixture')
     parser.add_argument('--closure', choices=('binary', 'count'), default='binary',
-                        help='chiusura triadica dentro l\'evento: binaria (documentata) o frazione '
-                             'delle altre controparti')
+                        help='triadic closure inside the event: binary (documented) or the fraction '
+                             'of the other counterparts')
     args = parser.parse_args()
     with_content = args.content != 'off'
     stratified = args.negatives == 'stratified'
@@ -494,23 +493,24 @@ def run():
 
     fitted = population_exponent(edge_sets, index, TRAIN_STEPS)
     exponent = args.exponent
-    log(f'esponente della riscalatura di k: {exponent:.3f} (pendenza log-log stimata sul reale: '
-        f'{fitted:.3f}). Il sintetico ha 10.000 utenti contro i 25.714 del reale e i suoi ultimi '
-        f'passi ereditano la tabella dell\'ultima transizione di training: senza riscalatura il '
-        f'grado medio uscirebbe 80 contro 32, con l\'esponente 1 esce nell\'ordine giusto.')
+    log(f'rescaling exponent of k: {exponent:.3f} (log-log slope estimated on the real: '
+        f'{fitted:.3f}). The synthetic dataset has 10,000 users against the 25,714 of the real one '
+        f'and its last steps inherit the table of the last training transition: without rescaling '
+        f'the mean degree would come out at 80 against 32, with exponent 1 it lands in the right '
+        f'order of magnitude.')
     tables, shares, sizes, unit = fit_counts(edge_sets, index, TRAIN_STEPS, exponent)
-    log(f'unita\' di scala della tabella normalizzata: {unit:.1f}')
+    log(f'scale unit of the normalised table: {unit:.1f}')
     for step in sorted(tables):
         table = tables[step] / tables[step].sum()
         expected = float(np.sum(np.arange(table.size) * table))
-        log(f'  transizione {step}: eventi {sizes[step]} | k normalizzato atteso {expected:.1f} '
-            f'| quota uscente {shares[step]:.3f}')
+        log(f'  transition {step}: events {sizes[step]} | expected normalised k {expected:.1f} '
+            f'| outgoing share {shares[step]:.3f}')
     cells = reciprocity_table(edge_sets, index, TRAIN_STEPS)
     for (direction, bucket), value in sorted(cells.items()):
-        log(f'    bidirezionalita: uscente {int(direction)} | grado {bucket}: {value:.3f}')
+        log(f'    reciprocation: outgoing {int(direction)} | degree {bucket}: {value:.3f}')
     reverse_rate = float(np.mean([value for (direction, _), value in cells.items()
                                   if direction > 0.5]))
-    log(f'  quota di coppie ricambiate usata in generazione: {reverse_rate:.3f}')
+    log(f'  share of reciprocated pairs used in generation: {reverse_rate:.3f}')
 
     log('fitted coefficients of the target-choice model (standardised features):')
     features, labels = build_choice_dataset(model, embeddings, users, index, edge_sets, masks, rng,
@@ -525,8 +525,8 @@ def run():
                                                     closure)
     auc = roc_auc_score(val_labels,
                         classifier.predict_proba(scaler.transform(val_features))[:, 1])
-    log(f'validation transition {VAL_STEP}: AUC {auc:.4f} (diagnostica del fit; la qualita\' della '
-        f'rete si giudica sulle sue statistiche, non qui)')
+    log(f'validation transition {VAL_STEP}: AUC {auc:.4f} (fit diagnostic; the quality of the '
+        f'network is judged on its statistics, not here)')
 
     name = args.output or f'{args.partition}_{args.variant}'
     os.makedirs(TABLES, exist_ok=True)

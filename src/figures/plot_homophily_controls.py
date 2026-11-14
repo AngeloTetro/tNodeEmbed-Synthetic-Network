@@ -1,4 +1,4 @@
-﻿"""Content homophily of the real network under structural controls (bar chart).
+"""Content homophily of the real network under structural controls (bar chart).
 
 Every bar is the ratio between the similarity of linked pairs and the similarity of a control
 set of unlinked pairs with the same structure. A ratio of 1.0 means no homophily: the standard

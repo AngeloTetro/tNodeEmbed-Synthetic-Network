@@ -1,4 +1,4 @@
-﻿"""Report on the native synthetic batches, and consolidation of a generated folder onto them.
+"""Report on the native synthetic batches, and consolidation of a generated folder onto them.
 
 Measured fact, and it is the reason a "back to the 4 native snapshots" delivery has to be done
 carefully: the native files are NOT time slices. Each of batch_0..batch_2 covers the whole
@@ -74,8 +74,8 @@ def main():
     snapshots = load_network(folder)
     wanted = f'snapshot_{args.step}'
     name, edges, nodes = next((item for item in snapshots if item[0] == wanted), snapshots[-1])
-    print(f'{args.folder}: snapshot {name} (passo {args.step}) con {len(nodes)} utenti e '
-          f'{len(edges)} archi')
+    print(f'{args.folder}: snapshot {name} (step {args.step}) with {len(nodes)} users and '
+          f'{len(edges)} edges')
 
     rows = []
     for index, (users, ids, first) in enumerate(batches):
@@ -116,14 +116,14 @@ def main():
         writer.writerows(rows)
 
     for row in rows:
-        print(f"  {row['batch']}: {row['posts']:>6} post | {row['users']:>5} utenti | "
-              f"id da {row['post_id_min']} a {row['post_id_max']} (mediana {row['post_id_median']}"
-              f") | in comune con gli altri: {row['overlap_with_others']} | "
-              f"archi scritti {row['edges_written']:>7} su {len(edges)}")
+        print(f"  {row['batch']}: {row['posts']:>6} posts | {row['users']:>5} users | "
+              f"ids {row['post_id_min']} to {row['post_id_max']} (median {row['post_id_median']}"
+              f") | shared with the others: {row['overlap_with_others']} | "
+              f"edges written {row['edges_written']:>7} of {len(edges)}")
     print()
-    print('I quattro file non sono slice temporali: ognuno copre tutto l\'intervallo degli id e '
-          'condivide quasi tutti gli utenti, quindi i file scritti sono la stessa rete ristretta '
-          'all\'insieme di utenti del batch (la sola consolidazione fedele).')
+    print('The four files are not temporal slices: each covers the whole id range and shares almost '
+          'every user, so the files written are the same network restricted to the users of that '
+          'batch (the only faithful consolidation).')
     print(f'written results/native_batches.csv and {args.folder}/native_4_*.edg')
 
 

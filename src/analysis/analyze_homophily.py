@@ -1,18 +1,18 @@
-﻿"""L'omofilia del contenuto del reale: struttura o scelta di somiglianza?
+"""Content homophily of the real network: structure, or a preference for similarity?
 
-Riproduce la misura di analyze_content.py (similaritÃ  coseno fra i profili TF-IDF+SVD degli
-estremi di ogni arco, rapporto contro coppie casuali) e la confronta con controlli costruiti con lo
-stesso protocollo giÃ  usato per i negativi appaiati. Per ogni arco si prende un non-arco i cui due
-estremi hanno la stessa posizione strutturale:
-    casuale        due utenti a caso: la misura attuale;
-    grado          stesso grado (classi a raddoppio) al momento dell'arco;
-    grado stretto  dentro +-10% del grado esatto;
-    arrivo+grado   anche lo stesso passo di ingresso nella rete;
-    testo          stesso volume di testo cumulativo (caratteri), +-10%: la leva della densitÃ  dei
-                   profili lessicali, indipendente dalla scelta del legame;
-    grado+testo    entrambe le cose (classi a raddoppio).
-Riporta il rapporto contro ogni controllo e l'AUC fra archi veri e coppie appaiate (media dei passi),
-piÃ¹ la curva della somiglianza per decile di grado e il grado medio degli estremi.
+Reproduces the measure of analyze_content.py (cosine similarity between the TF-IDF+SVD profiles of
+the two endpoints of every edge, ratio against random pairs) and compares it with control sets built
+with the same protocol already used for matched negatives. For every edge we pick a non-edge whose
+two endpoints have the same structural position:
+    random         two users at random: the current measure;
+    degree         same degree (doubling classes) at the time of the edge;
+    close degree   within +-10% of the exact degree;
+    arrival+degree also the same step of entry into the network;
+    text           same cumulative text volume (characters), +-10%: the lever of profile density,
+                   independent of the choice of the tie;
+    degree+text    both (doubling classes).
+Reports the ratio against every control and the AUC between true edges and matched pairs (mean over
+the steps), plus the similarity curve by degree decile and the mean degree of the endpoints.
 
 Usage: uv run python -m src.analysis.analyze_homophily [folder]
 Output: results/homophily_control_<folder>.csv
@@ -62,7 +62,7 @@ def pair_similarity(matrix, index, left, right):
 
 
 def matched_partners(keys, pools, rng):
-    """Un partner per posizione, pescato dal gruppo indicato dalla chiave della posizione."""
+    """One partner per position, drawn from the pool named by that position's key."""
     unique, inverse = np.unique(keys, return_inverse=True)
     partners = np.empty(keys.size, dtype=np.int64)
     order = np.argsort(inverse, kind='stable')
@@ -74,7 +74,7 @@ def matched_partners(keys, pools, rng):
 
 
 def window_pool(sorted_values, sorted_users, target):
-    """Utenti con un valore vicino al bersaglio (finestra allargata se il gruppo Ã¨ troppo piccolo)."""
+    """Users with a value close to the target (window widened if the group is too small)."""
     factor = WINDOW
     while True:
         low = np.searchsorted(sorted_values, max(1.0, target / factor))
@@ -97,7 +97,7 @@ def main():
     users = sorted(docs[-1])
     index = {u: i for i, u in enumerate(users)}
     final = sorted(edge_sets[-1])
-    print(f'{folder_name}: archi {len(final)} | utenti con testo {len(users)} | passi {len(snapshots)}')
+    print(f'{folder_name}: edges {len(final)} | users with text {len(users)} | steps {len(snapshots)}')
 
     vectorizer = TfidfVectorizer(min_df=5, sublinear_tf=True, lowercase=True, strip_accents='unicode',
                                  max_features=200000)
@@ -203,11 +203,11 @@ def main():
                 matrix, index, [users[i] for i in partners_left[keep]],
                 [users[i] for i in partners_right[keep]]))
         detail = ' | '.join(f'{name} {control_by_step[name][-1].mean():.4f}' for name in NAMES[1:])
-        print(f'  passo {step}: archi {len(rows)} | archi {real_by_step[-1].mean():.4f} | {detail}')
+        print(f'  step {step}: pairs {len(rows)} | edges {real_by_step[-1].mean():.4f} | {detail}')
 
     real = np.concatenate(real_by_step)
     rows = []
-    print(f'\narchi veri: somiglianza media {real.mean():.4f}')
+    print(f'\ntrue edges: mean similarity {real.mean():.4f}')
     for name in NAMES:
         values = np.concatenate(control_by_step[name])
         aucs = [roc_auc_score(np.concatenate([np.ones(a.size), np.zeros(b.size)]),
@@ -228,10 +228,10 @@ def main():
     text_final = np.array([volumes[-1][u] for u in users])
     edge_characters = float(np.median([volumes[-1].get(u, 0) for u in endpoints]))
     user_characters = float(np.median(text_final))
-    print(f'\ngrado medio: estremi degli archi {mean_edge_degree:.1f} | utenti con testo '
+    print(f'\nmean degree: edge endpoints {mean_edge_degree:.1f} | users with text '
           f'{mean_user_degree:.1f}')
-    print(f'caratteri cumulativi per utente: mediana {user_characters:.0f} | '
-          f'agli estremi degli archi {edge_characters:.0f}')
+    print(f'cumulative characters per user: median {user_characters:.0f} | '
+          f'at edge endpoints {edge_characters:.0f}')
     values = np.array([total.get(u, 0) for u in users])
     boundaries = np.quantile(values, np.linspace(0, 1, 11))
     for position in range(10):
@@ -246,8 +246,8 @@ def main():
                      'pairs': 2 * DECILE_SAMPLE, 'edge_similarity': '',
                      'control_similarity': round(float(value), 6), 'ratio': '',
                      'auc_edges_vs_control': ''})
-        print(f'  decile {position + 1:>2} ({int(low):>4}-{int(high):>4} gradi, {len(inside):>5} '
-              f'utenti): somiglianza interna {value:.4f}')
+        print(f'  decile {position + 1:>2} ({int(low):>4}-{int(high):>4} degree, {len(inside):>5} '
+              f'users): internal similarity {value:.4f}')
 
     os.makedirs(TABLES, exist_ok=True)
     path = os.path.join(TABLES, f'homophily_control_{folder_name}.csv')

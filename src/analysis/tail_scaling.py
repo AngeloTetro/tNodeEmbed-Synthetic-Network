@@ -1,4 +1,4 @@
-﻿"""Is the degree tail really underestimated, or is it the population difference?
+"""Is the degree tail really underestimated, or is it the population difference?
 
 The project claims (FINAL.md Â§10, docs/pipeline.md Â§6) that the residual gap of every variant is
 one: the preference for the most connected nodes is underestimated when transferring from 25.714
@@ -102,17 +102,17 @@ def main():
     total = float(np.sum((np.log(maxima) - np.log(maxima).mean()) ** 2))
     r2 = 1.0 - residual / total
 
-    print('legge di scala interna del reale (grado massimo contro numero di utenti):')
-    print(f'  esponente {slope:.3f} | R2 {r2:.3f} | estremi: {int(sizes[0])} utenti -> '
-          f'{int(maxima[0])} e {int(sizes[-1])} -> {int(maxima[-1])}')
+    print('internal scaling law of the real network (maximum degree against number of users):')
+    print(f'  exponent {slope:.3f} | R2 {r2:.3f} | ends: {int(sizes[0])} users -> '
+          f'{int(maxima[0])} and {int(sizes[-1])} -> {int(maxima[-1])}')
     for row in real_rows:
-        print(f"  {row['snapshot']:>20}: {row['nodes']:>6} utenti | grado massimo "
-              f"{row['max_out_degree']:>5} | pendenza di coda {row['tail_slope']:+.3f}")
+        print(f"  {row['snapshot']:>20}: {row['nodes']:>6} users | maximum degree "
+              f"{row['max_out_degree']:>5} | tail slope {row['tail_slope']:+.3f}")
 
     small = real_rows[0]
     print()
-    print(f"confronto a pari dimensione: reale al primo snapshot ({small['nodes']} utenti, "
-          f"pendenza {small['tail_slope']:+.3f}) contro le reti generate (~10.000 utenti)")
+    print(f"matched-size comparison: real at the first snapshot ({small['nodes']} users, "
+          f"slope {small['tail_slope']:+.3f}) against the generated networks (~10,000 users)")
 
     rows = []
     for folder, label in FOLDERS:
@@ -132,7 +132,7 @@ def main():
             'tail_gamma': row['tail_gamma'],
             'existing_endpoint_degree': accretion.get('mean_prev_degree_of_existing_end', ''),
         })
-        print(f"  {label:>8}: {row['nodes']:>6} utenti | grado massimo {row['max_out_degree']:>5} "
+        print(f"  {label:>8}: {row['nodes']:>6} users | maximum degree {row['max_out_degree']:>5} "
               f"| atteso dalla scala {expected:>6.0f} | rapporto {row['max_out_degree'] / expected:>5.2f} "
               f"| pendenza {row['tail_slope']:+.3f}")
 
@@ -149,12 +149,12 @@ def main():
 
     if real_hub:
         print()
-        print('il grado medio dell\'estremo gia\' presente, contro il rapporto fra le popolazioni:')
+        print('mean degree of the already-present endpoint, against the population ratio:')
         for row in rows:
             value = row['existing_endpoint_degree'] or float('nan')
             ratio = float(value) / float(real_hub) if value else float('nan')
-            print(f"  {row['network']:>8}: {float(value):>6.1f} contro {float(real_hub):.1f} del reale "
-                  f"| rapporto {ratio:.3f} | rapporto fra popolazioni "
+            print(f"  {row['network']:>8}: {float(value):>6.1f} against {float(real_hub):.1f} of the real "
+                  f"| ratio {ratio:.3f} | population ratio "
                   f"{row['nodes'] / sizes[-1]:.3f}")
     print()
     print('written results/tail_scaling_real.csv and results/tail_scaling_summary.csv')

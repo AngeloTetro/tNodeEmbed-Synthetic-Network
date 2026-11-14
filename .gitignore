@@ -1,53 +1,40 @@
-# ambiente e cache (grandi e rigenerabili)
+# Environment and Python caches
 .venv/
 __pycache__/
 *.pyc
 .pytest_cache/
 
-# configurazione dello strumento (non è lavoro di progetto)
+# Tool configuration
 .commandcode/
 
-# dataset: input originali (read-only, mai modificati) e cartelle generate
-# (ricostruibili con gli script e i seed fissi). Sono congelati nel file zip di consegna.
-# dataset/ e ora versionato: e il contenuto principale del progetto
-
-# encoder fine-tuned alla radice del progetto (binari, ricostruibili con archive/src/finetune_encoder.py)
-# NB: senza lo slash iniziale questa regola ignorava anche src/models/, che è codice nostro.
+# Fine-tuned encoders saved at the project root
 /models/
 
-# log di lavoro degli script (sovrascritti a ogni giro), ovunque si trovino
+# Per-run logs, overwritten at every execution
 **/results/_*.txt
 **/results/_*.log
 
-# archivio di snapshot, se creato dentro il progetto
+# Snapshot archives, if created inside the project
 *.zip
 
-# materiale di lavoro non prodotto dal progetto
-archive/docs/llm_notes/
-
-# artefatti di compilazione LaTeX (rigenerabili con xelatex)
+# LaTeX build output
 document.aux
 document.log
 document.out
 document.toc
 *.synctex.gz
-
-# reti di controllo archiviate (grandi, ricostruibili: i numeri restano nei CSV)
-archive/dataset/
-
-# codice di terzi tenuto solo come provenienza (10 MB, non importato da nessuno script)
-archive/third_party/
-
-# materiale di lavoro degli strumenti
-.archify/
-.scratch/
 document.fdb_latexmk
 document.fls
 
-# lavori di altri studenti usati come esempio: non vanno pubblicati
+# Working material, not part of the project
+.archify/
+.scratch/
+archive/dataset/
+archive/third_party/
+archive/docs/llm_notes/
 archive/docs/esempi_professore/
 
-# non pubblicati su GitHub: materiale interno e sorgente LaTeX
+# Not published: internal material and the LaTeX source
 /docs/
 /archive/
 /document.tex

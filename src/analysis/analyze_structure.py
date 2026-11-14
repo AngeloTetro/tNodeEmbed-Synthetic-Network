@@ -1,4 +1,4 @@
-﻿"""Structural analysis of a dataset folder (real or generated), plus its figures.
+"""Structural analysis of a dataset folder (real or generated), plus its figures.
 
 Light metrics for every snapshot; heavy metrics (transitivity, clustering, diameter) only
 for the last snapshot, where the graph is largest.

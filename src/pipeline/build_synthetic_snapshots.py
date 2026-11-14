@@ -1,4 +1,4 @@
-﻿"""Partition the synthetic dataset into 9 time steps (one snapshot = one time step).
+"""Partition the synthetic dataset into 9 time steps (one snapshot = one time step).
 
 The synthetic dataset has no time, so the time axis is imposed with explicit rules. Two things
 come from the REAL dataset (measured there, never invented):

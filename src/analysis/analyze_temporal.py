@@ -1,4 +1,4 @@
-﻿"""Temporal analysis of a dataset folder (real or generated), plus its figures.
+"""Temporal analysis of a dataset folder (real or generated), plus its figures.
 
 Per consecutive snapshot pair: new nodes and edges, edge persistence (Jaccard between the
 edge sets), community stability (NMI between the Louvain partitions), and the densification

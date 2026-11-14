@@ -1,4 +1,4 @@
-﻿"""Side-by-side comparison of the datasets (real and generated), from the results CSVs.
+"""Side-by-side comparison of the datasets (real and generated), from the results CSVs.
 
 Produces figures under results/figures:
   compare_growth.png        nodes and edges per snapshot

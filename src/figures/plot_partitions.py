@@ -1,4 +1,4 @@
-﻿"""The two temporal partitions of the synthetic dataset, drawn from users_by_birth.csv.
+"""The two temporal partitions of the synthetic dataset, drawn from users_by_birth.csv.
 
 Left panel: share of the population present at each step. The all-present partition is flat at
 100% from the first step; the progressive one follows the arrival curve measured on the real

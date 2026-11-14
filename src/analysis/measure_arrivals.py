@@ -1,6 +1,6 @@
-﻿"""Misura gli eventi di arrivo sul reale: quanti archi porta ciascun evento, la direzione e la quota
-di coppie ricambiate, per transizione. E' la misura da cui il generatore prende la sua unita' di generazione, e
-serve a rendere citabili i numeri che il paper riporta.
+"""Measures the arrival events of the real network: how many edges each event carries, the direction
+and the share of reciprocated pairs, per transition. This is the measurement the generator takes its
+unit of generation from, and it makes the numbers quoted in the document citable.
 
 Usage: uv run python -m src.analysis.measure_arrivals
 Output: results/arrival_events.csv
@@ -33,13 +33,13 @@ def main():
                      'edges_per_event_median': float(np.median(sizes)),
                      'edges_per_event_max': int(sizes.max()),
                      'outgoing_share': round(float(outgoing), 4)})
-        print(f'transizione {step}: eventi {rows[-1]["arrival_events"]} | archi '
+        print(f'transition {step}: events {rows[-1]["arrival_events"]} | edges '
               f'{rows[-1]["new_edges"]} | media {rows[-1]["edges_per_event_mean"]} | mediana '
               f'{rows[-1]["edges_per_event_median"]:.0f} | massimo '
               f'{rows[-1]["edges_per_event_max"]} | uscenti {rows[-1]["outgoing_share"]}')
     total = np.array([row['new_edges'] for row in rows]).sum()
     mean = np.array([row['new_edges'] / max(1, row['arrival_events']) for row in rows])
-    print(f'totale archi nuovi {total} | media per evento fra {mean.min():.0f} e {mean.max():.0f}')
+    print(f'total new edges {total} | mean per event between {mean.min():.0f} and {mean.max():.0f}')
     os.makedirs(TABLES, exist_ok=True)
     path = os.path.join(TABLES, 'arrival_events.csv')
     with open(path, 'w', encoding='utf-8', newline='') as f:

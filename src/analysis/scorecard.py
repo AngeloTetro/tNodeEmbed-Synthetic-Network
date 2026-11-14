@@ -1,4 +1,4 @@
-﻿"""Scorecard of the progressive and all-present networks against the real one, last snapshot.
+"""Scorecard of the progressive and all-present networks against the real one, last snapshot.
 
 Two networks are compared: the progressive one (users entering over time) and the all-present one
 (the whole population from the first step). For every metric the file reports the

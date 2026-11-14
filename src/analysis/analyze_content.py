@@ -1,4 +1,4 @@
-﻿"""Content analysis of a dataset folder (real or generated), plus its figures.
+"""Content analysis of a dataset folder (real or generated), plus its figures.
 
 Measures how much the content explains the edges:
   - mean cosine similarity between the content of the two endpoints of an edge, against the

@@ -1,4 +1,4 @@
-﻿"""Profile classification on a generated folder, plus its figures.
+"""Profile classification on a generated folder, plus its figures.
 
 Uses the labels that exist only in the synthetic dataset (political_leaning, profession,
 age_interval) and compares feature sets:

@@ -1,2 +1,2 @@
-# Nessuna conversione dei fine riga: i file vengono salvati e ripristinati byte per byte
+# No line-ending conversion: files are stored and restored byte for byte.
 * -text

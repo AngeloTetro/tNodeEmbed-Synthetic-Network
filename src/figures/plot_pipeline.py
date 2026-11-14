@@ -1,4 +1,4 @@
-﻿"""Schematic of the pipeline (a block diagram for the paper's method section).
+"""Schematic of the pipeline (a block diagram for the paper's method section).
 
 Usage: uv run python -m src.figures.plot_pipeline
 Output: results/figures/paper_pipeline.png
