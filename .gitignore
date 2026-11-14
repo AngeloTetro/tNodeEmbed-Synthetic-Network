@@ -46,3 +46,8 @@ document.fls
 
 # lavori di altri studenti usati come esempio: non vanno pubblicati
 archive/docs/esempi_professore/
+
+# non pubblicati su GitHub: materiale interno e sorgente LaTeX
+/docs/
+/archive/
+/document.tex

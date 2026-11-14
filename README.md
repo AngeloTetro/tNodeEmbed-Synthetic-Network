@@ -36,14 +36,19 @@ arrivati nello stesso passo (17,0% contro 12,4%, reale 8,1%).
 
 ## Dove guardare
 
-| documento | contenuto |
-|---|---|
-| **`document.pdf`** (sorgente `document.tex`) | **il documento finale, in inglese**, su schema CRISP-DM: business understanding, dati, preparazione, modellazione, valutazione, conclusioni |
-| `docs/pipeline.md` | dettaglio tecnico: script, dati, scelte, limiti |
-| `docs/relazione.md` (+ PDF) | la guida in italiano: cosa c'è nel documento, perché delle scelte, glossario delle metriche |
-| `archive/storico.md` | tutti i tentativi precedenti, con meccanismo e metriche |
-| `archive/docs/` | i documenti superati: articolo (it/en), relazione precedente, prompt delle figure |
-| `docs/riferimenti/` | figure e note di consultazione |
+| percorso | contenuto | dove |
+|---|---|---|
+| **`document.pdf`** | **il documento finale, in inglese**: business understanding, dati, preparazione, modellazione, valutazione, conclusioni | repo |
+| `src/` | il codice: `lib/` (librerie), `pipeline/` (partizioni e generazione), `analysis/` (misure), `figures/` (grafici) | repo |
+| `results/tables/` | le 33 tabelle citate dal documento e dai testi | repo |
+| `results/figures/` | le 17 figure, tutte rigenerate da `src/figures/` | repo |
+| `dataset/` | i due dataset e le due reti generate (sei cartelle) | repo |
+| `docs/pipeline.md` | dettaglio tecnico: script, dati, scelte, limiti | pacchetto di consegna |
+| `docs/relazione.pdf` | la guida in italiano: cosa c'è nel documento, perché delle scelte, glossario delle metriche | pacchetto di consegna |
+| `archive/` | i tentativi superati: `storico.md`, i loro CSV, i documenti vecchi | pacchetto di consegna |
+
+Il repository pubblico contiene solo il progetto definitivo; `docs/` e `archive/` viaggiano nel
+pacchetto di consegna, insieme al sorgente LaTeX del documento.
 
 ## Come si rigenera tutto
 

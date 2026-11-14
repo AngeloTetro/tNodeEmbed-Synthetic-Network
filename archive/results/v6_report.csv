@@ -1,5 +1,0 @@
-variant,calibration,partition,target,threshold,nodes,edges,density,reciprocity,mean_out_degree,max_out_degree
-v6a,degree,generated_snapshots_v2,mean out-degree 32.05,top 2.24e-04,6599,58282,0.001339,0.42,8.83,959
-v6b,growth,generated_snapshots_v2,real per-snapshot new edges x 0.389 (309581 edges in total),per step,9219,390737,0.004598,0.42,42.38,1709
-v6a,degree,generated_snapshots_growth_v2,mean out-degree 32.05,top 2.24e-04,6266,51037,0.0013,0.42,8.15,727
-v6b,growth,generated_snapshots_growth_v2,real per-snapshot new edges x 0.389 (309581 edges in total),per step,8494,389491,0.005399,0.42,45.85,1021

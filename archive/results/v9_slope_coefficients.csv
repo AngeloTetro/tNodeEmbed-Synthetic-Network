@@ -1,9 +1,0 @@
-feature,coefficient
-content_score,0.047350
-partner_degree_log,1.019963
-partner_percentile,0.911948
-partner_new,1.216083
-partner_active,-0.025437
-outgoing,0.139383
-partner_co_occurrence,0.194253
-val_auc,0.918026
